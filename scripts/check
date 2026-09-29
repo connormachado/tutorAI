@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# The gate (protected). Stop hook, git pre-commit and future CI all call this.
+# Deterministic only: no network, no model calls. Runs every step, exits 1 if any failed.
+set -uo pipefail
+cd "$(git rev-parse --show-toplevel)"
+
+failed=()
+step() {
+  local name=$1; shift
+  echo "== $name"
+  if ! "$@"; then failed+=("$name"); fi
+}
+pytest_fast() {
+  uv run --locked pytest -q -x -m "not llm"
+  local rc=$?
+  [ $rc -eq 5 ] && { echo "(no tests collected)"; return 0; }
+  return $rc
+}
+
+step "ruff format" uv run --locked ruff format --check .
+step "ruff check"  uv run --locked ruff check .
+step "pyright"     uv run --locked pyright
+step "pytest"      pytest_fast
+step "import-linter (A-2, PII store)" uv run --locked lint-imports --no-cache
+
+if [ ${#failed[@]} -gt 0 ]; then
+  echo "GATE RED: ${failed[*]}"
+  exit 1
+fi
+echo "GATE GREEN"

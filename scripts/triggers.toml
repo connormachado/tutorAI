@@ -1,0 +1,22 @@
+# The one list of trigger paths (protected). Read by /ship, the pre-commit hook and the
+# protect-gate hook via scripts/gate.py. fnmatch globs: `*` also matches `/`.
+# Globs that match nothing yet are fine; they switch on once matching files exist.
+
+[privacy]       # -> privacy-boundary-reviewer + Codex (/ship); diagram LLM refresh
+paths = ["src/primer/gateway/*", "src/primer/store/*", "src/primer/session/*",
+         "src/primer/logging*", "src/primer/config*", "pyproject.toml"]
+
+[mastery_math]  # -> Codex (/ship)
+paths = ["src/primer/mastery/*"]
+
+[pedagogy]      # -> scripts/eval HARD GATE (pre-commit); fails closed
+paths = ["src/primer/prompts/*", "src/primer/policy/*", "evals/pedagogy/*"]
+
+[gate]          # protected: Edit/Write denied; commits need ALLOW_GATE_CHANGE=1
+paths = ["scripts/check", "scripts/gate.py", "scripts/triggers.toml", "scripts/pre-commit",
+         "scripts/diagram", "scripts/edge_diff.py", "diagrams/AS-BUILT.md",
+         ".claude/hooks/*", ".claude/settings.json", ".importlinter", "ruff.toml",
+         "pyrightconfig.json", "pytest.ini", "DECISIONS.md"]
+
+[gate_inputs]   # pre-commit refuses if these have unstaged or untracked changes
+paths = ["src/*", "tests/*", "evals/*", "pyproject.toml", "uv.lock"]

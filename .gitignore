@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.claude/.gate-cache/
+.claude/settings.local.json
+.DS_Store
+.grimp_cache/
+.import_linter_cache/
+
+# Local data must never be committed (P-1)
+*.db
+*.sqlite
+*.sqlite3
+*.log

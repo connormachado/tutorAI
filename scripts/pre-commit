@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Git pre-commit (protected gate file; .git/hooks/pre-commit execs this). The real backstop:
+# covers the Stop hook's 8-block override, Codex commits and hand commits. Any failure blocks.
+set -uo pipefail
+cd "$(git rev-parse --show-toplevel)"
+die() { echo "pre-commit: BLOCKED: $*" >&2; exit 1; }
+gate() { uv run --frozen --quiet python scripts/gate.py "$@"; }
+
+# 1. The gate must test exactly what is being committed.
+hits=$(gate match gate_inputs --unstaged); rc=$?
+case $rc in
+  0) die "unstaged or untracked changes the gate would see:"$'\n'"$hits"$'\n'"Stage or stash them first." ;;
+  1) ;;
+  *) die "gate.py failed ($rc)" ;;
+esac
+
+# 2. Gate-file tripwire. AS-BUILT.md is exempt here because step 5 regenerates and edge-checks it
+#    (a hand-inserted edge is blocked there); Edit/Write on it is still denied.
+hits=$(gate match gate --staged | grep -vx 'diagrams/AS-BUILT.md'); rc=${PIPESTATUS[0]}
+[ $rc -eq 0 ] && [ -z "$hits" ] && rc=1
+case $rc in
+  0) [ "${ALLOW_GATE_CHANGE:-}" = 1 ] || die "commit touches gate files (set ALLOW_GATE_CHANGE=1 only if Connor approved):"$'\n'"$hits"
+     echo "pre-commit: gate files changed (ALLOW_GATE_CHANGE=1):"$'\n'"$hits" ;;
+  1) ;;
+  *) die "gate.py failed ($rc)" ;;
+esac
+
+# 3. The mechanical gate.
+scripts/check || die "scripts/check is red"
+
+# 4. Pedagogy eval hard gate: fails closed, cached by content (§3.1a).
+gate match pedagogy --staged >/dev/null; rc=$?
+case $rc in
+  0) gate eval-gate || die "pedagogy eval" ;;
+  1) ;;
+  *) die "gate.py failed ($rc)" ;;
+esac
+
+# 5. Living diagram: grimp -> stamp -> (LLM if stale) -> edge check -> stage AS-BUILT.md (§3.1b).
+scripts/diagram --stage || die "diagram"

@@ -1,0 +1,8 @@
+# Gate config (protected). Loosening a rule here is a gate change.
+target-version = "py312"
+line-length = 100
+extend-include = ["scripts/diagram"]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "PGH", "RUF"]
+# PGH003/PGH004: no blanket `# type: ignore` / `# noqa`. RUF100: no unused suppressions.

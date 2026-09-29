@@ -1,0 +1,64 @@
+# Gate config (protected). A-2: structural, never by convention.
+[importlinter]
+root_package = primer
+include_external_packages = True
+
+[importlinter:contract:a2-egress]
+name = A-2: only primer.gateway may import network, LLM, speech or telemetry clients
+type = forbidden
+source_modules =
+    primer
+forbidden_modules =
+    socket
+    ssl
+    http
+    urllib
+    ftplib
+    smtplib
+    xmlrpc
+    anthropic
+    openai
+    httpx
+    httpcore
+    requests
+    urllib3
+    aiohttp
+    websockets
+    websocket
+    grpc
+    boto3
+    botocore
+    google
+    deepgram
+    assemblyai
+    elevenlabs
+    sentry_sdk
+    posthog
+    mixpanel
+# Forbidden modules not yet imported anywhere are skipped, so the list can name future clients.
+ignore_imports =
+    primer.gateway -> *
+    primer.gateway.** -> *
+unmatched_ignore_imports_alerting = none
+# primer.session -> primer.gateway -> anthropic is the intended path, so only direct imports count.
+allow_indirect_imports = True
+
+[importlinter:contract:pii-store]
+name = Q5: only primer.store may import a database driver
+type = forbidden
+source_modules =
+    primer
+forbidden_modules =
+    sqlite3
+    sqlcipher3
+    pysqlcipher3
+    psycopg
+    psycopg2
+    sqlalchemy
+    shelve
+    dbm
+ignore_imports =
+    primer.store -> *
+    primer.store.** -> *
+unmatched_ignore_imports_alerting = none
+allow_indirect_imports = True

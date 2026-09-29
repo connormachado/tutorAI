@@ -1,0 +1,35 @@
+# The Primer: Privacy Invariants
+
+*DRAFT, pending Connor's approval. Every P-id traces to `DECISIONS.md` A-2 or A-3, or to an approved Q-default (Q5). `privacy-boundary-reviewer` cites a P-id for every finding. Where a check is mechanical, the reviewer doesn't re-check it; it looks for what tests can't see: new data flows, new sinks, and dependencies that phone home.*
+
+**Kid content** means anything the kid or the tutor said or showed during a session: typed messages, model replies, transcribed speech, audio, and photos of work.
+
+| P-id | Invariant | Traces to | Enforced by |
+|---|---|---|---|
+| **P-1** | Kid content is **never persisted**: not to a DB, file, temp file, cache or queue. It lives in memory for the live session only. | A-3, Q5 | Canary test (§ below) + reviewer |
+| **P-2** | **Only `primer.gateway` has third-party network access** (LLM, speech, vision, telemetry). | A-2 | `.importlinter` contract `a2-egress` (gate) |
+| **P-3** | The gateway **fails closed.** On a provider error, timeout or malformed response the session gets an error state. There's no fallback provider, no retry through another module, and no degraded path that sends data elsewhere. | A-2 | Reviewer. *(Fault-injection tests are deferred: `deferred-credibility-checks.md`.)* |
+| **P-4** | Gateway destinations are a **fixed allowlist in code.** Adding a host is a privacy-path change. | A-2 | `[privacy]` trigger → reviewer + Codex |
+| **P-5** | **Declared exception:** kid content crosses the gateway to the LLM/speech provider unscrubbed. This is intentional and is **not** a finding. | A-3 | — |
+| **P-6** | The **PII store is reached only through `primer.store`,** with a fixed field allowlist and no free-form fields. | Q5 | `.importlinter` contract `pii-store` (gate) + reviewer |
+| **P-7** | The **profile (personality file) and mastery state are encrypted at rest.** | A-3 | Reviewer |
+| **P-8** | **Only distilled state is persisted:** skill mastery, the personality file, and structured session records (skill ids, outcome codes, counts, timestamps). These records **quote no kid content.** | A-3 | Canary test + reviewer |
+| **P-9** | **BKT-fitting data leaves only through the opt-in, anonymized upload path.** Events carry a random pseudonymous id, skill id, correctness and context buckets, with no names, text or profile fields. With no opt-in, nothing is sent. | A-3 | Reviewer + Codex |
+| **P-10** | **No kid content in logs, error trackers, analytics or exception messages.** Log events and exception text carry ids and codes, never message payloads. | A-3 | Canary test (captures log records) + reviewer |
+| **P-11** | **No new outbound destination for kid data.** A new dependency that phones home (telemetry, crash reporting, "anonymous usage stats") is a finding. | A-2 | `a2-egress` (the listed clients) + reviewer (unlisted ones) |
+| **P-12** | A **parent-shared grade/transcript** is used once as a bootstrap prior and then discarded, never stored. | A-3, A-9 | Reviewer |
+| **P-13** | **Tooling never touches real kid data.** `/demo-check`, evals and tests use seeded fake-kid profiles only. | A-3 | Reviewer |
+
+## Canary test (A-2's own verification)
+
+Arrives with the first session code (`tests/`, fast and deterministic, so it's part of `scripts/check`). It works like this:
+
+1. Run a scripted session through the real session entry point, with the gateway replaced by an in-process fake.
+2. Every kid message contains a unique canary string.
+3. Afterwards, search every DB file, log file, temp directory, and **every captured log record and exception** for the canary.
+4. Any hit fails the test. That covers P-1, P-8 and P-10.
+
+## Open (Connor to decide; not findings until decided)
+
+- Encryption-at-rest mechanism and key custody for P-7 (e.g. SQLCipher vs. app-level field encryption).
+- Whether parent summaries (R-24) may contain any free text written by the model (P-8 currently says structured only).

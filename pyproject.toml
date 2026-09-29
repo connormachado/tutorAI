@@ -1,0 +1,23 @@
+[project]
+name = "primer"
+version = "0.1.0"
+description = "The Primer: adaptive, privacy-first algebra tutor"
+requires-python = ">=3.12,<3.13"
+dependencies = []
+
+[build-system]
+requires = ["uv_build>=0.12.10,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "import-linter>=2.15",
+    "pyright>=1.1.414",
+    "pytest>=9.1.1",
+    "ruff>=0.16.9",
+]
+
+[tool.uv]
+# uv-managed CPython is arm64-only. The python.org universal2 build runs as x86_64 when a parent is
+# x86_64 (e.g. an Intel /usr/local/bin/git running hooks), then can't load arm64 wheels.
+python-preference = "only-managed"
