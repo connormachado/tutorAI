@@ -1,6 +1,8 @@
+import type { PuzzleTemplate } from "../content/types";
 import type { ClientEvent, ServerEvent, SessionMode } from "../protocol";
 
-export type DemoTrigger = "pause" | "safety" | "error" | "skip";
+/** "interest" cycles the puzzle skin; a template name opens that puzzle. */
+export type DemoTrigger = "pause" | "safety" | "error" | "skip" | "interest" | PuzzleTemplate;
 
 export interface TutorTransport {
   readonly kind: "mock" | "websocket";

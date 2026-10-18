@@ -28,8 +28,8 @@
     },
     "checks": [
       { "check": "found_error", "skill": "one_step_equations", "kind": "ui_state", "expected": "the student taps step 0" },
-      { "check": "fixed_step", "skill": "one_step_equations", "kind": "solution_set", "expected": "{answer}" },
-      { "check": "final_answer", "skill": "two_step_equations", "kind": "solution_set", "expected": "{answer}" }
+      { "check": "fixed_step", "skill": "one_step_equations", "kind": "equivalent_to", "expected": "{a}*x = {c + b}" },
+      { "check": "final_answer", "skill": "two_step_equations", "kind": "equivalent_to", "expected": "x = {answer}" }
     ],
     "hints": [
       "Go line by line. For each line, ask: does this undo what's being done to x?",

@@ -23,9 +23,11 @@ interface Props {
   onChange: (value: string) => void;
   onSubmit: () => void;
   disabled?: boolean;
+  /** The symbol keys. Off where only a plain linear line is wanted, like a puzzle line. */
+  keys?: boolean;
 }
 
-export function MathInput({ id, label, value, placeholder, onChange, onSubmit, disabled }: Props) {
+export function MathInput({ id, label, value, placeholder, onChange, onSubmit, disabled, keys = true }: Props) {
   const input = useRef<HTMLInputElement>(null);
   const latex = kidMathToLatex(value);
 
@@ -66,6 +68,7 @@ export function MathInput({ id, label, value, placeholder, onChange, onSubmit, d
           }
         }}
       />
+      {keys && (
       <div className="math-keys" role="group" aria-label="Math symbols">
         {KEYS.map((k) => (
           <button
@@ -81,13 +84,14 @@ export function MathInput({ id, label, value, placeholder, onChange, onSubmit, d
           </button>
         ))}
       </div>
+      )}
       <p className="math-preview" aria-live="polite">
         {latex ? (
           <>
             <span className="math-preview__label">Platy reads:</span> <Tex latex={latex} />
           </>
         ) : (
-          <span className="math-preview__label">Type x^2 for x², sqrt(9) for √9, 3/4 for a fraction.</span>
+          keys && <span className="math-preview__label">Type x^2 for x², sqrt(9) for √9, 3/4 for a fraction.</span>
         )}
       </p>
     </div>

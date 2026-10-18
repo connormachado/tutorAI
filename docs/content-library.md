@@ -244,7 +244,23 @@ Later, item quality is the aggregate across students: completion rate, skip poin
 
 ### 6.5 Protocol additions for `web/`
 
-These events would join PR #1's session protocol in `web/src/protocol.ts`, alongside its existing `answer` and `answer_result` events:
+**Puzzles (built, against the mock).** These are in `web/src/protocol.ts`, with the puzzle shapes in `web/src/content/types.ts`:
+
+```ts
+// ServerEvent
+| { type: "puzzle"; puzzle: Puzzle }  // item, instance, resolved skin, and the template's own fields
+| { type: "puzzle_result"; instance_id: string; check: CheckId; outcome: "correct" | "incorrect" | "unreadable" }
+| { type: "puzzle_done"; instance_id: string }
+// ClientEvent (the server grades; the client never sends "correct")
+| { type: "puzzle_move"; instance_id: string; move: PuzzleMove }  // a tapped line, a typed line, or a scale move
+| { type: "puzzle_hint"; instance_id: string }
+| { type: "puzzle_next"; instance_id: string }  // finished, ready to move on
+| { type: "slot_pick"; colors: PaletteId }  // R-35, from a fixed palette
+```
+
+A second `puzzle` event with the same `instance_id` only changes the skin, so the student keeps their progress. The browser draws a balance-scale move only after the server's `puzzle_result` accepts it. Hints used and response times for R-11 stay on the server, which already sees every move and hint request.
+
+**Other formats (proposed, not built).** Videos, songs, stories and the whiteboard would add:
 
 ```ts
 // ServerEvent

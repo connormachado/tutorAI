@@ -1,0 +1,45 @@
+import { type ReactNode, useState } from "react";
+import { MathInput } from "../MathInput";
+
+interface Props {
+  id: string;
+  /** Says what to write; shown above the box. */
+  prompt: string;
+  placeholder: string;
+  button: string;
+  onSubmit: (text: string) => void;
+  /** A move is waiting for its verdict; the box stays editable but can't send. */
+  busy: boolean;
+  /** More buttons for the same row, like the hint. */
+  children?: ReactNode;
+}
+
+// One line of math for a puzzle to grade. The draft stays after a miss so it can be edited.
+export function LineEntry({ id, prompt, placeholder, button, onSubmit, busy, children }: Props) {
+  const [draft, setDraft] = useState("");
+  const submit = () => {
+    if (draft.trim() && !busy) onSubmit(draft.trim());
+  };
+  return (
+    <>
+      <p className="puzzle__ask" id={`${id}-ask`}>
+        {prompt}
+      </p>
+      <MathInput
+        id={id}
+        label={prompt}
+        value={draft}
+        placeholder={placeholder}
+        keys={false}
+        onChange={setDraft}
+        onSubmit={submit}
+      />
+      <div className="problem__actions">
+        <button type="button" className="btn btn--primary" onClick={submit} disabled={busy || !draft.trim()}>
+          {button}
+        </button>
+        {children}
+      </div>
+    </>
+  );
+}

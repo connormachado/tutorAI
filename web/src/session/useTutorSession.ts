@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import type { PaletteId, PuzzleMove } from "../content/types";
 import type { ClientEvent } from "../protocol";
 import { createTransport } from "../transport";
 import type { DemoTrigger, TutorTransport } from "../transport/types";
@@ -58,6 +59,17 @@ export function useTutorSession(makeTransport: () => TutorTransport = createTran
     [send],
   );
 
+  const puzzleMove = useCallback(
+    (instance_id: string, move: PuzzleMove, echo?: string) => {
+      // What the kid typed or tapped shows in the chat, like an answer does, so the tutor's
+      // question about it reads in context. It lives in React state only (P-1).
+      if (echo) dispatch({ type: "kid_said", id: `k${++kidMessages.current}`, text: echo });
+      dispatch({ type: "puzzle_move_sent", move });
+      send({ type: "puzzle_move", instance_id, move });
+    },
+    [send],
+  );
+
   return {
     state,
     isMock,
@@ -80,5 +92,12 @@ export function useTutorSession(makeTransport: () => TutorTransport = createTran
       dispatch({ type: "restart" });
     },
     demo: (trigger: DemoTrigger) => transport.current?.demo?.(trigger),
+    puzzleMove,
+    puzzleHint: (instance_id: string) => {
+      dispatch({ type: "kid_said", id: `k${++kidMessages.current}`, text: "Can I get a hint?" });
+      send({ type: "puzzle_hint", instance_id });
+    },
+    puzzleNext: (instance_id: string) => send({ type: "puzzle_next", instance_id }),
+    pickColors: (colors: PaletteId) => send({ type: "slot_pick", colors }),
   };
 }

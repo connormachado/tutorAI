@@ -39,8 +39,16 @@ Other commands:
 5. **Three misses on one problem** brings up the pause screen, then an easier warm-up, then
    back to the problem (R-21).
 
-The dashed **Demo** button (mock only) jumps to any screen on cue: skip a problem, the pause
-screen, the safety-resources panel (R-22) and the dropped-connection screen (P-3).
+6. **Puzzles (R-32).** On problem 1, answer `25/3` (adding the 5 instead of subtracting it).
+   Platy sends you to a spot-the-error puzzle about the same slip, then back to problem 1.
+   Tap the wrong line, rewrite it, then finish it; Platy asks before it corrects (R-03), gives
+   no hint before a first try (R-02), and asks a reflection question at the end (R-30).
+
+The dashed **Demo** button (mock only) jumps to any screen on cue: skip a problem, each of the
+three puzzles (spot the error, missing step, balance scale), the pause screen, the
+safety-resources panel (R-22) and the dropped-connection screen (P-3). **Switch interest**
+re-skins the puzzle on screen (soccer, football, gaming, plain) without changing its numbers,
+and **Colors** on a puzzle picks your own team colors (R-35).
 
 Things to say in chat: "just tell me the answer" (Platy won't), "I'm stuck" (gets a hint).
 
@@ -53,10 +61,12 @@ src/
     mock.ts              in-browser stand-in for Platy's server, replays mock/script.ts
     websocket.ts         the real transport: POST /sessions, then a WebSocket
     index.ts             picks mock unless VITE_PLATY_SERVER_URL is set
-  mock/                  scripted lesson + answer checking (goes away with the real backend)
+  mock/                  scripted lesson, answer checking, and puzzle items, skins, problem
+                         generators and grading (all go away with the real backend)
+  content/               puzzle types, balance-scale moves, team-color palette
   math/                  kid-math parser, LaTeX output, KaTeX rendering
   session/               reducer + hook holding all session state in memory
-  components/            ProblemCard, MathInput, Chat, Overlays, Mascot
+  components/            ProblemCard, PuzzlePlayer (+ puzzles/), MathInput, Chat, Overlays, Mascot
 ```
 
 ### Pointing it at a real server
@@ -80,6 +90,11 @@ skill_id, prompt (LaTeX), instruction, position, total}`, `answer_result {proble
 Client to server: `kid_message {text}`, `answer {problem_id, text}`, `hint_requested
 {problem_id}`, `resume`, `end_session`.
 
+Puzzles (R-32, R-35) add `puzzle {puzzle}`, `puzzle_result {instance_id, check, outcome}` and
+`puzzle_done {instance_id}` from the server, and `puzzle_move {instance_id, move}`,
+`puzzle_hint {instance_id}`, `puzzle_next {instance_id}` and `slot_pick {colors}` from the
+client. `docs/content-library.md` §6.5 explains them.
+
 `answer_result`, `instruction`/`position`/`total` on `problem`, and `resume` are additions to the
 plan's first draft; they let the problem card give feedback and show progress. Answers are sent
 as the kid typed them (`x^2 = 49`, `±7`); the server does the grading.
@@ -96,6 +111,7 @@ as the kid typed them (`x^2 = 49`, `±7`); the server does the grading.
 
 ## Not done yet
 
-Voice and photo input, onboarding mode (which also fills the personality file in V1), the
+Players for the other content formats (videos, songs, stories, the whiteboard), voice and
+photo input, onboarding mode (which also fills the personality file in V1), the
 13+ age gate (R-36) and a landing page. There's no parent side in V1: V1 is for students 13
 and up, and parent features come in V2/V3 (`REQUIREMENTS.md` § Audience).

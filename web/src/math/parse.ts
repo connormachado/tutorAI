@@ -136,9 +136,16 @@ class Parser {
     }
     for (let tok = this.peek(); tok?.t === "op" && "+-±".includes(tok.v); tok = this.peek()) {
       this.pos++;
-      left = { kind: "bin", op: tok.v as BinOp, left, right: this.term() };
+      left = { kind: "bin", op: tok.v as BinOp, left, right: this.signedTerm() };
     }
     return left;
+  }
+
+  // A negative number right after a plus or minus: "18 + -11", "18 - -11".
+  private signedTerm(): Node {
+    if (!this.isOp("-")) return this.term();
+    this.pos++;
+    return { kind: "neg", sign: "-", arg: this.term() };
   }
 
   private term(): Node {
