@@ -16,7 +16,8 @@ Plan a set of content items for one Algebra 1 skill. Each item will be written l
   - *Misconception-first:* show the common wrong move, then why it fails.
 - **Cover the learning loop:** at least one `hook`, one `introduce` or `worked_example`, two `practice` items, and one `repair` per misconception you were given.
 - **Match format to role.** Hooks suit reels, stories and songs. Explaining suits worked-example videos. Practice must be interactive (a puzzle or a whiteboard scene), because only interactive items give the tutor evidence of what the student can do. Whiteboard scenes suit concrete models (a balance scale, tiles, a number line, a grid) and step-by-step practice.
-- **Worked problems with integer answers,** and different numbers for each brief so items don't repeat each other.
+- **Worked problems with integer answers,** and different numbers for each brief so items don't repeat each other. Never use one of the skill's probe equations (see the inputs), or the same equation with its sides swapped.
+- **`touches` only names prerequisites.** Any other skill an item exercises must be in the prerequisite chain you were given.
 
 ## What you return
 
@@ -24,20 +25,22 @@ One JSON object and nothing else:
 
 ```json
 {
-  "skill": "<skill id>",
+  "skill": "<skill node id, copied from the inputs>",
   "briefs": [
     {
       "brief_id": "<skill-short>-<angle>-<format>, e.g. lin2-balance-reel",
-      "role": "hook | introduce | worked_example | practice | repair | retrieval | confidence | apply",
+      "touches": ["<prerequisite node ids from the chain below, or empty>"],
+      "role": "hook | introduce | worked_example | practice | repair | retrieval | easy_win | apply",
       "format": "reel | worked_example | puzzle | story | song | whiteboard",
       "puzzle_template": "balance | missing_step | spot_the_error | null",
       "whiteboard_scene": "balance | tiles | number_line | grid | steps | null",
       "angle": "<kebab-case name>",
       "angle_in_one_line": "<the idea, as you'd say it to a student>",
       "why_it_works": "<one or two sentences: what about this angle makes the idea click>",
-      "misconception": "<misconception id this targets, or null>",
-      "worked_problem": "<equation in SymPy syntax with an integer answer>",
+      "misconception": "<misconception id from the inputs, or null>",
+      "worked_problem": "<equation in the math checker's syntax (see the shared instructions), with an integer answer>",
       "difficulty": 1,
+      "avoid_equations": ["<every probe equation from the inputs, copied, so the writer avoids them too>"],
       "notes_for_writer": "<anything the writer must get right or avoid>"
     }
   ],
@@ -47,12 +50,15 @@ One JSON object and nothing else:
 
 ## Inputs
 
+Copy these from the skill's node in the skill map (`src/primer/skills/`), so there's only one list of skills. Misconceptions aren't in the skill map yet, so type them in for each run and don't save them as a second list.
+
 ```
-Skill id:            {{skill_id}}
-Skill description:   {{what the student can do once they have it}}
-Prerequisites:       {{prerequisite skill ids and one line each}}
+Skill id:            {{node.id, e.g. two_step_equations}}
+Skill name:          {{node.name}}
+Skill description:   {{node.description}}
+Prerequisite chain:  {{prerequisite_chain(node.id, 2): each id with its name, nearest first}}
+Probes (never reuse): {{each of node.probes: equation, one per line}}
 Misconceptions:      {{misconception id: description, one per line}}
-Typical problems:    {{two or three example equations}}
 Formats available:   reel, worked_example, puzzle (balance | missing_step | spot_the_error), story, song,
                      whiteboard (balance | tiles | number_line | grid | steps)
 ```

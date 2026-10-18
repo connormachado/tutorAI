@@ -1,14 +1,16 @@
 {
   "descriptor": {
+    "schema_version": 1,
     "format": "puzzle",
     "role": "repair",
-    "skills": { "primary": "alg1.linear.two_step", "touches": ["alg1.linear.one_step"] },
+    "skills": { "primary": "two_step_equations", "touches": ["one_step_equations"] },
     "angle": "spot-the-error",
-    "misconceptions": ["lin2.undo-with-same-op"],
+    "misconceptions": ["undo_with_same_op"],
     "difficulty": 2,
     "duration_s": 90,
     "interest_tags": [],
     "sensitive_tags": [],
+    "base_item": null,
     "reading_level": 6
   },
   "body": {
@@ -25,25 +27,27 @@
       ]
     },
     "checks": [
-      { "check": "found_error", "skill": "alg1.linear.one_step", "correct_when": "the student taps step 0" },
-      { "check": "fixed_step", "skill": "alg1.linear.one_step", "correct_when": "the student's replacement for step 0 is equivalent to a*x = c + b" },
-      { "check": "final_answer", "skill": "alg1.linear.two_step", "correct_when": "the student's final answer equals answer" }
+      { "check": "found_error", "skill": "one_step_equations", "kind": "ui_state", "expected": "the student taps step 0" },
+      { "check": "fixed_step", "skill": "one_step_equations", "kind": "solution_set", "expected": "{answer}" },
+      { "check": "final_answer", "skill": "two_step_equations", "kind": "solution_set", "expected": "{answer}" }
     ],
     "hints": [
       "Go line by line. For each line, ask: does this undo what's being done to x?",
       "Look at how the 'minus' part was handled. What's the opposite of taking something away?",
       "To undo a subtraction, add the same amount to both sides. Which line didn't do that?"
     ],
-    "wrong_answer_feedback": [
+    "wrong_answer_prompts": [
       {
         "misconception": null,
         "looks_like": "taps step 1 (the division)",
-        "feedback": "That line divides correctly, but it's working from a line that's already off. Look one line earlier."
+        "ask": "What does that line do to both sides, and does it follow from the line just above it?",
+        "nudge": "That division is done right, so the trouble starts earlier. Look one line up."
       },
       {
-        "misconception": "lin2.undo-with-same-op",
+        "misconception": "undo_with_same_op",
         "looks_like": "replaces step 0 with a*x = c - b again, or with another subtraction",
-        "feedback": "That's the same move the solution made. The equation takes b away from a*x, so what would put it back?"
+        "ask": "The equation takes b away from a*x. What did your line do to the b?",
+        "nudge": "Taking b away a second time doesn't undo it. Think about what would put it back."
       }
     ]
   },
@@ -90,7 +94,8 @@
   "tutor_notes": {
     "key_idea": "To undo taking a number away, add it back to both sides.",
     "worked_problem": "2x - 7 = 9",
-    "follow_up_prompt": "How could you have caught that mistake without redoing the whole problem?"
+    "follow_up_prompt": "How could you have caught that mistake without redoing the whole problem?",
+    "reflection_prompt": "What made you suspect that line? Where would you start looking next time?"
   },
   "author_notes": "The 'says' text marks the wrong step for reviewers only; the student sees just the equations. The follow-up is meant to lead to checking by substitution."
 }
