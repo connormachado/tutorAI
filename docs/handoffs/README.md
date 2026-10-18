@@ -7,4 +7,4 @@ One note per coding session or run, so Connor, Michael and their AI tools stay o
 - **Names:** `YYYY-MM-DD-HHMM-<who>-<slug>.md` in UTC, so `sort` puts the newest last.
 - **Never** put kid conversation, PII or secrets in a note (P-1, P-10).
 
-Notes are a log, not a spec. When one records a lasting decision, it still belongs in `REQUIREMENTS.md`, `PRIVACY.md` or (Connor's call) `DECISIONS.md`.
+Notes are a log, not a spec. When one records a lasting decision, it still belongs in `REQUIREMENTS.md`, `PRIVACY.md` or (Connor's or Michael's call) `DECISIONS.md`.

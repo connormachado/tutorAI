@@ -18,8 +18,8 @@
 None.
 
 ## Open questions for Connor
-- Do you want the Stop-hook nudge? If yes, apply it from the PR description with `ALLOW_GATE_CHANGE=1`.
+- Do you want the Stop-hook nudge? If yes, Connor or Michael applies it from the PR description with `ALLOW_GATE_CHANGE=1`.
 
 ## Next steps
-- Connor reviews this PR alongside PR #1 (demo frontend).
+- Connor and Michael review this PR alongside PR #1 (demo frontend).
 - Next frontend session writes its own handoff, including the proposed session protocol in `web/src/protocol.ts`.

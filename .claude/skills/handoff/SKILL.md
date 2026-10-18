@@ -52,4 +52,4 @@ Use exactly these headings. Keep it under about 60 lines; link to files, PRs and
 - No secrets, tokens or local paths from your machine.
 - State what was checked (a test name, `scripts/check` output) versus what is inferred.
 - Don't hand-edit `diagrams/AS-BUILT.md` or gate files to "document" them; note the change here instead.
-- Write the note, show its path, then stop. The handoff is committed with the session's other changes (Connor commits on `main`; branch work goes in its PR).
+- Write the note, show its path, then stop. The handoff is committed with the session's other changes (Connor or Michael commits on `main`; branch work goes in its PR).
