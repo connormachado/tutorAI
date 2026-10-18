@@ -17,8 +17,9 @@
 | **P-9** | **BKT-fitting data leaves only through the opt-in, anonymized upload path.** Events carry a random pseudonymous id, skill id, correctness and context buckets, with no names, text or profile fields. With no opt-in, nothing is sent. | A-3 | Reviewer + Codex |
 | **P-10** | **No kid content in logs, error trackers, analytics or exception messages.** Log events and exception text carry ids and codes, never message payloads. | A-3 | Canary test (captures log records) + reviewer |
 | **P-11** | **No new outbound destination for kid data.** A new dependency that phones home (telemetry, crash reporting, "anonymous usage stats") is a finding. | A-2 | `a2-egress` (the listed clients) + reviewer (unlisted ones) |
-| **P-12** | A **parent-shared grade/transcript** is used once as a bootstrap prior and then discarded, never stored. | A-3, A-9 | Reviewer |
+| **P-12** | A **parent-shared grade/transcript** is used once as a bootstrap prior and then discarded, never stored. *Dormant in V1: there's no parent upload until R-16 returns in V2/V3.* | A-3, A-9 | Reviewer |
 | **P-13** | **Tooling never touches real kid data.** `/demo-check`, evals and tests use seeded fake-kid profiles only. | A-3 | Reviewer |
+| **P-14** | The **age gate keeps only a yes/no "13 or older"**, never the age or birth date entered. An under-13 attempt stores nothing. | R-28 *(pending a `DECISIONS.md` entry for the 13+ audience)* | Reviewer |
 
 ## Canary test (A-2's own verification)
 
@@ -32,4 +33,4 @@ Arrives with the first session code (`tests/`, fast and deterministic, so it's p
 ## Open (Connor or Michael to decide; not findings until decided)
 
 - Encryption-at-rest mechanism and key custody for P-7 (e.g. SQLCipher vs. app-level field encryption).
-- Whether parent summaries (R-24) may contain any free text written by the model (P-8 currently says structured only).
+- Whether parent summaries (R-24, V2/V3) may contain any free text written by the model (P-8 currently says structured only).
