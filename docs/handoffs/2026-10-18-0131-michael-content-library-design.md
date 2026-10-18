@@ -16,6 +16,7 @@
 - Proposal: all item math and all interactive checks go through `primer.mathcheck`, so there's no second sympy checker (R-29 applied to content).
 - Proposal: published items are packaged data in `src/primer/content/items/`, covered by the `[pedagogy]` trigger; authoring tools live in `tools/content/` as a separate uv project (Manim needs NumPy 2, pyBKT needs `numpy<2`).
 - **Michael chose the React app in `web/` as the demo frontend** (2026-10-18). PR #1 amends the demo contract to match, with Streamlit kept as Connor's internal testing tool. So content players live in `web/`, and the browser never decides correctness.
+- Proposal (§7): personalize by choosing and assembling, not by generating media per student. Five layers: primer selection (including pace), live templates with per-student numbers and interest skins, pre-made variants per interest tag for the top tags, the tutor's own words, and per-student media only in V2+. Short reels become animated templates in `web/` rather than Manim videos.
 - Proposal: observed format affinity instead of "learning styles". Session-only in the demo.
 - **Michael and Connor agreed the whiteboard is in V1** (2026-10-18). Connor or Michael still has to update A-8 in `DECISIONS.md` and the "Not V1" list. §4.1 keeps it small; "check my work" is safety-first, the vision model only transcribes, and mathcheck finds the wrong line.
 - Proposed author-time services: ElevenLabs voice (via `manim-voiceover`), Eleven Music, Suno v6 as the alternative. No student data reaches them.
@@ -35,6 +36,7 @@
 - Get answers to the open questions; "content in the demo?" comes first.
 - Build the descriptor model and validator in the gate, against `SkillMap`, after R-32 and R-33 are accepted.
 - Run `brief-v1` on the three first-slice skills once the linear-equations map exists.
+- Update `reel-v1` (and the descriptor) for template reels: generator rules and skins per interest tag (§7.2).
 
 ## Gotchas
 - mathcheck refuses implicit multiplication, `**`, capital letters and two letters in a row. Write `3*x`, not `3x`.
