@@ -183,7 +183,7 @@ Field notes:
 - **`tutor_notes`** are what the tutor model reads when it shows the item, so it can talk about it, follow up and stay anchored to the item's verified math. This is the "RAG ground-truth layer" from the vision doc. They vary by turn, so under the prompt-caching rule (pending R-28) they go in a later, uncached system block, never in `system[0]` or a tool definition. `worked_problem` is display notation only; the checkable form is in the item's math block (§8).
 - **`media.script_text`** is the narration or on-screen text, kept for captions and accessibility. It's authored content, not a session transcript.
 - **`provenance`** is required. `math_check` must be `passed` and `reviewed_by` set before `status` can be `live`.
-- **Template items** (puzzles, whiteboard scenes, short reels) also carry `generator` rules and a `skins` map keyed by interest tag, so the numbers and the skin are filled in per student at runtime (§7.2). The example above is a reel rendered to video, the route for a reel that needs effects a template can't do.
+- **Template items** (puzzles, whiteboard scenes, short reels) also carry `generator` rules, the `slots` they expose and a `skins` map of slot defaults keyed by interest tag, so the numbers, the skin and the student's own picks are filled in at runtime (§7.2, §7.3). The example above is a reel rendered to video, the route for a reel that needs effects a template can't do.
 - There is **no per-student data** in a descriptor.
 
 ## 6. How the primer and the library work together
@@ -289,7 +289,17 @@ The first draft rendered every reel to video with Manim. Instead, short reels (a
 
 An existing library such as Remotion (React-based, with an in-browser player) could do the animation. Its license was free for companies of up to 3 people at last check ([license](https://v3.remotion.dev/docs/license)), so check the current terms before adding it. Plain React animation, with no new dependency, also works.
 
-### 7.3 What it costs
+### 7.3 Slots: small tweaks on a shared core
+
+Michael's framing (2026-10-18): one large, standard library, where each item can be tweaked slightly for each student. Two students who both like football play the same game, but each sees it in their own team's colors. That makes the template layer finer-grained:
+
+- **Every template exposes named slots:** `color_primary`, `color_secondary`, `team_name`, `player_names`, `emblem` (from Platy's own art set) and a few setting words. The core animation, the interaction and the math never read a slot, so filling slots can't break an item or need its math re-checked.
+- **An interest skin fills the slots with defaults** (the football skin: a made-up team, a field, positions). **The student's own picks override them:** colors from a fixed palette and names from authored lists, chosen during onboarding. They're structured choices rather than free text, so they fit the profile's distilled state (P-8) and the library still never sees free text about a student.
+- **No real logos, team names or player names in content.** They're licensed trademarks and publicity rights. Colors are generally fine, so a Buccaneers fan gets a made-up team in red and pewter. The tutor can still mention a student's real team in chat (layer 4), because that's conversation, not branded content. To confirm with a lawyer before real users.
+- **What can take slots:** anything drawn live in `web/` (puzzles, games, whiteboard scenes, template reels, the text of stories). Recorded media (narrated videos, songs) varies only per interest tag, because changing a word means re-recording it.
+- **Slot text is fixed kid-facing text,** so the lists of names and setting words are authored, reviewed and covered by the pedagogy eval like any other item text.
+
+### 7.4 What it costs
 
 - **AI generation is cheap per variant.** ElevenLabs voice is about $0.10 per 1,000 characters (roughly 4 cents for a 30-second narration), and Eleven Music about $0.30 per minute ([pricing summary](https://developer.puter.com/tutorials/elevenlabs-api-pricing/), 2026). Confirm on the plan we buy.
 - **Human review is the real cost,** so variants are made only where they pay off: the top 5 to 8 interest tags, for hooks and stories. A student whose interests are in the long tail gets the neutral version plus layer 4.
@@ -371,7 +381,7 @@ Numbering continues after R-31 (the age gate, in PR #1). R-28 to R-30 and P-14 a
 - **R-32 Content library.** Items with validated descriptors (§5), stored as packaged data and keyed to skill-map node ids; a descriptor naming a missing node, or reusing a probe's equation, fails validation.
 - **R-33 Content math checks.** R-29 applied to the library: no item goes live unless its math block passes `primer.mathcheck` and a human reviewed it, and every interactive check is decided by mathcheck or exact UI state.
 - **R-34 Content selection.** A pure `select_item` that policy calls; showing an item is a tutor move that passes `checks.py` (including reveal rules, R-02). With no match, the tutor falls back to chat. R-05 retries prefer a different angle and format.
-- **R-35 Interest variants and skins.** Template skins and pre-made variants per interest tag from a fixed vocabulary, made per tag and never per student (§7); the library never sees free-text profile data.
+- **R-35 Interest variants, skins and slots.** Template skins and pre-made variants per interest tag from a fixed vocabulary, made per tag and never per student, plus per-student slot choices (colors, names) from fixed lists (§7.3); no real logos, team or player names; the library never sees free-text profile data.
 - **R-36 Content events and format affinity.** Structured engagement events and per-format counts; session-only in the demo, distilled state (P-8) once there's a store.
 - **R-37 Self-hosted media.** All content media and players are served by Platy itself; no third-party embeds or SDKs at runtime. *(Could instead be P-16 in `PRIVACY.md`, since it is really P-11 applied to content.)*
 - **R-38 Whiteboard.** A canvas with library scenes, snapping student tools, freehand scratch ink and a fixed set of tutor marks that pass policy checks (§4.1). Only structured actions count as evidence. "Check my work" goes through the gateway with a pinned ZDR vision role, safety first, with correctness decided by mathcheck. Student ink is kid content and is never stored. *Agreed for V1; needs A-8's text updated first.*
