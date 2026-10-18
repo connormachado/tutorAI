@@ -1,6 +1,6 @@
 # The Primer
 
-Adaptive, privacy-first algebra tutor for kids. Python 3.12 + uv. Source of truth: `REQUIREMENTS.md` (R-ids), `PRIVACY.md` (P-ids), `DECISIONS.md` (A-ids, Connor's; never edit). Harness design: `02-harness-proposal.md`.
+Adaptive, privacy-first algebra tutor. V1 is for students 13 and up, with no parent features; parents come in V2/V3 (`REQUIREMENTS.md` § Audience). Python 3.12 + uv. Source of truth: `REQUIREMENTS.md` (R-ids), `PRIVACY.md` (P-ids), `DECISIONS.md` (A-ids, Connor's and Michael's; never edit). Harness design: `02-harness-proposal.md`.
 
 IMPORTANT: never persist raw conversation. Kid messages, model replies, transcripts, audio and photos never reach a DB, file, temp file, cache or log (P-1, P-10). Only `primer.gateway` talks to third-party networks (P-2).
 
@@ -14,15 +14,15 @@ IMPORTANT: never persist raw conversation. Kid messages, model replies, transcri
 ## The loop
 1. Every task is small: **one R-id, a named acceptance test, and `arch: none` or `arch: <what changes>`** stated up front.
 2. Write the failing test first, then implement.
-3. `/ship` to review, then **stop. Connor commits.** Never run `git commit`, and never use `--no-verify` or `ALLOW_GATE_CHANGE`.
+3. `/ship` to review, then **stop. Connor or Michael commits.** Never run `git commit`, and never use `--no-verify` or `ALLOW_GATE_CHANGE`.
 4. Gate files (`[gate]` in `scripts/triggers.toml`) are off-limits. If the gate looks wrong, say what should change and why; don't weaken it.
 
 ## Demo contract (Platy demo; binding for all work)
 Scope: one unit ("solving linear equations"), one path, 14–18 skill nodes. Diagnose the missing prerequisite 1–2 levels down before teaching (R-01), ask for self-explanation (R-03), teach metacognition with a confidence check and a reflection (R-30), and never hand over answers (R-02).
 
-Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctness), R-30 (metacognition), P-14 (only pinned, ZDR-verified models and features, caching included) and the R-22 (988 + parent notice) demo note are drafts until Connor approves them (build step 1). No code that depends on them lands before that.
+Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctness), R-30 (metacognition), P-14 (only pinned, ZDR-verified models and features, caching included) and the R-22 (988 + parent notice) demo note are drafts until Connor or Michael approves them (build step 1). No code that depends on them lands before that.
 
-**Stack (closed list).** Runtime: `anthropic`, `pydantic` v2, `sympy`, `streamlit`, `pyBKT` (A-5). Dev: what pyproject already has. Everything else is stdlib (`tomllib`, `json`, `string.Template`, `unittest.mock`). No DB, no auth, no web framework beyond Streamlit, no async. Any new dependency needs Connor's OK.
+**Stack (closed list).** Runtime: `anthropic`, `pydantic` v2, `sympy`, `streamlit`, `pyBKT` (A-5). Dev: what pyproject already has. Everything else is stdlib (`tomllib`, `json`, `string.Template`, `unittest.mock`). No DB, no auth, no web framework beyond Streamlit, no async. Any new dependency needs Connor's or Michael's OK.
 
 **Boundaries**
 - `src/primer/gateway/llm.py` is the single client wrapper and the only importer of `anthropic` (A-2; import-linter enforces it). It is the gateway now, not a placeholder: one allowlisted host, fail-closed (P-3), no server-side `fallbacks`, no fallback model. Provider specifics stay behind it.
@@ -34,7 +34,7 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 
 **LLM calls**
 - Roles: `tutor`, `updater`, `safety_classifier` and `judge` return structured output; `simulated_student` returns text. Each sets `model`, `max_tokens` and `effort`. There's no `temperature`, because current models reject non-default values.
-- Model ids are pinned by `tests/test_model_pins.py`. Changing one needs Connor's ZDR check plus privacy review. Never use a retention-excluded model.
+- Model ids are pinned by `tests/test_model_pins.py`. Changing one needs a ZDR check by Connor or Michael plus privacy review. Never use a retention-excluded model.
 - Structured output: one tool per call with `strict: true`, its schema generated from the pydantic model (`extra="forbid"`), and `tool_choice` auto plus an instruction to call it. Validate the input with that model. A missing or invalid call is an error. Never parse JSON out of text.
 - Prompt caching (ZDR-eligible, per Connor 2026-10-17): `system` is sent as blocks, and the static role-prompt block carries `cache_control: {"type": "ephemeral"}` (5-minute TTL; it caches the tool definition plus that block). That is the only `cache_control` in any request: never on `messages`, tool results or later system blocks, and no `ttl` override. Tool definitions are static, built once per role from the pydantic model, with no per-turn enums or descriptions (`probe_id` is checked by `policy/checks.py`, not the schema). Anything that varies by kid, session or turn (profile, turn plan, probe candidates) goes in a later system block with no marker, so the cached prefix stays byte-stable and holds nothing per-kid. Prefixes under 512 tokens (Sonnet/Haiku 5.5) silently don't cache. Tests: a fast unit test builds requests for two seeded fake kids with canaries in their messages and profiles, and asserts exactly one marker, on `system[0]`, with `tools` + `system[0]` byte-identical and canary-free. An `llm` test asserts that a repeated call shows `cache_read_input_tokens > 0`.
 - Retries: only the SDK's built-in retry, set explicitly to `max_retries=3` (it retries 408, 409, 429, 5xx, timeouts and connection errors), with the request timeout from config. After that, or on a `refusal` or `max_tokens` stop, raise a content-free `GatewayError`, and the session shows an error state.
@@ -59,8 +59,8 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 - `test-driven-development`, `verification-before-completion`, `systematic-debugging`: use as-is. The project's `scripts/check` defines green.
 - Use `brainstorming` → `writing-plans` → `executing-plans` only for work bigger than one `/ship` task. Every plan task cites an R-id, names its acceptance test and declares `arch:`. A task from an approved plan counts as approved; don't re-brainstorm it.
 - `executing-plans` overrides:
-  - Execute **inline, on `main`, with no worktree.** Connor consents to main here.
-  - **End each task with `/ship` and stop for Connor's commit** instead of committing and continuing.
+  - Execute **inline, on `main`, with no worktree.** Connor and Michael consent to main here.
+  - **End each task with `/ship` and stop for Connor or Michael to commit** instead of committing and continuing.
   - Skip its final whole-branch review and `finishing-a-development-branch`, because `/ship` plus the phase-end Codex review replace them.
   - Its `.superpowers/` ledger is fine.
 - Don't use `subagent-driven-development`, `dispatching-parallel-agents` or `using-git-worktrees`. If asked about a worktree, the answer is no.
@@ -73,7 +73,7 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 
 ## Design skills (dormant until `web/` exists)
 - `frontend-design` governs all kid-facing UI.
-- `design-taste-frontend` is only for the parent-facing landing page. On kid UI, the dials are about VARIANCE 3, MOTION 2, DENSITY 3.
+- `design-taste-frontend` is only for the marketing landing page. On kid UI, the dials are about VARIANCE 3, MOTION 2, DENSITY 3.
 - When the two disagree: frontend-design wins on kid UI, taste-skill on the landing page. Neither picks the frontend stack.
 
 ## Gotchas

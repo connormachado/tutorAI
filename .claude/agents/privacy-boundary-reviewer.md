@@ -16,6 +16,7 @@ The caller gives you the diff command, the matched `[privacy]` paths, and the da
 - **PII store:** fields outside the allowlist, free-form text fields, access that bypasses `primer.store` (P-6); unencrypted profile or mastery state (P-7).
 - **Upload path:** anything leaving for BKT fitting without opt-in, or with identifiable fields (P-9).
 - **Tooling:** real kid data in fixtures, demos or evals (P-13).
+- **Age data:** an entered age or birth date that is stored, logged, sent anywhere or put in exception text. The age gate keeps only a yes/no "13 or older" (P-15).
 
 ## Don't re-check what's mechanical
 The import-linter contracts (a2-egress, pii-store) and the canary test already run in the gate. Don't report "module X imports httpx" if the gate would catch it. Do report what the gate can't: e.g. a new network client library not on the a2-egress list, or a sink the canary test can't reach.

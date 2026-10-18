@@ -1,6 +1,10 @@
 # The Primer: V1 Requirements
 
-*DRAFT, pending Connor's approval. Distilled from `the-primer-initial-vision.md`, the kickoff brief and `DECISIONS.md`. `scope-skeptic` traces every added unit of code to an R-id here, so code with no R-id behind it gets a CUT verdict. IDs are stable: retire an R-id rather than renumbering.*
+*DRAFT, pending approval by Connor or Michael. Distilled from `the-primer-initial-vision.md`, the kickoff brief and `DECISIONS.md`. `scope-skeptic` traces every added unit of code to an R-id here, so code with no R-id behind it gets a CUT verdict. IDs are stable: retire an R-id rather than renumbering.*
+
+## Audience
+
+**V1 (the MVP) is for students aged 13 and up, who use Platy on their own.** There are no parent accounts, parent onboarding or parent reporting in V1. Parents come in at V2/V3, when Platy moves down to students under 13 (decided by Michael, 2026-10-18). The parent requirements below are kept, with their R-ids, under "Deferred to V2/V3". `DECISIONS.md` A-9 still describes a parent track; Connor or Michael needs to amend it (open question 3).
 
 ## Tutoring behavior (pedagogy rules)
 
@@ -13,7 +17,7 @@ These are written as testable rules because the pedagogy eval (`scripts/eval`, n
 - **R-05 Change the angle.** When an explanation doesn't land, try a different one rather than repeating it.
 - **R-06 Short replies.** Response length is capped, and each reply carries one concept at a time.
 - **R-07 Interest hooks.** Reframe concepts through interests in the kid's personality file (R-14), and approach sensitive topics sideways.
-- **R-08 Pedagogy eval suite.** Scripted fake-student cases (wrong answer, direct request for the answer, frustrated kid, off-topic, safety disclosure) check R-01…R-07 and R-21…R-23. It must exist before the first tutoring prompt is committed (the gate fails closed) and must pass before any real kid uses the product.
+- **R-08 Pedagogy eval suite.** Scripted fake-student cases (wrong answer, direct request for the answer, frustrated kid, off-topic, safety disclosure, a student who says they're under 13) check R-01…R-07, R-21…R-23 and R-31. It must exist before the first tutoring prompt is committed (the gate fails closed) and must pass before any real kid uses the product.
 
 ## Skill map and mastery
 
@@ -25,9 +29,9 @@ These are written as testable rules because the pedagogy eval (`scripts/eval`, n
 
 ## Kid profile and onboarding
 
-- **R-14 Personality file.** One per kid, holding interests, motivational hooks and sensitive topics to avoid (A-9).
-- **R-15 Kid onboarding.** A warm, interests-first chat with embedded low-stakes diagnostic problems that produce real BKT signal, not self-report (A-9).
-- **R-16 Parent onboarding.** A parent questionnaire fills the personality file. An optional one-time grade/transcript share is used as a rough prior and then discarded. There is no school-record integration (A-9).
+- **R-14 Personality file.** One per kid, holding interests, motivational hooks and sensitive topics to avoid (A-9). In V1 the student fills it during onboarding (R-15), not a parent.
+- **R-15 Kid onboarding.** A warm, interests-first chat with embedded low-stakes diagnostic problems that produce real BKT signal, not self-report (A-9). In V1 the same chat also asks about interests, what motivates them and topics they'd rather skip, which fills the personality file (R-14).
+- **R-16 Parent onboarding.** *Deferred to V2/V3, see below.*
 
 ## Session
 
@@ -41,29 +45,39 @@ These are written as testable rules because the pedagogy eval (`scripts/eval`, n
 - **R-21 De-escalation ladder,** driven by behavioral proxies only: wrong attempts, latency, silence and explicit self-report (A-7).
   1. First occurrence in a session → pivot or pause.
   2. Repeated in the same session → switch to a confidence-building topic.
-  3. A multi-day pattern → a constructive parent note ("here's a sticking point and what we tried").
-- **R-22 Safety disclosures.** Disclosures of abuse, self-harm or danger get a hard-coded escalation to a parent/guardian and/or crisis resources. The tutor never handles one itself or acts as a therapist. Scripted eval cases are required before the first real kid. *The detection design is still Open in `DECISIONS.md`. This R-id only fixes that V1 must have one.*
+  3. A multi-day pattern → in V1, a constructive note to the student ("here's a sticking point and what we tried"). The parent version of this note is V2/V3.
+- **R-22 Safety disclosures.** Disclosures of abuse, self-harm or danger get a hard-coded escalation to a parent/guardian and/or crisis resources. V1 has no parent contact, so V1 escalation is crisis resources plus a clear push to reach a trusted adult (open question 4). The tutor never handles one itself or acts as a therapist. Scripted eval cases are required before the first real kid. *The detection design is still Open in `DECISIONS.md`. This R-id only fixes that V1 must have one.*
 - **R-23 Warm, not "your friend".** The tutor is curious and kind, and it nudges the kid back toward real friends and family. It never encourages dependency.
-
-## Parent-facing
-
-- **R-24 Parent summaries** name sticking points and what was tried, never "your kid failed." They're built from distilled state (P-8), not transcripts.
 
 ## Privacy, platform and measurement
 
 - **R-25 Privacy invariants.** Every P-id in `PRIVACY.md` is a requirement.
 - **R-26 Learning-gain measurement.** V1 can run a pretest/posttest on related-but-not-identical items (A-10). The item design is Open.
 - **R-27 Target devices.** It runs in a browser on a school Chromebook (1366×768) and on a phone. Inference is in the cloud, on Connor's own servers (A-1).
+- **R-31 Age gate.** *(R-28–R-30 and P-14 are reserved by Connor's pending demo spec in `CLAUDE.md`.)* Sign-up asks for age in a neutral way (no hint that 13 is the cutoff) before collecting anything else. Anyone under 13 is turned away and nothing they entered is kept (P-15). Sign-up isn't the only way to learn a student's age: if a student says or shows during a session that they're under 13 (in the onboarding chat, a message or a photo), the session ends kindly and their stored state (personality file, mastery, session records) is deleted. How the tutor spots this is Open, like R-22 detection, and the signal is recorded only as a code (P-1, P-10). V1's 13+ audience depends on all of this, but the gate keeps Platy outside COPPA's parental-consent rules only if Platy also isn't "directed to children" (open question 5).
 
 ## Not V1: code for these gets a CUT verdict
 
 - Whiteboard or drawing surface (A-8, V1.5); real-world grounding; teacher sync; hardware or wearables; audiences beyond K-12 kids.
+- Students under 13, and anything parent-facing: parent accounts, consent flows, the questionnaire, summaries, notes or a dashboard (V2/V3, see below).
 - Subjects other than algebra, and abstractions for multiple subjects.
 - The RAG ground-truth content layer. The vision doc sequences it after the core loop is validated, so it needs its own R-id when that happens.
 - School or district integration and deployment (A-1, A-9).
 - Tone or acoustic emotion detection (A-7).
 
-## Open questions for Connor (no R-id until answered)
+## Deferred to V2/V3 (parents, students under 13)
 
-1. Is a **parent-facing landing page** or subscription billing in V1? The harness installs `design-taste-frontend` for a landing page, but no requirement asks for one yet.
-2. **Accounts and auth.** How do a parent and kid sign in, and does the parent see a dashboard? The vision implies parent notes (R-21, R-24) but doesn't specify how they're delivered.
+Kept so the R-ids stay stable. Code for these in V1 gets a CUT verdict.
+
+- **R-16 Parent onboarding.** A parent questionnaire fills the personality file. An optional one-time grade/transcript share is used as a rough prior and then discarded. There is no school-record integration (A-9).
+- **R-24 Parent summaries** name sticking points and what was tried, never "your kid failed." They're built from distilled state (P-8), not transcripts.
+- The parent note at R-21 step 3, and parent/guardian notification for R-22.
+
+## Open questions for Connor and Michael (no R-id until answered)
+
+1. Is a **student-facing landing page** or subscription billing in V1, and who pays in V1 now that parents aren't the buyer? The harness installs `design-taste-frontend` for a landing page, but no requirement asks for one yet.
+2. **Accounts and auth.** How does a student 13+ sign up and sign in on their own, and where does the R-31 age gate sit in that flow?
+3. **DECISIONS.md needs updating.** Record the V1 audience (13+, no parent features, the R-31 age gate) as a new A-id, which P-15 traces to. A-9 (locked) still has a parent questionnaire track, and A-1 cites a "parent-channel distribution plan". Until A-9 says the student fills the personality file in V1, `architect-reviewer` will flag R-14/R-15 code as drift.
+4. **Safety escalation without parents (R-22).** With no parent contact in V1, is crisis resources plus "talk to a trusted adult" enough for 13–17-year-olds, or is anything else needed? Detection is already Open in `DECISIONS.md`.
+5. **COPPA and teen privacy laws.** 13+ avoids COPPA's parental-consent rule only if Platy isn't "directed to children" and doesn't knowingly collect from under-13s (R-31). The FTC judges "directed to children" on the whole picture: subject matter, animated characters (like the cartoon Platy mascot in `web/`), the ages of intended and actual users, and marketing. Some accelerated 7th graders take Algebra 1, so expect under-13 interest. Ask a lawyer to confirm Platy is a general-audience service, and what in a chat counts as knowing a student is under 13 (a stated age, a grade, a joke). Separately, some laws still cover 13–17-year-olds (for example California for under-16s and New York's Child Data Protection Act for under-18s), and the EU sets digital consent at 13–16 depending on the country. All of this needs a lawyer's look before the first real users.
+6. **The demo contract in `CLAUDE.md` vs. V1 scope.** It makes Streamlit the only demo UI, while `web/` (PR #1) is a React app; pick one demo frontend. It also has a safety disclosure send a codes-only `ParentNotice`, but V1 has no parent contact (R-22, question 4).
