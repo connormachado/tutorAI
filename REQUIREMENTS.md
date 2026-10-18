@@ -1,10 +1,10 @@
 # The Primer: V1 Requirements
 
-*DRAFT, pending Connor's approval. Distilled from `the-primer-initial-vision.md`, the kickoff brief and `DECISIONS.md`. `scope-skeptic` traces every added unit of code to an R-id here, so code with no R-id behind it gets a CUT verdict. IDs are stable: retire an R-id rather than renumbering.*
+*DRAFT, pending approval by Connor or Michael. Distilled from `the-primer-initial-vision.md`, the kickoff brief and `DECISIONS.md`. `scope-skeptic` traces every added unit of code to an R-id here, so code with no R-id behind it gets a CUT verdict. IDs are stable: retire an R-id rather than renumbering.*
 
 ## Audience
 
-**V1 (the MVP) is for students aged 13 and up, who use Platy on their own.** There are no parent accounts, parent onboarding or parent reporting in V1. Parents come in at V2/V3, when Platy moves down to students under 13 (decided by Michael, 2026-10-18). The parent requirements below are kept, with their R-ids, under "Deferred to V2/V3". `DECISIONS.md` A-9 still describes a parent track; Connor needs to amend it (open question 3).
+**V1 (the MVP) is for students aged 13 and up, who use Platy on their own.** There are no parent accounts, parent onboarding or parent reporting in V1. Parents come in at V2/V3, when Platy moves down to students under 13 (decided by Michael, 2026-10-18). The parent requirements below are kept, with their R-ids, under "Deferred to V2/V3". `DECISIONS.md` A-9 still describes a parent track; Connor or Michael needs to amend it (open question 3).
 
 ## Tutoring behavior (pedagogy rules)
 
@@ -73,7 +73,7 @@ Kept so the R-ids stay stable. Code for these in V1 gets a CUT verdict.
 - **R-24 Parent summaries** name sticking points and what was tried, never "your kid failed." They're built from distilled state (P-8), not transcripts.
 - The parent note at R-21 step 3, and parent/guardian notification for R-22.
 
-## Open questions for Connor (no R-id until answered)
+## Open questions for Connor and Michael (no R-id until answered)
 
 1. Is a **student-facing landing page** or subscription billing in V1, and who pays in V1 now that parents aren't the buyer? The harness installs `design-taste-frontend` for a landing page, but no requirement asks for one yet.
 2. **Accounts and auth.** How does a student 13+ sign up and sign in on their own, and where does the R-28 age gate sit in that flow?

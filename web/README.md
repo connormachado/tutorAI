@@ -67,7 +67,7 @@ VITE_PLATY_SERVER_URL=http://localhost:8000 npm run dev
 
 Nothing else changes: the UI only sees `ServerEvent`s from `protocol.ts`.
 
-## Session contract (proposal for Connor)
+## Session contract (proposal for the backend)
 
 `POST /sessions {mode}` returns `{session_id}`, then a WebSocket at `/sessions/{id}/live`
 carries JSON events.
