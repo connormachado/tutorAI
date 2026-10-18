@@ -54,4 +54,7 @@ UI changed → consider /demo-check        (only if web/ changed)
 ```
 
 ## 4. Commit message
-Run the `change-summarizer` agent (default mode, short message). Show the message, then **stop**. Connor stages with `git add -A` and commits. Pre-commit re-runs the gate, the eval (cached) and the diagram (stamp fresh, so no LLM call), and stages AS-BUILT.md into the commit.
+Run the `change-summarizer` agent (default mode, short message). Show the message.
+
+## 5. Handoff
+Run `/handoff` so the note lands in the same commit, then **stop**. Connor stages with `git add -A` and commits. Pre-commit re-runs the gate, the eval (cached) and the diagram (stamp fresh, so no LLM call), and stages AS-BUILT.md into the commit.

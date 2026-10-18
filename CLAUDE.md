@@ -9,6 +9,9 @@ IMPORTANT: never persist raw conversation. Kid messages, model replies, transcri
 - `uv run pytest -q path::test`: one test. `uv add <pkg>` / `uv add --dev <pkg>`: dependencies (never pip).
 - `scripts/diagram`: regenerate `diagrams/AS-BUILT.md` (pre-commit does this; never hand-edit it).
 
+## Handoffs
+Connor (backend) and Michael (frontend, `web/`) work in parallel. **Before starting, read the newest notes in `docs/handoffs/`** (`ls docs/handoffs/ | sort | tail -3`). **Before ending a session that changed the repo, run `/handoff`.**
+
 ## The loop
 1. Every task is small: **one R-id, a named acceptance test, and `arch: none` or `arch: <what changes>`** stated up front.
 2. Write the failing test first, then implement.
