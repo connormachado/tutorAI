@@ -97,6 +97,7 @@ Every item is one JSON file in the library. The primer and the selector read onl
   "interaction": "passive",
   "evidence": [],
   "interest_tags": ["soccer"],
+  "sensitive_tags": [],
   "base_item": "lin2-balance-reel",
   "reading_level": 6,
   "media": {
@@ -114,7 +115,7 @@ Every item is one JSON file in the library. The primer and the selector read onl
   },
   "provenance": {
     "made_by": "ai-assisted",
-    "script_prompt": "prompts/reel-v1",
+    "script_prompt": "content/prompts/reel-v1",
     "media_tool": "manim+tts",
     "math_check": "passed",
     "reviewed_by": "michael",
@@ -131,6 +132,7 @@ Field notes:
 - **`evidence`** lists each check an interactive item makes and the skill it observes: `[{ "check": "step-1", "skill": "alg1.linear.one_step" }]`. Empty for passive items.
 - **`misconceptions`** use ids from a per-skill misconception list that lives next to the skill graph (e.g. `lin2.subtract-before-divide-confusion`). `repair` items must name at least one.
 - **`interest_tags`** come from a fixed vocabulary (about 30 tags: `soccer`, `basketball`, `gaming`, `music-hiphop`, `cooking`, `fashion`, ...). The personality file's free-text interests are mapped to tags once, at onboarding. The library never sees free text about a student, which keeps the selector on the safe side of P-1 and P-6.
+- **`sensitive_tags`** mark what an item touches from a short fixed list (`food`, `body`, `money`, `family`, `loss`, `conflict`), so the selector can skip it for a student whose personality file lists that topic as one to avoid (R-14).
 - **`tutor_notes`** are what the tutor model reads when it shows the item, so it can talk about it, follow up and stay anchored to the item's verified math. This is the "RAG ground-truth layer" from the vision doc.
 - **`provenance`** is required. `math_check` must be `passed` and `reviewed_by` set before `status` can be `live`.
 - There is **no per-student data** in a descriptor. Aggregate quality stats (§6.4) live in a separate table keyed by item id.
@@ -208,8 +210,8 @@ Content is made at **author time**, offline, by Michael and tools. No student da
 Pipeline for one item:
 
 1. **Brief.** Generated from the skill graph: skill, prerequisite skills, misconception list, role, target format. One brief per (skill, role, angle).
-2. **Script.** Claude drafts the script, story, lyrics or puzzle spec from the brief, using Michael's content prompts (stored in `content/prompts/`, versioned, cited in `provenance.script_prompt`). Grounded in open sources where useful (OpenStax and Illustrative Mathematics are CC BY).
-3. **Math check (automatic, required).** Every equation, step and answer in the script is extracted into a structured form and checked with SymPy: each step is equivalent to the last, and the stated answer satisfies the original equation. A failed check blocks the item. This is the answer to "how do you know it teaches correctly".
+2. **Script.** Claude drafts the script, story, lyrics or puzzle spec from the brief, using the prompts in [`content/prompts/`](../content/prompts/README.md) (versioned, cited in `provenance.script_prompt`). There is one prompt per format, plus a brief prompt that plans 4–6 angles per skill, an interest-variant prompt and a critic prompt that reviews each draft in a fresh conversation. Grounded in open sources where useful (OpenStax and Illustrative Mathematics are CC BY).
+3. **Math check (automatic, required).** Every prompt returns the item's math as a structured block (the contract is in `content/prompts/_shared-v1.md`), which is checked with SymPy: each step is equivalent to the last, and the stated answer satisfies the original equation. A failed check blocks the item. This is the answer to "how do you know it teaches correctly".
 4. **Media.**
    - *Video and reels:* programmatic animation (Manim or a similar library) rendered from the checked script, with TTS voiceover and generated captions. This is chosen over AI video-generation models because those regularly garble written math, and on-screen math has to be exactly right. AI image generation is fine for backgrounds and characters in interest variants.
    - *Songs:* lyrics written and math-checked in step 3, then an AI music service sets them to music. Check each service's commercial-use terms before relying on it.
@@ -263,8 +265,7 @@ Numbering continues after R-28 (the age gate, in PR #1).
 ## 11. Open questions
 
 **For Michael**
-1. Please share the Claude prompts you designed for the content side. They become `content/prompts/` and step 2 of the pipeline, and this doc gets updated around them.
-2. Do you want the whiteboard in V1? If so, it's a conversation with Connor about A-8, not something to build around.
+1. Do you want the whiteboard in V1? If so, it's a conversation with Connor about A-8, not something to build around.
 
 **For Connor**
 1. Does `select()` belong inside the primer (a `src/primer/content/` module) or as a separate service the primer calls?

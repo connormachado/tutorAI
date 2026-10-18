@@ -1,0 +1,85 @@
+{
+  "descriptor": {
+    "format": "reel",
+    "role": "hook",
+    "skills": { "primary": "alg1.linear.two_step", "touches": ["alg1.linear.one_step"] },
+    "angle": "balance-scale",
+    "misconceptions": [],
+    "difficulty": 2,
+    "duration_s": 32,
+    "interest_tags": [],
+    "sensitive_tags": [],
+    "reading_level": 5
+  },
+  "body": {
+    "orientation": "vertical",
+    "needs_audio": false,
+    "beats": [
+      {
+        "t_start": 0, "t_end": 3,
+        "on_screen_text": "This scale is level. What's in each bag?",
+        "on_screen_latex": [],
+        "visual": "A two-pan scale, perfectly level. Left pan: 3 closed bags and 5 loose blocks. Right pan: 20 loose blocks. The bags wobble slightly.",
+        "voiceover": "This scale is level. What's in each bag?"
+      },
+      {
+        "t_start": 3, "t_end": 8,
+        "on_screen_text": "Every bag holds the same number of blocks. Call it x.",
+        "on_screen_latex": ["3x + 5 = 20"],
+        "visual": "Each bag gets an x label. The equation types itself under the scale, each term under the thing it stands for.",
+        "voiceover": "Every bag holds the same number of blocks. Call it x."
+      },
+      {
+        "t_start": 8, "t_end": 14,
+        "on_screen_text": "Take the 5 loose blocks off the left...",
+        "on_screen_latex": ["3x + 5 = 20"],
+        "visual": "5 blocks lift off the left pan only. The scale tips hard to the right. The +5 in the equation turns muted red.",
+        "voiceover": "Take the 5 loose blocks off the left..."
+      },
+      {
+        "t_start": 14, "t_end": 20,
+        "on_screen_text": "...and it tips. Take 5 off BOTH sides.",
+        "on_screen_latex": ["3x + 5 - 5 = 20 - 5"],
+        "visual": "Rewind. This time 5 blocks lift off each pan together. The scale stays level. Both sides of the equation show - 5 in highlight.",
+        "voiceover": "...and it tips. Take five off both sides."
+      },
+      {
+        "t_start": 20, "t_end": 26,
+        "on_screen_text": "Still level. 3 bags = 15 blocks.",
+        "on_screen_latex": ["3x = 15"],
+        "visual": "Left pan: 3 bags. Right pan: 15 blocks. The equation simplifies to 3x = 15.",
+        "voiceover": "Still level. Three bags weigh the same as fifteen blocks."
+      },
+      {
+        "t_start": 26, "t_end": 32,
+        "on_screen_text": "So how many blocks are in ONE bag?",
+        "on_screen_latex": ["3x = 15"],
+        "visual": "The 15 blocks shuffle but don't split. One bag glows. Freeze.",
+        "voiceover": "So how many blocks are in one bag?"
+      }
+    ]
+  },
+  "math": {
+    "problems": [
+      {
+        "id": "p1",
+        "variable": "x",
+        "equation": "3*x + 5 = 20",
+        "steps": [
+          { "expr": "3*x + 5 - 5 = 20 - 5", "says": "Take 5 off both sides." },
+          { "expr": "3*x = 15", "says": "Simplify." },
+          { "expr": "x = 5", "says": "Split both sides into 3 equal groups (divide by 3)." }
+        ],
+        "answer": "5",
+        "intentional_error_step": null,
+        "from_words": null
+      }
+    ]
+  },
+  "tutor_notes": {
+    "key_idea": "Whatever you do to one side of an equation, you do to the other, so it stays balanced.",
+    "worked_problem": "3x + 5 = 20",
+    "follow_up_prompt": "Why did the scale tip when the blocks came off only one side? What does that mean for the equation?"
+  },
+  "author_notes": "The reel stops at 3x = 15 on purpose so the student finishes the last step; the tutor's follow-up should ask for it."
+}
