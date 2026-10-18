@@ -97,5 +97,5 @@ as the kid typed them (`x^2 = 49`, `±7`); the server does the grading.
 ## Not done yet
 
 Voice and photo input, onboarding mode (which also fills the personality file in V1), the
-13+ age gate (R-28) and a landing page. There's no parent side in V1: V1 is for students 13
+13+ age gate (R-31) and a landing page. There's no parent side in V1: V1 is for students 13
 and up, and parent features come in V2/V3 (`REQUIREMENTS.md` § Audience).
