@@ -2,7 +2,7 @@
 
 *DRAFT proposal from Michael's side (content and learning experience), 2026-10-18. Nothing here is approved until Connor or Michael approves it. It proposes new R-ids (§10) and needs one locked decision, A-8, updated so the whiteboard can be in V1 (§4.1). It does not edit `REQUIREMENTS.md`, `PRIVACY.md` or `DECISIONS.md`.*
 
-*Revised later on 2026-10-18 to fit the binding "Demo contract" Connor added to `CLAUDE.md` on main, together with his skill-map models (`src/primer/skills/`) and `primer.mathcheck`. §2.1 summarises what changed.*
+*Revised later on 2026-10-18 to fit the binding "Demo contract" Connor added to `CLAUDE.md` on main, together with his skill-map models (`src/primer/skills/`) and `primer.mathcheck`. §2.1 summarises what changed. Updated again the same day after Michael chose the React app in `web/` as the demo frontend: content players live there.*
 
 ## 1. Why this exists
 
@@ -38,12 +38,13 @@ One correction to the framing in the kickoff conversation: the primer should **n
 
 ### 2.1 The demo contract on main
 
-Connor's "Demo contract" in `CLAUDE.md` is binding for all work. It sets: one unit (solving linear equations), one path, 14–18 skill nodes; a closed stack (`anthropic`, `pydantic`, `sympy`, `streamlit`, `pyBKT`, "no web framework beyond Streamlit", no DB, and any new dependency needs approval); policy deciding every turn, with `policy/checks.py` gating every tutor move; sympy as the only judge of correctness; kid state in memory only; and fixed kid-facing text living only in `src/primer/prompts/*.md`, so the pedagogy eval gate covers it.
+Connor's "Demo contract" in `CLAUDE.md` is binding for all work. It sets: one unit (solving linear equations), one path, 14–18 skill nodes; a closed stack (`anthropic`, `pydantic`, `sympy`, `streamlit`, `pyBKT`; no DB; any new dependency needs approval); policy deciding every turn, with `policy/checks.py` gating every tutor move; sympy as the only judge of correctness; kid state in memory only; and fixed kid-facing text living only in `src/primer/prompts/*.md`, so the pedagogy eval gate covers it.
 
-This doc now separates two things:
+**The frontend is the React app in `web/`** (Michael's decision, 2026-10-18). As first written, the contract made the demo Streamlit only; PR #1 amends it so the kid-facing app is `web/`, with Connor's Python primer behind it and Streamlit kept as Connor's internal testing tool. So in this doc:
 
-- **The demo.** The library can only enter it the way the contract allows: chosen by policy, rendered by Streamlit, checked by `primer.mathcheck`, nothing persisted. Concretely that means text items (stories, tutor notes), video and audio (`st.video`, `st.audio`), and puzzles built from Streamlit widgets. Whether the demo includes any content at all, or the library waits until after the core loop is validated, is an open decision (§11).
-- **V1 beyond the demo.** Richer players (reels, games, the whiteboard canvas) need a real UI layer. PR #1 builds that UI in React (`web/`), which the demo contract currently rules out. Settling Streamlit vs React is a decision for Connor and Michael. It affects PR #1 as much as this doc, and nothing here assumes the answer.
+- **Content players live in `web/`.** Each format gets a player component there, built and tested against PR #1's mock server first. The Python side chooses, checks and grades; the browser only shows items and reports what the student did (§6.4, §6.5).
+- **Everything else in the contract still holds:** items are chosen by policy and gated by `checks.py`, every check is graded by `primer.mathcheck` on the server, kid state lives in memory only (server memory and React state, never browser storage), and nothing is persisted in the demo.
+- **Still open:** whether any content goes in the demo itself, or the library waits until the core loop is validated, as `REQUIREMENTS.md` sequences it (§11). The "Demo" column in §4 says which formats would fit if it does.
 
 ## 3. The core model: skill × angle × format
 
@@ -74,30 +75,30 @@ Items play one of a small set of **roles** in the learning loop:
 
 ## 4. Formats
 
-Status: **V1** = in the first V1 build; **V1.x** = soon after, no spec conflict; **V2+** = needs accounts, social safety or kid-content generation, so later. "Demo" says whether the format fits the Streamlit demo as the contract stands.
+Status: **V1** = in the first V1 build; **V1.x** = soon after, no spec conflict; **V2+** = needs accounts, social safety or kid-content generation, so later. "Demo" says whether the format could be in the demo, if content goes in it (§11): it has to be V1, inside the demo unit, and buildable without an unapproved spec.
 
 | Format | What it is | Good for | Evidence | How it's made | Status | Demo |
 |---|---|---|---|---|---|---|
 | Chat / Socratic dialogue | The primer itself talking through a problem | introduce, practice, repair | Yes | The tutor, anchored to an item's tutor notes | V1 (exists) | Yes |
 | Voice | The same dialogue spoken (R-19) | Same as chat | Yes | Speech-to-text; needs a pinned, ZDR-verified speech path (P-14) and, if not Anthropic, a new gateway host (P-4) | V1 (R-19) | Not yet |
-| Worked-example clip | 45–120 s video solving one problem step by step | worked_example, repair | No | Programmatic animation + TTS (§8) | **V1** | Yes (`st.video`) |
-| Reel | Vertical, under 45 s, one hook or one misconception | hook, repair | No | Same pipeline, vertical template | **V1** | Yes (`st.video`) |
-| Puzzle | Short interactive problem with a twist (balance scale, missing-step, spot-the-error) | practice, repair, retrieval | Yes | Puzzle templates in the UI + a problem generator | **V1** | Yes, as Streamlit widgets |
+| Worked-example clip | 45–120 s video solving one problem step by step | worked_example, repair | No | Programmatic animation + TTS (§8) | **V1** | Yes |
+| Reel | Vertical, under 45 s, one hook or one misconception | hook, repair | No | Same pipeline, vertical template | **V1** | Yes |
+| Puzzle | Short interactive problem with a twist (balance scale, missing-step, spot-the-error) | practice, repair, retrieval | Yes | Puzzle templates in the UI + a problem generator | **V1** | Yes |
 | Short story | 150–400 words, a narrative that sets up a problem the student solves | hook, apply | Yes (the closing problem) | Claude-written, human-edited, math-checked | **V1** | Yes |
-| Song / jingle | 30–60 s mnemonic for a rule or procedure | hook, retrieval | No | Lyrics written and checked, then AI music generation (§8) | **V1** (one or two) | Yes (`st.audio`) |
-| Whiteboard | Shared canvas where tutor and student both work (§4.1) | introduce, practice, repair | Yes, structured actions only | Scenes authored with `whiteboard-v1`; the board is a UI component | **V1** (agreed; A-8 text pending) | Only with a custom Streamlit component (needs approval) |
+| Song / jingle | 30–60 s mnemonic for a rule or procedure | hook, retrieval | No | Lyrics written and checked, then AI music generation (§8) | **V1** (one or two) | Yes |
+| Whiteboard | Shared canvas where tutor and student both work (§4.1) | introduce, practice, repair | Yes, structured actions only | Scenes authored with `whiteboard-v1`; the board is a UI component | **V1** (agreed; A-8 text pending) | Once A-8's text is updated |
 | Interactive graph | Drag a slider, watch a line or parabola move | introduce, practice | Yes, if it asks a question | A coordinate-grid whiteboard scene, built in-house (no Desmos embed, P-11) | V1, when content reaches graphing | No (outside the demo unit) |
 | Mini-game | A few minutes of play where moves are skill checks | practice, easy_win, retrieval | Yes | Small game templates, parameterised by problem generators | V1.x | No |
-| Explainer video | 3–6 min deeper explanation of one concept | introduce | No | Same pipeline as clips, longer script | V1.x | Yes (`st.video`) |
+| Explainer video | 3–6 min deeper explanation of one concept | introduce | No | Same pipeline as clips, longer script | V1.x | No (V1.x) |
 | Long project | Multi-session task (design a budget, plan a trip, model a sports stat) | apply | Yes, at checkpoints | Hand-designed briefs with checkpoint problems | V1.x | No (one path) |
 | Student-made music | Student generates a song about a concept | apply, motivation | No | Live AI generation through the gateway; output is kid content, never stored | V2+ | No |
 | Collaborative project | Work with friends on a shared project | apply | Yes | Needs friend accounts, moderation, teen messaging safety | V2+ | No |
 
-A format is added by writing a **renderer** in the UI (a Streamlit function in the demo) and a **template** (how items of that format are authored). Adding a format never touches the primer's decision logic, because policy only sees descriptors (§5).
+A format is added by writing a **player** (a component in `web/`) and a **template** (how items of that format are authored). Adding a format never touches the primer's decision logic, because policy only sees descriptors (§5).
 
 ### 4.1 The whiteboard in V1
 
-**Michael and Connor agreed on 2026-10-18 that the whiteboard is in V1.** The text hasn't caught up yet: A-8 in `DECISIONS.md` still defers it to V1.5, and `REQUIREMENTS.md` still lists it under "Not V1". Connor or Michael updates both; AI sessions never edit `DECISIONS.md`. Until that edit lands, `architect-reviewer` will flag whiteboard code as drift, so building waits for it. Designing and authoring scenes don't have to wait. Whether the whiteboard is part of the Streamlit demo is a separate question (§11): the demo has no canvas, and adding one means a custom Streamlit component or a new dependency.
+**Michael and Connor agreed on 2026-10-18 that the whiteboard is in V1.** The text hasn't caught up yet: A-8 in `DECISIONS.md` still defers it to V1.5, and `REQUIREMENTS.md` still lists it under "Not V1". Connor or Michael updates both; AI sessions never edit `DECISIONS.md`. Until that edit lands, `architect-reviewer` will flag whiteboard code as drift, so building waits for it. Designing and authoring scenes don't have to wait. The board itself is a component in `web/`, like the other players.
 
 V1's whiteboard is deliberately small: a canvas beside the chat with three layers.
 
@@ -115,7 +116,7 @@ V1's whiteboard is deliberately small: a canvas beside the chat with three layer
 
 In V1, a vision-read check isn't counted as mastery evidence.
 
-**Privacy.** Whatever the student draws or writes is kid content, like a photo (P-1, R-20). It lives in session memory only (`st.session_state` in the demo; no `st.cache_*` on it). It is never stored, cached or logged, and it leaves the app only when the student asks for a check, and then only through the gateway. A hard reset (A-4) clears the board, and a safety stop closes it. Scenes are library content, and tutor marks and check results are structured codes.
+**Privacy.** Whatever the student draws or writes is kid content, like a photo (P-1, R-20). It lives in memory only: React state in the browser (never browser storage, cookies or the console, as `web/` already does for chat) and session memory on the server. It is never stored, cached or logged, and it leaves the app only when the student asks for a check, and then only through the gateway. A hard reset (A-4) clears the board, and a safety stop closes it. Scenes are library content, and tutor marks and check results are structured codes.
 
 **It also helps with math input,** which is a known gap. Write-in boxes accept handwriting, read by the vision model on request, alongside typed math.
 
@@ -207,7 +208,7 @@ UI renders the item; check results come back as codes
 - **Showing an item is a tutor move,** so the usual checks apply. A worked example of the exact problem the student is on is an answer reveal, and policy has to allow a reveal first (R-02).
 - **Items can be offered on any turn policy allows,** including mid-problem for R-05's "change the angle". Hard resets (A-4) are a separate thing and still happen only at natural breakpoints.
 - **R-30:** before an interactive item's checks are graded, policy runs the confidence check. Afterwards, the item's `reflection_prompt` gives the tutor a reflection to ask.
-- **Puzzles don't give feedback on their own.** On a wrong check, the renderer emits the result (with the matched misconception id, as a code) and stops. Policy then decides what's next: ask the student to explain their step first (R-03), and allow a hint level only after a further attempt (R-02). Authored hints and feedback are material the tutor draws on, which policy allows by id, not text the renderer shows by itself.
+- **Puzzles don't give feedback on their own.** On a wrong check, the player reports the result (with the matched misconception id, as a code) and stops. Policy then decides what's next: ask the student to explain their step first (R-03), and allow a hint level only after a further attempt (R-02). Authored hints and feedback are material the tutor draws on, which policy allows by id, not text the player shows by itself.
 
 The call:
 
@@ -228,21 +229,21 @@ constraints: device ("chromebook" | "phone"), audio_ok, max_duration_s,
 
 ### 6.3 Format affinity
 
-Per student, per format: counts of `shown`, `completed`, `skipped`, and `next_attempt_correct` (whether the next evidence on that skill was correct). In the demo these live in `st.session_state` and vanish with the session, like all kid state. Once there is a store, they're counts and codes, so they'd be distilled state under P-8, encrypted with the profile under P-7. Affinity replaces "learning style" with something measured.
+Per student, per format: counts of `shown`, `completed`, `skipped`, and `next_attempt_correct` (whether the next evidence on that skill was correct). In the demo these live in the server's session memory and vanish with the session, like all kid state. Once there is a store, they're counts and codes, so they'd be distilled state under P-8, encrypted with the profile under P-7. Affinity replaces "learning style" with something measured.
 
 ### 6.4 Content events and checks
 
-Renderers emit structured events only: `content_started`, `content_completed`, `content_skipped` (with position), and `check_result`.
+Players emit structured events only: `content_started`, `content_completed`, `content_skipped` (with position), and `check_result`.
 
 - **`check_result`** carries the check id, the outcome code, `hints_used` and a response-time bucket, so it can feed R-11's `multigs` classes.
-- **The outcome is computed in the app,** never asserted by the browser. Algebraic checks call `primer.mathcheck` on the student's (normalised) input. UI-state checks (which step was tapped, where a point snapped) compare exact values. In Streamlit this all happens in-process anyway.
+- **The outcome is computed on the server,** never asserted by the browser. Algebraic checks call `primer.mathcheck` on the student's (normalised) input. UI-state checks (which step was tapped, where a point snapped) compare exact values. The browser sends what the student did; the server grades it, and the result comes back as a code.
 - **No free-text answers are recorded.** A typed answer goes through the same whitelist-then-mathcheck path as any kid input.
 
 Later, item quality is the aggregate across students: completion rate, skip point, and how often the next attempt is correct. Aggregates have no student ids and need a store, so they're post-demo.
 
-### 6.5 Protocol, if the UI moves beyond Streamlit
+### 6.5 Protocol additions for `web/`
 
-In the Streamlit demo, all of this is in-process function calls, with no client/server protocol. If Connor and Michael keep a separate web client (PR #1's `web/`), these events would join its protocol in `web/src/protocol.ts`:
+These events would join PR #1's session protocol in `web/src/protocol.ts`, alongside its existing `answer` and `answer_result` events:
 
 ```ts
 // ServerEvent
@@ -330,11 +331,11 @@ Interest tags for the slice: `soccer`, `gaming`, `music`.
 
 **Build order:**
 
-1. **Decisions first** (Connor and Michael): is content in the demo or after it, Streamlit vs `web/`, and where items live (§11).
+1. **Decisions first** (Connor and Michael): is content in the demo or after it, and where items live (§11). The frontend is settled: `web/`.
 2. **Descriptor model and validator,** in the gate, against the `SkillMap` (Michael).
 3. **The content math check** using `primer.mathcheck` (Michael), plus a kid-input normaliser if Connor wants one shared (§11).
 4. **Author the items above** with the prompts.
-5. **Renderers:** Streamlit functions in the demo for video, audio, story text and puzzles; the whiteboard once A-8's text is updated and its UI question is settled.
+5. **Players in `web/`** for video and reels, audio, story text and the three puzzle templates, against the mock server first; the whiteboard once A-8's text is updated.
 6. **`select_item` and the `show_item` action** inside policy and `checks.py` (Connor), with session-only format affinity.
 7. **Real students, only once main's preconditions hold:** the pedagogy eval (R-08) passing, including content; the R-22 safety evals; the canary test; ZDR-verified pinned models (P-14); and the age gate (R-31). Until then, items can be shown to a few teens in person, with nothing collected.
 
@@ -355,13 +356,12 @@ Numbering continues after R-31 (the age gate, in PR #1). R-28 to R-30 and P-14 a
 ## 11. Open questions
 
 **For Connor** (either cofounder can approve the answers)
-1. **Whiteboard.** A-8 in `DECISIONS.md` and the "Not V1" list in `REQUIREMENTS.md` still need updating, by you or Michael. Do you accept structured checks only as V1's answer to the Open "whiteboard-to-BKT" item? Is the whiteboard part of the Streamlit demo (a custom component) or after it?
-2. **Content in the demo?** `REQUIREMENTS.md` sequences the content layer after the core loop is validated. Does any content go in the demo (stories, video, puzzles via Streamlit), or does it all wait?
-3. **UI stack.** The demo contract says Streamlit only; PR #1 builds a React `web/`. Which one do content renderers target, now and after the demo?
-4. **Where items live.** Is `src/primer/content/items/` as packaged data, added to the `[pedagogy]` trigger, the right home? Does the R-06 length cap apply to fixed item text like a 300-word story?
-5. **Misconceptions.** Add a `misconceptions` field to `SkillNode`, or keep a sibling file keyed by node id?
-6. **Selection in policy.** OK for `select_item` to be a pure function policy calls, with `show_item` as a `TutorMove` action that `checks.py` gates?
-7. **Authoring tools.** OK for `tools/content/` to be a separate uv project (Manim, voiceover, music SDKs) that can't import `primer`? If so, A-2 needs a line saying author-time tooling with no kid data is outside its scope.
-8. **Kid math input.** mathcheck refuses `2x`, `X` and `−`. Should there be one shared normaliser before mathcheck, for typed answers, handwriting and item checks alike?
-9. **Vision and voice.** Pinned, ZDR-verified roles for whiteboard "check my work" (vision) and voice (R-19), and any new gateway host they need (P-4).
-10. **R-32 to R-38:** accept, merge or cut.
+1. **Whiteboard.** A-8 in `DECISIONS.md` and the "Not V1" list in `REQUIREMENTS.md` still need updating, by you or Michael. Do you accept structured checks only as V1's answer to the Open "whiteboard-to-BKT" item? Is the whiteboard part of the demo or after it?
+2. **Content in the demo?** `REQUIREMENTS.md` sequences the content layer after the core loop is validated. Does any content go in the demo (stories, video, puzzles in `web/`), or does it all wait?
+3. **Where items live.** Is `src/primer/content/items/` as packaged data, added to the `[pedagogy]` trigger, the right home? Does the R-06 length cap apply to fixed item text like a 300-word story?
+4. **Misconceptions.** Add a `misconceptions` field to `SkillNode`, or keep a sibling file keyed by node id?
+5. **Selection in policy.** OK for `select_item` to be a pure function policy calls, with `show_item` as a `TutorMove` action that `checks.py` gates?
+6. **Authoring tools.** OK for `tools/content/` to be a separate uv project (Manim, voiceover, music SDKs) that can't import `primer`? If so, A-2 needs a line saying author-time tooling with no kid data is outside its scope.
+7. **Kid math input.** mathcheck refuses `2x`, `X` and `−`. Should there be one shared normaliser before mathcheck, for typed answers, handwriting and item checks alike?
+8. **Vision and voice.** Pinned, ZDR-verified roles for whiteboard "check my work" (vision) and voice (R-19), and any new gateway host they need (P-4).
+9. **R-32 to R-38:** accept, merge or cut.

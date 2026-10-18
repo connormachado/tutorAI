@@ -1,6 +1,6 @@
 # Puzzle (v1)
 
-*Paste after `_shared-v1.md`. Fill in the brief at the bottom. A puzzle is a template built once in the app's UI; you write the spec that tells it which problems to make and what to grade. Puzzles are the items that give the tutor evidence, so the `checks` must be exact.*
+*Paste after `_shared-v1.md`. Fill in the brief at the bottom. A puzzle is a template built once as a component in the React app (`web/`); you write the spec that tells it which problems to make and what to grade. Puzzles are the items that give the tutor evidence, so the `checks` must be exact.*
 
 ---
 
