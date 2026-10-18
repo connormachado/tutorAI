@@ -1,0 +1,86 @@
+{
+  "descriptor": {
+    "format": "reel",
+    "role": "hook",
+    "skills": { "primary": "alg1.linear.two_step", "touches": ["alg1.linear.one_step"] },
+    "angle": "balance-scale",
+    "misconceptions": [],
+    "difficulty": 2,
+    "duration_s": 32,
+    "interest_tags": ["soccer"],
+    "sensitive_tags": [],
+    "reading_level": 5,
+    "base_item": "lin2-balance-reel"
+  },
+  "body": {
+    "orientation": "vertical",
+    "needs_audio": false,
+    "beats": [
+      {
+        "t_start": 0, "t_end": 3,
+        "on_screen_text": "20 points. 5 draws. How many wins?",
+        "on_screen_latex": [],
+        "visual": "A league table row for a made-up team, the Harbor Hawks: P 15, D 5, PTS 20. The W column is a blinking question mark.",
+        "voiceover": "Twenty points. Five draws. How many wins?"
+      },
+      {
+        "t_start": 3, "t_end": 8,
+        "on_screen_text": "Win = 3 points. Draw = 1 point. Call the wins x.",
+        "on_screen_latex": ["3x + 5 = 20"],
+        "visual": "The table row slides onto the left pan of a scale as 3 'win' cards marked x and 5 one-point draw tokens. The right pan shows 20 points. The scale is level.",
+        "voiceover": "A win is three points. A draw is one. Call the wins x."
+      },
+      {
+        "t_start": 8, "t_end": 14,
+        "on_screen_text": "Take the 5 draw points off the left...",
+        "on_screen_latex": ["3x + 5 = 20"],
+        "visual": "The 5 draw tokens lift off the left pan only. The scale tips hard to the right. The +5 turns muted red.",
+        "voiceover": "Take the five draw points off the left..."
+      },
+      {
+        "t_start": 14, "t_end": 20,
+        "on_screen_text": "...and it tips. Take 5 off BOTH sides.",
+        "on_screen_latex": ["3x + 5 - 5 = 20 - 5"],
+        "visual": "Rewind. 5 points lift off each pan together, like a referee checking both sides. The scale stays level. Both sides show - 5 in highlight.",
+        "voiceover": "...and it tips. Take five off both sides."
+      },
+      {
+        "t_start": 20, "t_end": 26,
+        "on_screen_text": "Still level. Wins are worth 15 points.",
+        "on_screen_latex": ["3x = 15"],
+        "visual": "Left pan: the 3x win cards. Right pan: 15 points. The equation simplifies to 3x = 15.",
+        "voiceover": "Still level. The wins are worth fifteen points."
+      },
+      {
+        "t_start": 26, "t_end": 32,
+        "on_screen_text": "So how many games did the Hawks win?",
+        "on_screen_latex": ["3x = 15"],
+        "visual": "The W column question mark pulses. Freeze.",
+        "voiceover": "So how many games did the Hawks win?"
+      }
+    ]
+  },
+  "math": {
+    "problems": [
+      {
+        "id": "p1",
+        "variable": "x",
+        "equation": "3*x + 5 = 20",
+        "steps": [
+          { "expr": "3*x + 5 - 5 = 20 - 5", "says": "Take 5 off both sides." },
+          { "expr": "3*x = 15", "says": "Simplify." },
+          { "expr": "x = 5", "says": "Split both sides into 3 equal groups (divide by 3)." }
+        ],
+        "answer": "5",
+        "intentional_error_step": null,
+        "from_words": "20 points. 5 draws. A win is 3 points. A draw is 1."
+      }
+    ]
+  },
+  "tutor_notes": {
+    "key_idea": "Whatever you do to one side of an equation, you do to the other, so it stays balanced.",
+    "worked_problem": "3x + 5 = 20",
+    "follow_up_prompt": "Why did the scale tip when the draw points came off only one side? What does that mean for the equation?"
+  },
+  "author_notes": "Uses the real 3-1-0 points system, so the numbers fit without changing the math. The team is made up. Check: 5 wins + 5 draws + 5 losses = 15 played, which matches P 15 in the table."
+}
