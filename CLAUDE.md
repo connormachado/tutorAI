@@ -20,7 +20,7 @@ IMPORTANT: never persist raw conversation. Kid messages, model replies, transcri
 ## Demo contract (Platy demo; binding for all work)
 Scope: one unit ("solving linear equations"), one path, 14–18 skill nodes. Diagnose the missing prerequisite 1–2 levels down before teaching (R-01), ask for self-explanation (R-03), teach metacognition with a confidence check and a reflection (R-30), and never hand over answers (R-02).
 
-Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctness), R-30 (metacognition), P-14 (only pinned, ZDR-verified models and features, caching included) and the R-10 (14–18 nodes) and R-22 (988 + parent notice) demo notes are drafts until Connor approves them (build step 1). No code that depends on them lands before that.
+Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctness), R-30 (metacognition), P-14 (only pinned, ZDR-verified models and features, caching included) and the R-22 (988 + parent notice) demo note are drafts until Connor approves them (build step 1). No code that depends on them lands before that.
 
 **Stack (closed list).** Runtime: `anthropic`, `pydantic` v2, `sympy`, `streamlit`, `pyBKT` (A-5). Dev: what pyproject already has. Everything else is stdlib (`tomllib`, `json`, `string.Template`, `unittest.mock`). No DB, no auth, no web framework beyond Streamlit, no async. Any new dependency needs Connor's OK.
 
