@@ -8,7 +8,7 @@ fetched from a font host). Plain CSS, no UI kit.
 
 ## Run it
 
-You need Node 20 or newer.
+You need Node 20 or newer to run the app, and Node 22.12 or newer for `npm test` (vitest 5).
 
 ```bash
 cd web
