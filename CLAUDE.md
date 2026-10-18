@@ -1,6 +1,6 @@
 # The Primer
 
-Adaptive, privacy-first algebra tutor for kids. Python 3.12 + uv. Source of truth: `REQUIREMENTS.md` (R-ids), `PRIVACY.md` (P-ids), `DECISIONS.md` (A-ids, Connor's; never edit). Harness design: `02-harness-proposal.md`.
+Adaptive, privacy-first algebra tutor. V1 is for students 13 and up, with no parent features; parents come in V2/V3 (`REQUIREMENTS.md` § Audience). Python 3.12 + uv. Source of truth: `REQUIREMENTS.md` (R-ids), `PRIVACY.md` (P-ids), `DECISIONS.md` (A-ids, Connor's; never edit). Harness design: `02-harness-proposal.md`.
 
 IMPORTANT: never persist raw conversation. Kid messages, model replies, transcripts, audio and photos never reach a DB, file, temp file, cache or log (P-1, P-10). Only `primer.gateway` talks to third-party networks (P-2).
 
@@ -33,7 +33,7 @@ IMPORTANT: never persist raw conversation. Kid messages, model replies, transcri
 
 ## Design skills (dormant until `web/` exists)
 - `frontend-design` governs all kid-facing UI.
-- `design-taste-frontend` is only for the parent-facing landing page. On kid UI, the dials are about VARIANCE 3, MOTION 2, DENSITY 3.
+- `design-taste-frontend` is only for the marketing landing page. On kid UI, the dials are about VARIANCE 3, MOTION 2, DENSITY 3.
 - When the two disagree: frontend-design wins on kid UI, taste-skill on the landing page. Neither picks the frontend stack.
 
 ## Gotchas
