@@ -1,6 +1,6 @@
 # Whiteboard scene (v1)
 
-*Paste after `_shared-v1.md`. Fill in the brief at the bottom. A scene sets up the shared whiteboard (design doc §4.1): what's on the board, which tools the student gets, what counts as correct, and the marks the tutor can make. The board itself is built once in the app's UI; you write the scene it loads.*
+*Paste after `_shared-v1.md`. Fill in the brief at the bottom. A scene sets up the shared whiteboard (design doc §4.1): what's on the board, which tools the student gets, what counts as correct, and the marks the tutor can make. The board itself is built once as a component in the React app (`web/`); you write the scene it loads.*
 
 ---
 
