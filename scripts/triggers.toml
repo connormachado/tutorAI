@@ -4,7 +4,8 @@
 
 [privacy]       # -> privacy-boundary-reviewer + Codex (/ship); diagram LLM refresh
 paths = ["src/primer/gateway/*", "src/primer/store/*", "src/primer/session/*",
-         "src/primer/logging*", "src/primer/config*", "pyproject.toml"]
+         "src/primer/logging*", "src/primer/config*", "pyproject.toml",
+         ".streamlit/*"]
 
 [mastery_math]  # -> Codex (/ship)
 paths = ["src/primer/mastery/*"]

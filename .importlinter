@@ -19,6 +19,7 @@ forbidden_modules =
     anthropic
     openai
     httpx
+    httpx2
     httpcore
     requests
     urllib3

@@ -22,6 +22,7 @@ These are written as testable rules because the pedagogy eval (`scripts/eval`, n
 ## Skill map and mastery
 
 - **R-10 Skill graph.** One machine-queryable graph (JSON or graph DB) of about 50–100 algebra sub-skills with prerequisite edges, starting from Common Core algebra progressions (A-6).
+  - *Demo note (Platy, approved 2026-10-17):* one unit (solving linear equations), 14–18 nodes, exactly one top-level node, three probes per node, every probe answer verified by sympy.
 - **R-11 Mastery model.** Per-kid, per-skill BKT via pyBKT. Hint use, response time and self-explanation quality are bucketed into discrete `multigs` classes (A-5). Skills are independent, with no DBN.
 - **R-12 Scheduling layer.** Spaced repetition plus implicit review sits on top of the mastery model: solving a downstream problem counts as review of its prerequisites (A-5).
 - **R-13 Generated skill view.** Any human-readable view of the skill map is generated from R-10, never hand-maintained (A-6).
