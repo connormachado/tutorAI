@@ -1,6 +1,6 @@
 # The Primer: Privacy Invariants
 
-*DRAFT, pending Connor's or Michael's approval. Every P-id traces to `DECISIONS.md` A-2 or A-3, or to an approved Q-default (Q5). `privacy-boundary-reviewer` cites a P-id for every finding. Where a check is mechanical, the reviewer doesn't re-check it; it looks for what tests can't see: new data flows, new sinks, and dependencies that phone home.*
+*DRAFT, pending approval by Connor or Michael. Every P-id traces to `DECISIONS.md` A-2 or A-3, or to an approved Q-default (Q5); a P-id marked *pending* traces to an R-id until Connor or Michael records its A-id. `privacy-boundary-reviewer` cites a P-id for every finding. Where a check is mechanical, the reviewer doesn't re-check it; it looks for what tests can't see: new data flows, new sinks, and dependencies that phone home.*
 
 **Kid content** means anything the kid or the tutor said or showed during a session: typed messages, model replies, transcribed speech, audio, and photos of work.
 
@@ -19,7 +19,7 @@
 | **P-11** | **No new outbound destination for kid data.** A new dependency that phones home (telemetry, crash reporting, "anonymous usage stats") is a finding. | A-2 | `a2-egress` (the listed clients) + reviewer (unlisted ones) |
 | **P-12** | A **parent-shared grade/transcript** is used once as a bootstrap prior and then discarded, never stored. *Dormant in V1: there's no parent upload until R-16 returns in V2/V3.* | A-3, A-9 | Reviewer |
 | **P-13** | **Tooling never touches real kid data.** `/demo-check`, evals and tests use seeded fake-kid profiles only. | A-3 | Reviewer |
-| **P-14** | The **age gate keeps only a yes/no "13 or older"**, never the age or birth date entered. An under-13 attempt stores nothing. | R-28 *(pending a `DECISIONS.md` entry for the 13+ audience)* | Reviewer |
+| **P-14** | The **age gate keeps only a yes/no "13 or older"**, never the age or birth date entered, and the entered value never reaches logs, analytics, error trackers or exception text. An under-13 attempt keeps nothing the user entered; the one exception is a device-local flag (no id, no age) that blocks an immediate retry with a different age, as FTC COPPA guidance recommends. A student found to be under 13 mid-session has their stored state deleted (R-28). | R-28 *(pending a `DECISIONS.md` A-id for the 13+ audience; `REQUIREMENTS.md` open question 3)* | Reviewer |
 
 ## Canary test (A-2's own verification)
 
@@ -34,3 +34,4 @@ Arrives with the first session code (`tests/`, fast and deterministic, so it's p
 
 - Encryption-at-rest mechanism and key custody for P-7 (e.g. SQLCipher vs. app-level field encryption).
 - Whether parent summaries (R-24, V2/V3) may contain any free text written by the model (P-8 currently says structured only).
+- The `DECISIONS.md` A-id behind P-14 (the 13+ audience and age gate).
