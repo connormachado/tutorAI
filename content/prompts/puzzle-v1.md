@@ -18,7 +18,7 @@ Write a puzzle spec for one of three templates.
 2. **Three example instances** from those rules, each in the `math` block. For `spot_the_error`, set `intentional_error_step`.
 3. **Checks:** each thing the puzzle grades, which skill it is evidence for, and what counts as correct. A puzzle can check a prerequisite skill too (one from the brief's `touches`); that's how the tutor finds a cracked floor one level down. Every check is decided by a program, never by judgement, and has a `kind`:
    - `solution_set`: the student's line must have exactly one solution, `expected`. Write `expected` in the checker's syntax from the shared instructions (`5`, not `x = 5`).
-   - `equivalent_to`: the student's expression must equal `expected` (also checker syntax).
+   - `equivalent_to`: the student's expression must equal `expected` (also checker syntax). For an equation, it means that same line, with its sides swapped or its sums not yet worked out, and not another equation with the same solution: `16 = 2*x` and `2*x = 9 + 7` match `2*x = 16`, but `x = 8`, `2*x - 16 = 0` and the problem copied out don't. Use it when the student must write one particular step. For a final answer, use `equivalent_to` with `x = {answer}`, so a true line that isn't finished yet (`2*x = 16`) doesn't pass; a bare number counts as `x =` that number.
    - `ui_state`: an exact rule on what the student tapped or moved (`tapped step 1`, `removed 5 unit blocks from each pan`).
 
    Because problems are generated, `expected` can name a generator value in braces, like `{answer}` or `{c - b}`.

@@ -3,6 +3,7 @@ import { Chat } from "./components/Chat";
 import { Mascot } from "./components/Mascot";
 import { OverlayPanel } from "./components/Overlays";
 import { ProblemCard } from "./components/ProblemCard";
+import { PuzzlePlayer } from "./components/PuzzlePlayer";
 import { useTutorSession } from "./session/useTutorSession";
 import type { DemoTrigger } from "./transport/types";
 
@@ -35,7 +36,18 @@ export function App() {
 
       {phase === "live" && (
         <main className="session">
-          <ProblemCard problem={s.state.problem} feedback={s.state.feedback} onAnswer={s.answer} onHint={s.hint} />
+          {s.state.puzzle ? (
+            <PuzzlePlayer
+              key={s.state.puzzle.puzzle.instance_id}
+              state={s.state.puzzle}
+              onMove={s.puzzleMove}
+              onHint={s.puzzleHint}
+              onNext={s.puzzleNext}
+              onColors={s.pickColors}
+            />
+          ) : (
+            <ProblemCard problem={s.state.problem} feedback={s.state.feedback} onAnswer={s.answer} onHint={s.hint} />
+          )}
           <Chat
             messages={s.state.messages}
             resetNote={s.state.resetNote}
@@ -90,6 +102,10 @@ function DemoControls({ onTrigger }: { onTrigger: (t: DemoTrigger) => void }) {
   const [open, setOpen] = useState(false);
   const items: [DemoTrigger, string][] = [
     ["skip", "Skip to next problem"],
+    ["spot_the_error", "Puzzle: spot the error"],
+    ["missing_step", "Puzzle: missing step"],
+    ["balance", "Puzzle: balance scale"],
+    ["interest", "Switch interest (soccer, football, gaming)"],
     ["pause", "Suggest a pause"],
     ["safety", "Show safety resources"],
     ["error", "Drop the connection"],
