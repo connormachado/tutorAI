@@ -20,7 +20,7 @@ The existing specs are primer-first. Content touches them in these places:
 | R-07 Interest hooks | Reframe through the personality file's interests | Items carry interest tags from a fixed vocabulary; interest variants of an item are made ahead of time (§7). |
 | R-04 / R-12 Retrieval, scheduling | The scheduler picks what to recall | The scheduler picks the skill; the library supplies a retrieval-role item for it. |
 | R-21 De-escalation ladder | Rung 2 switches to a confidence-building topic | Rung 2 asks the library for a low-difficulty, game- or puzzle-format item on a mastered skill. |
-| REQUIREMENTS "Not V1" | "The RAG ground-truth content layer ... needs its own R-id" | This doc is that layer, broadened from text explanations to all formats. It proposes R-29 to R-35 (§10). |
+| REQUIREMENTS "Not V1" | "The RAG ground-truth content layer ... needs its own R-id" | This doc is that layer, broadened from text explanations to all formats. It proposes R-32 to R-38 (§10). |
 | Vision §2 "Ground-truth content" | Core math must be anchored to something verified, not improvised | Every item's math is machine-checked before it ships (§8, step 3). The tutor talks *about* a verified item instead of inventing math. |
 | A-8 Whiteboard (locked) | Deferred to V1.5 | **Michael and Connor agreed it's V1** (2026-10-18). This doc proposes a small V1 whiteboard (§4.1). Connor still has to update A-8's text before it's built. |
 | P-1 Kid content | "Anything the kid or the tutor said or showed" is never persisted | Library items are made ahead of time and contain no student data, so storing them is fine. Anything generated *for one student during a session* is kid content and is never stored or cached (§7). |
@@ -284,15 +284,15 @@ Interest tags for the slice: `soccer`, `gaming`, `music`.
 
 ## 10. Proposed R-ids (for Connor)
 
-Numbering continues after R-28 (the age gate, in PR #1).
+Numbering continues after R-31 (the age gate, in PR #1). R-28 to R-30 and P-14 are Connor's pending specs (usage log and prompt caching, sympy decides correctness, metacognition), and PR #1's age gate holds P-15, so any new P-id from this doc would start at P-16.
 
-- **R-29 Content library.** Items with validated descriptors (§5), keyed to skill-graph ids; a descriptor naming a missing skill fails validation.
-- **R-30 Math verification.** No item goes live unless its math check passed and a human reviewed it.
-- **R-31 Content selection.** At natural breakpoints the primer requests (skill, role, constraints) and gets an item or none; with none, the tutor falls back to chat. R-05 retries prefer a different angle and format.
-- **R-32 Interest variants.** Pre-made per interest tag from a fixed vocabulary; the library never sees free-text profile data.
-- **R-33 Content events and format affinity.** Structured engagement events and per-format counts, stored as distilled state (P-8).
-- **R-34 Self-hosted media.** All content media and players are served from Platy's own servers; no third-party embeds or SDKs. *(Could instead be a P-id in `PRIVACY.md`, since it is really P-11 applied to content.)*
-- **R-35 Whiteboard.** A canvas with library scenes, snapping student tools, freehand scratch ink and a fixed set of tutor marks (§4.1). Only structured actions count as evidence. Student ink is kid content: never stored, and sent only through the gateway when the student asks for a check. *Agreed for V1; needs A-8's text updated first.*
+- **R-32 Content library.** Items with validated descriptors (§5), keyed to skill-graph ids; a descriptor naming a missing skill fails validation.
+- **R-33 Math verification.** No item goes live unless its math check passed and a human reviewed it.
+- **R-34 Content selection.** At natural breakpoints the primer requests (skill, role, constraints) and gets an item or none; with none, the tutor falls back to chat. R-05 retries prefer a different angle and format.
+- **R-35 Interest variants.** Pre-made per interest tag from a fixed vocabulary; the library never sees free-text profile data.
+- **R-36 Content events and format affinity.** Structured engagement events and per-format counts, stored as distilled state (P-8).
+- **R-37 Self-hosted media.** All content media and players are served from Platy's own servers; no third-party embeds or SDKs. *(Could instead be a P-id in `PRIVACY.md`, since it is really P-11 applied to content.)*
+- **R-38 Whiteboard.** A canvas with library scenes, snapping student tools, freehand scratch ink and a fixed set of tutor marks (§4.1). Only structured actions count as evidence. Student ink is kid content: never stored, and sent only through the gateway when the student asks for a check. *Agreed for V1; needs A-8's text updated first.*
 
 ## 11. Open questions
 
@@ -301,4 +301,4 @@ Numbering continues after R-28 (the age gate, in PR #1).
 2. Does `select()` belong inside the primer (a `src/primer/content/` module) or as a separate service the primer calls?
 3. Is the `content/` + `tools/content/` layout outside `src/primer` OK with the egress contract and the gate?
 4. The protocol addition in §6.5.
-5. R-29 to R-35: accept, merge or cut.
+5. R-32 to R-38: accept, merge or cut.
