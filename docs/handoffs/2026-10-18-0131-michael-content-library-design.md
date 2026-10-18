@@ -1,33 +1,41 @@
-# Proposed the content library design and wrote its authoring prompts
+# Proposed the content library design and its authoring prompts, then fitted them to the demo contract
 
 - **Who:** michael   **Area:** docs
-- **Branch / PR:** claude/content-library-design-txzs0z / draft PR (see branch)
-- **R-ids:** proposes R-32 to R-38   **gate:** not run (docs and prompts only, no code)
+- **Branch / PR:** claude/content-library-design-txzs0z / draft PR #3
+- **R-ids:** proposes R-32 to R-38   **gate:** green (`scripts/check`; docs and prompts only, no code)
 
 ## What changed
-- New `docs/content-library.md`: Platy's content library design. Content items are skill × angle × format, each described by a JSON descriptor the primer can choose from.
-- It lists the formats with V1 / V1.x / V1.5 / V2+ status, the descriptor schema, how the primer and library split selection, the authoring pipeline (Claude scripts, SymPy math check, Manim + TTS video, AI music, human review), and a first slice of about 25 items on three linear-equation skills.
-- New `content/prompts/`: the Claude prompts for authoring (shared house style and JSON contract, brief, worked example, reel, puzzle, story, song, whiteboard scene, interest variant, critic). See `content/prompts/README.md`.
-- `content/prompts/examples/`: a balance-scale reel, its soccer variant and a spot-the-error puzzle. Their math blocks were checked with a throwaway SymPy script (not committed), which also caught deliberately broken copies.
+- `docs/content-library.md`: the content library design. Items are skill × angle × format, each with a JSON descriptor policy can choose from. Covers formats (with a "fits the Streamlit demo?" column), the descriptor, how selection fits policy, the authoring pipeline, a first slice of about 27 items, and proposed R-32 to R-38.
+- Revised to fit the "Demo contract" in `CLAUDE.md` and main's `src/primer/skills/` and `primer.mathcheck` (§2.1 summarises it). It now separates what the Streamlit demo could hold from V1 beyond it.
+- `content/prompts/`: the authoring prompts (shared house style and JSON contract, brief, worked example, reel, puzzle, story, song, whiteboard scene, interest variant, critic). Author-time only; the app never loads them.
+- The prompts now use mathcheck's syntax (no `**`, no `3x`), snake_case node ids, `easy_win` (was `confidence`, which collided with R-30), a `reflection_prompt`, probe avoidance, and checks with a `kind` (`solution_set`, `equivalent_to`, `ui_state`). Puzzle feedback became ask-first prompts the tutor uses when policy allows.
+- `content/prompts/examples/`: a balance-scale reel, its soccer variant and a spot-the-error puzzle. Checked: every math block passes `primer.mathcheck` (via a throwaway script, not committed), and broken copies fail (wrong answer, bad step, error flag flipped, `3x`).
 
 ## Decisions and why
-- Proposal: the primer picks skill and role; the library picks the item. Keeps formats pluggable without touching primer logic.
-- Proposal: track observed format affinity instead of "learning styles", which the research doesn't support.
-- Proposal: per-student generated media is V2+ because it would be kid content (P-1) and can't be math-checked first. Pre-made interest variants per tag are V1.
-- **Michael and Connor agreed the whiteboard is in V1** (2026-10-18). Connor or Michael still has to update A-8 in DECISIONS.md and drop the whiteboard from "Not V1" in REQUIREMENTS.md. The doc's §4.1 keeps the V1 board small: library scenes, snapping tools, a fixed set of tutor marks, structured checks only as BKT evidence, and student ink treated like a photo (never stored). Proposed as R-38.
-- The prompts take a skill node as input rather than keeping their own skill list, so the skill graph stays the only list (A-6).
-
-- Proposed author-time services: ElevenLabs for voice (via `manim-voiceover`) and Eleven Music for songs, with Suno v6 as the music alternative (§8). No student data reaches them.
+- Proposal: selection is a pure `select_item` that policy calls, and showing an item is a `TutorMove` that `checks.py` gates (reveal rules, R-02). Puzzles report results and stop; policy decides hints (R-02, R-03).
+- Proposal: all item math and all interactive checks go through `primer.mathcheck`, so there's no second sympy checker (R-29 applied to content).
+- Proposal: published items are packaged data in `src/primer/content/items/`, covered by the `[pedagogy]` trigger; authoring tools live in `tools/content/` as a separate uv project (Manim needs NumPy 2, pyBKT needs `numpy<2`).
+- Proposal: observed format affinity instead of "learning styles". Session-only in the demo.
+- **Michael and Connor agreed the whiteboard is in V1** (2026-10-18). Connor or Michael still has to update A-8 in `DECISIONS.md` and the "Not V1" list. §4.1 keeps it small; "check my work" is safety-first, the vision model only transcribes, and mathcheck finds the wrong line.
+- Proposed author-time services: ElevenLabs voice (via `manim-voiceover`), Eleven Music, Suno v6 as the alternative. No student data reaches them.
 
 ## Contract changes
-- Proposed only: a `content` server event and `content_event` client event, plus `board_scene`, `board_mark`, `board_clear` and `board_check_request` for the whiteboard, for `web/src/protocol.ts` (§6.5). Not implemented.
+- None implemented. Proposed: a `show_item` tutor action and a `content` module (§6.1); a `misconceptions` field on `SkillNode` or a sibling file (§5); content and whiteboard events for `web/src/protocol.ts` only if a separate web client stays (§6.5).
 
-## Open questions for Connor
-- Please update A-8's text for the whiteboard-in-V1 decision you agreed to. Do you accept "structured checks only" as V1's answer to the Open whiteboard-to-BKT item? Whiteboard code will be flagged as drift until A-8 is updated.
-- Does `select()` live in the primer or as a separate service?
-- Is a `content/` + `tools/content/` layout outside `src/primer` fine with the egress contract and the gate?
-- Accept, merge or cut proposed R-32 to R-38 (§10).
+## Open questions for Connor (either cofounder can approve the answers)
+- Streamlit only, or PR #1's React `web/`? It decides where content renderers go.
+- Does any content go in the demo, or does the library wait until after the core loop?
+- OK for `select_item` inside policy, `show_item` gated by `checks.py`, and items under `src/primer/content/items/` in `[pedagogy]`? Does R-06's cap apply to item text?
+- `misconceptions` on `SkillNode`, or a sibling file?
+- `tools/content/` as a separate uv project outside A-2's scope, written down as such?
+- One shared normaliser for kid-typed math (`2x`, `X`, `−`) before mathcheck?
+- Pinned ZDR roles for whiteboard vision and voice (P-14). Accept, merge or cut R-32 to R-38 (§10, §11).
 
 ## Next steps
-- Build the descriptor schema and validator, then the math checker (needs an R-id, tests and `sympy` as a dependency), then the players in `web/`.
-- Run `brief-v1` on the three first-slice skills once the skill graph has them.
+- Get answers to the open questions; the UI stack and "content in the demo?" come first.
+- Build the descriptor model and validator in the gate, against `SkillMap`, after R-32 and R-33 are accepted.
+- Run `brief-v1` on the three first-slice skills once the linear-equations map exists.
+
+## Gotchas
+- mathcheck refuses implicit multiplication, `**`, capital letters and two letters in a row. Write `3*x`, not `3x`.
+- Skill ids in the examples are placeholders until Connor's map lands.

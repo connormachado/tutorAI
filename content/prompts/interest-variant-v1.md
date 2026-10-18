@@ -23,7 +23,7 @@ Re-skin the base item for students interested in the given tag. Same idea, same 
 
 - **Know the interest from the inside.** A soccer variant should use what players and fans actually care about (positions, set pieces, training drills, the table), not just a ball in the corner of the frame. But no real players, clubs, leagues, games or artists.
 - **The numbers must still make sense in the new world.** If `3x + 5 = 20` can't be a believable soccer situation, say so in `author_notes` and stop, rather than forcing it or changing the math.
-- **Set `descriptor.interest_tags`** to the one tag and add `"base_item": "<base item id>"` to the descriptor.
+- **Set `descriptor.interest_tags`** to the one tag and `descriptor.base_item` to the base item's id.
 
 ## Inputs
 

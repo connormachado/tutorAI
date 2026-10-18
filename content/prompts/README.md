@@ -1,6 +1,8 @@
 # Content prompts
 
-The Claude prompts that author Platy's content library, step 2 of the pipeline in [`docs/content-library.md`](../../docs/content-library.md) §8. Each file is one prompt, versioned in its name (`reel-v1`). An item's descriptor cites the prompt that made it in `provenance.script_prompt`, so if a prompt changes, a new version is added rather than the old one edited.
+The Claude prompts that author Platy's content library, step 2 of the pipeline in [`docs/content-library.md`](../../docs/content-library.md) §8. Each file is one prompt, versioned in its name (`reel-v1`). An item's descriptor cites the prompt that made it in `provenance.script_prompt`, so once an item made with a prompt is published, changes to that prompt go in a new version rather than an edit. The v1 prompts are still drafts: nothing has been published with them, so they're edited in place for now.
+
+These are **author-time** prompts. The app never loads them; it reads only published items.
 
 **No student data ever goes into these prompts.** They run at author time, on skill descriptions and other items only. Personalization comes from interest tags (§7 of the design doc), never from a real student's profile.
 
@@ -22,13 +24,13 @@ skill node ──► brief-v1 ──► one brief per (skill, role, angle, forma
                          │                          │
                          └──────────► critic-v1 ◄───┘
                                       │
-                       SymPy math check (§8 step 3), then human review
+                  math check with primer.mathcheck (§8 step 3), then human review
 ```
 
 | File | Input | Output |
 |---|---|---|
 | [`_shared-v1.md`](_shared-v1.md) | — | House style and the JSON envelope every format prompt returns. Included in every run. |
-| [`brief-v1.md`](brief-v1.md) | One skill: id, description, prerequisites, known misconceptions | 4–6 briefs, each a distinct angle with a role, a format and a worked problem |
+| [`brief-v1.md`](brief-v1.md) | One skill-map node: id, name, description, prerequisite chain, probes, plus known misconceptions | 4–6 briefs, each a distinct angle with a role, a format and a worked problem |
 | [`worked-example-v1.md`](worked-example-v1.md) | A brief | A 45–120 s worked-example video script, scene by scene |
 | [`reel-v1.md`](reel-v1.md) | A brief | A vertical reel under 45 s that works with the sound off |
 | [`puzzle-v1.md`](puzzle-v1.md) | A brief and a puzzle template | A puzzle spec: generator rules, examples, checks, graduated hints |
@@ -45,8 +47,8 @@ Until there's a script in `tools/content/`, run them by hand in Claude:
 1. Start a new conversation. Paste `_shared-v1.md`, then the format prompt, then the filled-in inputs at the bottom of the format prompt.
 2. Save the JSON it returns as a draft item.
 3. In a **separate** conversation, run `critic-v1.md` on that JSON. A fresh conversation matters: a model reviewing its own work in the same conversation tends to approve it.
-4. Fix what the critic flags (by hand, or by pasting the issues back into the first conversation), then run the SymPy check and review it yourself.
+4. Fix what the critic flags (by hand, or by pasting the issues back into the first conversation), then run the math check and review it yourself.
 
-**Where the skill input comes from.** The skill graph (R-10) is the only list of skills (A-6), so these prompts take a skill node as input instead of keeping their own skill list. Until Connor's graph exists, type the skill's id, description, prerequisites and misconceptions into the brief prompt for that run and don't save them as a second list.
+**Where the skill input comes from.** The skill map (R-10) is the only list of skills (A-6), so these prompts take a skill node as input instead of keeping their own skill list. Copy the node's fields from the map in `src/primer/skills/` into the brief prompt. Until the linear-equations map lands, and for misconceptions (which the map doesn't hold yet), type them in for that run and don't save them as a second list.
 
-[`examples/`](examples/) holds sample outputs, so you can see what good output looks like. Their math has been checked with SymPy.
+[`examples/`](examples/) holds sample outputs, so you can see what good output looks like. Their math passes `primer.mathcheck`. Their skill and misconception ids are placeholders until the linear-equations skill map exists.

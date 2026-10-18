@@ -37,15 +37,17 @@ Return **one JSON object and nothing else** (no prose before or after), in this 
 ```json
 {
   "descriptor": {
+    "schema_version": 1,
     "format": "reel | worked_example | puzzle | story | song | whiteboard",
-    "role": "hook | introduce | worked_example | practice | repair | retrieval | confidence | apply",
-    "skills": { "primary": "<skill id>", "touches": ["<prerequisite skill ids this item also exercises>"] },
+    "role": "hook | introduce | worked_example | practice | repair | retrieval | easy_win | apply",
+    "skills": { "primary": "<skill node id>", "touches": ["<prerequisite node ids this item also exercises>"] },
     "angle": "<short kebab-case name for the idea used, e.g. balance-scale>",
     "misconceptions": ["<misconception ids targeted, if any>"],
     "difficulty": 1,
     "duration_s": 0,
     "interest_tags": [],
     "sensitive_tags": [],
+    "base_item": null,
     "reading_level": 6
   },
   "body": { },
@@ -68,21 +70,26 @@ Return **one JSON object and nothing else** (no prose before or after), in this 
   "tutor_notes": {
     "key_idea": "<the one idea, in one sentence a student could understand>",
     "worked_problem": "<the main equation, as written on screen>",
-    "follow_up_prompt": "<one question the tutor can ask after the student sees this, which makes them explain their thinking>"
+    "follow_up_prompt": "<one question the tutor can ask after the student sees this, which makes them explain their thinking>",
+    "reflection_prompt": "<one question that gets the student to think about how they worked, not about the answer, e.g. what they'd check first next time>"
   },
   "author_notes": "<anything a reviewer should look at: assumptions, things you're unsure of, a number that felt forced. Empty string if none.>"
 }
 ```
 
+**Ids.** Skill ids are the skill map's node ids exactly as the inputs give them (lowercase snake_case, like `two_step_equations`); never invent one. Misconception ids are snake_case too (`undo_with_same_op`). `base_item` stays `null` except in an interest variant.
+
 ### The `math` block
 
-A program checks this block with SymPy: it checks that each step is equivalent to the one before it, and that the answer satisfies the original equation. So:
+A program checks this block with Platy's math checker (SymPy underneath). For every problem it checks that the original equation's only solution is `answer`, and that every step has exactly that same solution. So:
 
-- Write every equation **in SymPy syntax, not LaTeX:** `*` for multiplication (`3*x`, `2*(x - 3)`), `/` for division, `**` for powers, exactly one `=`.
+- **Write math in the checker's syntax, not LaTeX.** Allowed: digits, single lowercase letters as variables, `+ - * / ( ) .`, spaces, and exactly one `=`. Write every multiplication with `*` (`3*x`, `2*(x - 3)`, never `3x`). There are no powers (`**` and `^` are refused); if a problem truly needs one, write `x*x` and say so in `author_notes`. Two letters in a row are refused, so variables are one letter each.
 - **Every problem that appears anywhere in `body`** (worked, shown, or asked of the student) has an entry, in the order it appears. Problems the student is asked to solve still list their steps here, so the checker can verify them.
 - `steps` are the steps a student would write, one operation each. The last step is `variable = answer`.
-- `intentional_error_step`: for spot-the-error content, the 0-based index of the step that is deliberately wrong. Otherwise `null`. In that case `steps` is the flawed solution exactly as the student sees it, so its last step shows the wrong answer, and `answer` is still the **correct** answer. The checker expects that step, and only that step, to be non-equivalent to the line before it.
+- **Expressions, not equations.** For a "simplify" or "evaluate" problem, set `variable` to `null`, put the bare expression (no `=`) in `equation` and `answer`, and make each step a bare expression. The checker then confirms each step equals the answer.
+- `intentional_error_step`: for spot-the-error content, the 0-based index of the step that is deliberately wrong. Otherwise `null`. In that case `steps` is the flawed solution exactly as the student sees it, so its last step shows the wrong answer, and `answer` is still the **correct** answer. The checker expects every step before that index to have the correct solution, and that step and every step after it not to.
 - `from_words`: if the equation comes from a story or word problem, quote the sentence(s) it was translated from. The program can't check the translation, so the critic and the human reviewer do.
+- **Don't reuse a probe.** The brief lists the skill's diagnostic probe equations in `avoid_equations`. Never use one of them, or the same equation with its sides swapped, anywhere in the item: the tutor uses probes to find out what a student already knows, and an item that shows one spoils it.
 - On-screen math in `body` uses LaTeX (`3x + 5 = 20`, `\frac{x}{4}`) and must say exactly the same thing as the `math` block.
 
 ### Difficulty

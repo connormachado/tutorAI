@@ -15,28 +15,30 @@ You are reviewing a draft content item for Platy. Assume it has at least one pro
 4. For `from_words`: write the equation from those sentences yourself. Does it match? Could a careful student reasonably write a different equation?
 5. For `spot_the_error`: exactly one step is wrong, it's the step `intentional_error_step` names, and it's the misconception the brief targets.
 6. Nothing in the item uses a phrase that teaches a misconception ("move it to the other side", "cancel", "the x's cancel out" when it isn't true).
+7. The `math` block uses only the checker's syntax: `*` for every multiplication, no `**` or `^`, single-letter variables, one `=` (none for an expression problem, where `variable` is `null`).
+8. No equation in the item is one of the brief's `avoid_equations`, or one of them with its sides swapped.
 
 **Teaching**
-7. There is one idea, and `tutor_notes.key_idea` names it.
-8. The item gives reasons, not only instructions.
-9. Items that end in a question don't give the answer anywhere the student can see.
-10. Puzzle and whiteboard hints are graduated, and neither level 3 nor the last tutor mark gives the answer. Every check maps to the right skill and is an exact rule (never on freehand ink).
-11. `follow_up_prompt` makes the student explain their thinking; it isn't a yes/no question.
+9. There is one idea, and `tutor_notes.key_idea` names it.
+10. The item gives reasons, not only instructions.
+11. Items that end in a question don't give the answer anywhere the student can see.
+12. Puzzle and whiteboard hints are graduated, and neither level 3 nor the last tutor mark gives the answer. Every check maps to the primary skill or one in `touches`, has a `kind`, and is an exact rule (never on freehand ink). `solution_set` and `equivalent_to` checks have `expected` in checker syntax.
+13. `follow_up_prompt` makes the student explain their thinking; it isn't a yes/no question. `reflection_prompt` is about how they worked, not about the answer. Puzzle `ask` lines are questions that get the student to explain before anything is corrected, and no `nudge` gives the fix.
 
 **Audience and tone**
-12. Reading level is about grade 6–7. Flag any sentence over 20 words.
-13. Not babyish, not try-hard. Quote any line that would make a 15-year-old cringe.
-14. No "your friend" framing, no lines encouraging reliance on the app.
+14. Reading level is about grade 6–7. Flag any sentence over 20 words.
+15. Not babyish, not try-hard. Quote any line that would make a 15-year-old cringe.
+16. No "your friend" framing, no lines encouraging reliance on the app.
 
 **Content safety**
-15. No real people, brands, teams, songs, games or characters.
-16. No assumptions about family, money or bodies. `sensitive_tags` lists everything the item touches.
-17. No questions about the student's own life.
+17. No real people, brands, teams, songs, games or characters.
+18. No assumptions about family, money or bodies. `sensitive_tags` lists everything the item touches.
+19. No questions about the student's own life.
 
 **Format fit**
-18. Duration and length are within the format's limits. For narration, word count ≈ `duration_s × 2.3`.
-19. Reels work with the sound off. Songs scan and the style prompt names no artists.
-20. For a variant: every equation, step and answer in the `math` block is identical to the base item's (only `from_words` may differ), and the interest is used from the inside, not as decoration.
+20. Duration and length are within the format's limits. For narration, word count ≈ `duration_s × 2.3`.
+21. Reels work with the sound off. Songs scan and the style prompt names no artists.
+22. For a variant: every equation, step and answer in the `math` block is identical to the base item's (only `from_words` may differ), and the interest is used from the inside, not as decoration.
 
 ## What you return
 

@@ -1,16 +1,17 @@
 {
   "descriptor": {
+    "schema_version": 1,
     "format": "reel",
     "role": "hook",
-    "skills": { "primary": "alg1.linear.two_step", "touches": ["alg1.linear.one_step"] },
+    "skills": { "primary": "two_step_equations", "touches": ["one_step_equations"] },
     "angle": "balance-scale",
     "misconceptions": [],
     "difficulty": 2,
     "duration_s": 32,
     "interest_tags": ["soccer"],
     "sensitive_tags": [],
-    "reading_level": 5,
-    "base_item": "lin2-balance-reel"
+    "base_item": "lin2-balance-reel",
+    "reading_level": 5
   },
   "body": {
     "orientation": "vertical",
@@ -80,7 +81,8 @@
   "tutor_notes": {
     "key_idea": "Whatever you do to one side of an equation, you do to the other, so it stays balanced.",
     "worked_problem": "3x + 5 = 20",
-    "follow_up_prompt": "Why did the scale tip when the draw points came off only one side? What does that mean for the equation?"
+    "follow_up_prompt": "Why did the scale tip when the draw points came off only one side? What does that mean for the equation?",
+    "reflection_prompt": "Next time you see a plus-something next to the x, what will you check before you divide?"
   },
   "author_notes": "Uses the real 3-1-0 points system, so the numbers fit without changing the math. The team is made up. Check: 5 wins + 5 draws + 5 losses = 15 played, which matches P 15 in the table."
 }
