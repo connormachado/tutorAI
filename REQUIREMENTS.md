@@ -1,6 +1,6 @@
 # The Primer: V1 Requirements
 
-*DRAFT, pending Connor's approval. Distilled from `the-primer-initial-vision.md`, the kickoff brief and `DECISIONS.md`. `scope-skeptic` traces every added unit of code to an R-id here, so code with no R-id behind it gets a CUT verdict. IDs are stable: retire an R-id rather than renumbering.*
+*DRAFT, pending Connor's or Michael's approval. Distilled from `the-primer-initial-vision.md`, the kickoff brief and `DECISIONS.md`. `scope-skeptic` traces every added unit of code to an R-id here, so code with no R-id behind it gets a CUT verdict. IDs are stable: retire an R-id rather than renumbering.*
 
 ## Tutoring behavior (pedagogy rules)
 
@@ -63,7 +63,7 @@ These are written as testable rules because the pedagogy eval (`scripts/eval`, n
 - School or district integration and deployment (A-1, A-9).
 - Tone or acoustic emotion detection (A-7).
 
-## Open questions for Connor (no R-id until answered)
+## Open questions for Connor or Michael (no R-id until answered)
 
 1. Is a **parent-facing landing page** or subscription billing in V1? The harness installs `design-taste-frontend` for a landing page, but no requirement asks for one yet.
 2. **Accounts and auth.** How do a parent and kid sign in, and does the parent see a dashboard? The vision implies parent notes (R-21, R-24) but doesn't specify how they're delivered.
