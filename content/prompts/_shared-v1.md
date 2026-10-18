@@ -37,7 +37,7 @@ Return **one JSON object and nothing else** (no prose before or after), in this 
 ```json
 {
   "descriptor": {
-    "format": "reel | worked_example | puzzle | story | song",
+    "format": "reel | worked_example | puzzle | story | song | whiteboard",
     "role": "hook | introduce | worked_example | practice | repair | retrieval | confidence | apply",
     "skills": { "primary": "<skill id>", "touches": ["<prerequisite skill ids this item also exercises>"] },
     "angle": "<short kebab-case name for the idea used, e.g. balance-scale>",

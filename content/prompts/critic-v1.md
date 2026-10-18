@@ -20,7 +20,7 @@ You are reviewing a draft content item for Platy. Assume it has at least one pro
 7. There is one idea, and `tutor_notes.key_idea` names it.
 8. The item gives reasons, not only instructions.
 9. Items that end in a question don't give the answer anywhere the student can see.
-10. Puzzle hints are graduated and level 3 still doesn't give the answer. Every check maps to the right skill.
+10. Puzzle and whiteboard hints are graduated, and neither level 3 nor the last tutor mark gives the answer. Every check maps to the right skill and is an exact rule (never on freehand ink).
 11. `follow_up_prompt` makes the student explain their thinking; it isn't a yes/no question.
 
 **Audience and tone**

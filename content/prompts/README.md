@@ -11,7 +11,7 @@ skill node ──► brief-v1 ──► one brief per (skill, role, angle, forma
                               │
               ┌───────────────┼───────────────┬──────────────┬───────────┐
               ▼               ▼               ▼              ▼           ▼
-   worked-example-v1      reel-v1        puzzle-v1       story-v1     song-v1
+   worked-example-v1      reel-v1        puzzle-v1       story-v1     song-v1   (+ whiteboard-v1)
               └───────────────┴───────┬───────┴──────────────┴───────────┘
                                       ▼
                               base item (JSON)
@@ -34,6 +34,7 @@ skill node ──► brief-v1 ──► one brief per (skill, role, angle, forma
 | [`puzzle-v1.md`](puzzle-v1.md) | A brief and a puzzle template | A puzzle spec: generator rules, examples, checks, graduated hints |
 | [`story-v1.md`](story-v1.md) | A brief | A 150–400 word story that sets up a problem the student solves |
 | [`song-v1.md`](song-v1.md) | A brief | Lyrics for a 30–60 s mnemonic song and a style prompt for the music tool |
+| [`whiteboard-v1.md`](whiteboard-v1.md) | A brief and a scene type | A whiteboard scene: board objects, student tools, exact checks and a tutor script of marks (design doc §4.1; needs A-8 amended before the board is built) |
 | [`interest-variant-v1.md`](interest-variant-v1.md) | A base item and one interest tag | The same item re-skinned for that interest, with identical math |
 | [`critic-v1.md`](critic-v1.md) | One item (and its base item, for a variant) | A pass / revise / reject verdict with specific issues and fixes |
 
