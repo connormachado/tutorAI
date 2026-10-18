@@ -1,6 +1,6 @@
 # The Content Library: Design
 
-*DRAFT proposal from Michael's side (content and learning experience), 2026-10-18. Nothing here is approved until Connor agrees. It proposes new R-ids (§10) and asks Connor to change one locked decision, A-8, so the whiteboard can be in V1 (§4.1); it does not edit `REQUIREMENTS.md`, `PRIVACY.md` or `DECISIONS.md`.*
+*DRAFT proposal from Michael's side (content and learning experience), 2026-10-18. Nothing here is approved until Connor or Michael approves it. It proposes new R-ids (§10) and needs one locked decision, A-8, updated so the whiteboard can be in V1 (§4.1); it does not edit `REQUIREMENTS.md`, `PRIVACY.md` or `DECISIONS.md`.*
 
 ## 1. Why this exists
 
@@ -22,7 +22,7 @@ The existing specs are primer-first. Content touches them in these places:
 | R-21 De-escalation ladder | Rung 2 switches to a confidence-building topic | Rung 2 asks the library for a low-difficulty, game- or puzzle-format item on a mastered skill. |
 | REQUIREMENTS "Not V1" | "The RAG ground-truth content layer ... needs its own R-id" | This doc is that layer, broadened from text explanations to all formats. It proposes R-32 to R-38 (§10). |
 | Vision §2 "Ground-truth content" | Core math must be anchored to something verified, not improvised | Every item's math is machine-checked before it ships (§8, step 3). The tutor talks *about* a verified item instead of inventing math. |
-| A-8 Whiteboard (locked) | Deferred to V1.5 | **Michael and Connor agreed it's V1** (2026-10-18). This doc proposes a small V1 whiteboard (§4.1). Connor still has to update A-8's text before it's built. |
+| A-8 Whiteboard (locked) | Deferred to V1.5 | **Michael and Connor agreed it's V1** (2026-10-18). This doc proposes a small V1 whiteboard (§4.1). Connor or Michael still has to update A-8's text before it's built. |
 | P-1 Kid content | "Anything the kid or the tutor said or showed" is never persisted | Library items are made ahead of time and contain no student data, so storing them is fine. Anything generated *for one student during a session* is kid content and is never stored or cached (§7). |
 | P-2 / P-11 Egress | Only `primer.gateway` reaches third parties; nothing new phones home | No third-party players or embeds (YouTube, Spotify, game SDKs, analytics in game engines). Media is self-hosted on Connor's servers (A-1). |
 | P-8 Distilled state | Only skill ids, outcome codes, counts, timestamps | Content engagement is stored as item ids and outcome codes (§6.4). That fits P-8 with no change. |
@@ -80,7 +80,7 @@ Formats are added by writing a **player** (a React component in `web/`) and a **
 
 ### 4.1 The whiteboard in V1
 
-**Michael and Connor agreed on 2026-10-18 that the whiteboard is in V1.** The text hasn't caught up yet: A-8 in `DECISIONS.md` still defers it to V1.5, and `REQUIREMENTS.md` still lists it under "Not V1". Connor updates both, since only he edits `DECISIONS.md`. Until that edit lands, `architect-reviewer` will flag whiteboard code as drift, so building waits for it. Designing and authoring scenes don't have to wait. The shape below is still a proposal for Connor to accept.
+**Michael and Connor agreed on 2026-10-18 that the whiteboard is in V1.** The text hasn't caught up yet: A-8 in `DECISIONS.md` still defers it to V1.5, and `REQUIREMENTS.md` still lists it under "Not V1". Connor or Michael updates both; AI sessions never edit `DECISIONS.md`. Until that edit lands, `architect-reviewer` will flag whiteboard code as drift, so building waits for it. Designing and authoring scenes don't have to wait. The shape below is still a proposal for Connor to accept.
 
 V1's whiteboard is deliberately small: a canvas beside the chat with three layers.
 
@@ -232,7 +232,7 @@ Live-generated media (songs, video) per student is deliberately V2+: it's expens
 
 ## 8. How V1 Algebra 1 content gets made
 
-Content is made at **author time**, offline, by Michael and tools. No student data is ever in a generation prompt, so authoring tools are outside the kid-data boundary. They should live outside `src/primer/` (proposed: `content/` for items and `tools/content/` for scripts) so the A-2 egress contract on `src/primer` stays simple. *Connor to confirm the layout.*
+Content is made at **author time**, offline, by Michael and tools. No student data is ever in a generation prompt, so authoring tools are outside the kid-data boundary. They should live outside `src/primer/` (proposed: `content/` for items and `tools/content/` for scripts) so the A-2 egress contract on `src/primer` stays simple. *Connor or Michael to confirm the layout.*
 
 Pipeline for one item:
 
@@ -282,7 +282,7 @@ Interest tags for the slice: `soccer`, `gaming`, `music`.
 
 **What we learn:** which formats students finish, which ones precede a correct next attempt, what one item really costs to make, and whether interest variants move engagement enough to justify making them at scale.
 
-## 10. Proposed R-ids (for Connor)
+## 10. Proposed R-ids (for Connor or Michael to approve)
 
 Numbering continues after R-31 (the age gate, in PR #1). R-28 to R-30 and P-14 are Connor's pending specs (usage log and prompt caching, sympy decides correctness, metacognition), and PR #1's age gate holds P-15, so any new P-id from this doc would start at P-16.
 
@@ -296,8 +296,8 @@ Numbering continues after R-31 (the age gate, in PR #1). R-28 to R-30 and P-14 a
 
 ## 11. Open questions
 
-**For Connor**
-1. You agreed the whiteboard is in V1 (2026-10-18). Please update A-8 in `DECISIONS.md` and drop the whiteboard from "Not V1" in `REQUIREMENTS.md`. Do you accept structured checks only as V1's answer to the Open "whiteboard-to-BKT" item (§4.1)?
+**For Connor** (either cofounder can approve the answers)
+1. You agreed the whiteboard is in V1 (2026-10-18). A-8 in `DECISIONS.md` and the "Not V1" list in `REQUIREMENTS.md` still need updating, by you or Michael. Do you accept structured checks only as V1's answer to the Open "whiteboard-to-BKT" item (§4.1)?
 2. Does `select()` belong inside the primer (a `src/primer/content/` module) or as a separate service the primer calls?
 3. Is the `content/` + `tools/content/` layout outside `src/primer` OK with the egress contract and the gate?
 4. The protocol addition in §6.5.
