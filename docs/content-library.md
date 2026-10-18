@@ -19,7 +19,7 @@ The existing specs are primer-first. Content touches them in these places:
 | Spec | What it says today | What this doc does with it |
 |---|---|---|
 | R-05 Change the angle | Try a different explanation when one doesn't land | The library is where the "different angle" comes from. A new angle means a different item, ideally a different format. |
-| R-07 Interest hooks | Reframe through the personality file's interests | Items carry interest tags from a fixed vocabulary; interest variants of an item are made ahead of time (§7). |
+| R-07 Interest hooks | Reframe through the personality file's interests | Items carry interest tags from a fixed vocabulary; template skins and interest variants are made per tag, ahead of time, and the tutor adds the personal touch in its own words (§7). |
 | R-04 / R-12 Retrieval, scheduling | The scheduler picks what to recall | The scheduler picks the skill; the library supplies a retrieval-role item for it. |
 | R-21 De-escalation ladder | Rung 2 switches to a confidence-building topic | Rung 2 asks for an `easy_win` item: low difficulty, game or puzzle format, on a mastered skill. |
 | R-01 Diagnose first | On main, diagnosis uses the skill map's three probes per node | Diagnosis stays with the probes. Interactive items add evidence after diagnosis; they don't replace it, and they never reuse a probe's equation (§5). |
@@ -82,7 +82,7 @@ Status: **V1** = in the first V1 build; **V1.x** = soon after, no spec conflict;
 | Chat / Socratic dialogue | The primer itself talking through a problem | introduce, practice, repair | Yes | The tutor, anchored to an item's tutor notes | V1 (exists) | Yes |
 | Voice | The same dialogue spoken (R-19) | Same as chat | Yes | Speech-to-text; needs a pinned, ZDR-verified speech path (P-14) and, if not Anthropic, a new gateway host (P-4) | V1 (R-19) | Not yet |
 | Worked-example clip | 45–120 s video solving one problem step by step | worked_example, repair | No | Programmatic animation + TTS (§8) | **V1** | Yes |
-| Reel | Vertical, under 45 s, one hook or one misconception | hook, repair | No | Same pipeline, vertical template | **V1** | Yes |
+| Reel | Vertical, under 45 s, one hook or one misconception | hook, repair | No | An animated template in `web/`, filled per student (§7.2) | **V1** | Yes |
 | Puzzle | Short interactive problem with a twist (balance scale, missing-step, spot-the-error) | practice, repair, retrieval | Yes | Puzzle templates in the UI + a problem generator | **V1** | Yes |
 | Short story | 150–400 words, a narrative that sets up a problem the student solves | hook, apply | Yes (the closing problem) | Claude-written, human-edited, math-checked | **V1** | Yes |
 | Song / jingle | 30–60 s mnemonic for a rule or procedure | hook, retrieval | No | Lyrics written and checked, then AI music generation (§8) | **V1** (one or two) | Yes |
@@ -183,6 +183,7 @@ Field notes:
 - **`tutor_notes`** are what the tutor model reads when it shows the item, so it can talk about it, follow up and stay anchored to the item's verified math. This is the "RAG ground-truth layer" from the vision doc. They vary by turn, so under the prompt-caching rule (pending R-28) they go in a later, uncached system block, never in `system[0]` or a tool definition. `worked_problem` is display notation only; the checkable form is in the item's math block (§8).
 - **`media.script_text`** is the narration or on-screen text, kept for captions and accessibility. It's authored content, not a session transcript.
 - **`provenance`** is required. `math_check` must be `passed` and `reviewed_by` set before `status` can be `live`.
+- **Template items** (puzzles, whiteboard scenes, short reels) also carry `generator` rules and a `skins` map keyed by interest tag, so the numbers and the skin are filled in per student at runtime (§7.2). The example above is a reel rendered to video, the route for a reel that needs effects a template can't do.
 - There is **no per-student data** in a descriptor.
 
 ## 6. How the primer and the library work together
@@ -262,17 +263,39 @@ These events would join PR #1's session protocol in `web/src/protocol.ts`, along
 | { type: "board_check_request"; item_id: string; image_png_base64: string }
 ```
 
-## 7. Personalization tiers
+## 7. Personalization: tailored to each student, without per-student media
 
-| Tier | Example | Stored? | V1? |
-|---|---|---|---|
-| **Static** | The balance-scale reel | Yes, it's library content | Yes |
-| **Interest variant** | The same reel, re-skinned for soccer, gaming, music | Yes: made ahead of time per tag, not per student, so it isn't kid content | Yes, 3 tags in the first slice |
-| **Live-generated** | A story written in-session using details the student just mentioned | **Never** (P-1). Generated through the gateway, shown once, discarded | Text only, via the tutor (it already does this, within R-06 and policy checks) |
+The goal is that every student's experience feels made for them: their interests, their pace, the formats that work for them. The economical way to get there is to **personalize by choosing and assembling, not by generating new media for each student.** Media is the expensive part, so it's made once and reused. What changes per student is which pieces are picked, the numbers and "skin" inside templates, and the tutor's words around them.
 
-Interest variants are the main lever: one base item with verified math, and N re-skins that change the story, visuals and names but not the numbers or the steps. Because the math lives in the base item, a variant needs only a light review.
+This is also where the evidence points. In Walkington's study of 145 high-school algebra students in Carnegie Learning's Cognitive Tutor, word problems rewritten around each student's interests (same math) led to better and faster learning, especially for low-achieving students (58% vs 25% success at writing expressions in the personalized unit), and the gain held in a later unit after the personalization was removed. What changed was the context, not the math or the media. (One study, one tutoring system; reported by [EdSurge](https://edsurge.com/news/2013-11-08-can-interest-based-personalization-deliver-better-learning-outcomes), 2013.)
 
-Live-generated media (songs, video) per student is deliberately V2+: it's expensive, slow, can't be math-checked before the student sees it, and every output would be kid content that can't be kept.
+### 7.1 Five layers, cheapest first
+
+| Layer | What's tailored | How | Extra cost per student | Stored? |
+|---|---|---|---|---|
+| **1. Selection** (the primer) | Skill, timing, pace, difficulty, role, angle, format | BKT, the scheduler and policy choose; `select_item` ranks by interest tags and format affinity (§6) | None | Only counts and codes (§6.3) |
+| **2. Live templates** | The numbers, difficulty and skin (setting, names, art) | Puzzles, whiteboard scenes and short reels are components in `web/` filled at runtime. A generator picks numbers for the student's level, `primer.mathcheck` verifies them on the server, and the skin for the student's top interest tag is swapped in | None | No, rebuilt each time |
+| **3. Pre-made variants** | Interest context in media that has to be recorded or rendered ahead (narrated videos, songs, stories) | One variant per interest tag, not per student, and only where context matters most (hooks, stories, `apply` items) | None; a fixed cost per tag | Yes, it's library content |
+| **4. The tutor's words** | Personal details ("like your team's league table") | The tutor introduces each item and follows up using the profile. It's chat, within R-06 and the policy checks | A turn the session already pays for | Never (P-1) |
+| **5. Per-student media** | A song or video made for one student | Live generation through the gateway | High, plus a wait | Never, so never reused |
+
+Layer 5 stays V2+. It's the expensive layer, it can't be math-checked or reviewed before the student sees it, and because it's kid content (P-1) it can't be kept, so it's paid for again every time.
+
+**Pace is the primer's job, not the media's.** A slower student isn't shown a slower video. They get more practice instances, more worked examples and repair items, and smaller steps between checks. A faster student skips easy wins and reaches `apply` items sooner. Templates make this cheap because they produce a problem at any difficulty on demand, and every player lets students pause and replay.
+
+### 7.2 Short reels become templates
+
+The first draft rendered every reel to video with Manim. Instead, short reels (and the step-by-step parts of worked examples) can be animated components in `web/`, driven by the item JSON and drawn with KaTeX. Then the numbers, names and skin change per student at no cost, and the on-screen math is still exact because it's generated by rules and checked by mathcheck before it's shown. Reels already work with the sound off, so they need no per-student voice. Manim stays for longer narrated videos.
+
+An existing library such as Remotion (React-based, with an in-browser player) could do the animation. Its license was free for companies of up to 3 people at last check ([license](https://v3.remotion.dev/docs/license)), so check the current terms before adding it. Plain React animation, with no new dependency, also works.
+
+### 7.3 What it costs
+
+- **AI generation is cheap per variant.** ElevenLabs voice is about $0.10 per 1,000 characters (roughly 4 cents for a 30-second narration), and Eleven Music about $0.30 per minute ([pricing summary](https://developer.puter.com/tutorials/elevenlabs-api-pricing/), 2026). Confirm on the plan we buy.
+- **Human review is the real cost,** so variants are made only where they pay off: the top 5 to 8 interest tags, for hooks and stories. A student whose interests are in the long tail gets the neutral version plus layer 4.
+- **Measure before scaling.** Whether a variant beats the neutral version is measured with the same events as format affinity (§6.4). Tags that don't improve completion or next-attempt accuracy stop getting variants.
+
+Rough numbers for the demo unit, inferred rather than measured: about 16 skills × 6 base items is roughly 100 base items at under an hour of review each, and about 30 hook and story items × 6 tags is roughly 180 variants at a few minutes each. That's on the order of 110 hours of review and, at most, low hundreds of dollars of AI generation for the whole unit. None of it grows with the number of students.
 
 ## 8. How V1 Algebra 1 content gets made
 
@@ -299,7 +322,7 @@ Pipeline for one item:
 
    The math syntax matches mathcheck's whitelist: digits, single lowercase letters, `+ - * / ( ) .`, spaces and one `=`. There's no `**`. A failed check blocks the item. This applies Connor's pending R-29 to library content, and it answers "how do you know it teaches correctly".
 4. **Media.**
-   - *Video and reels:* programmatic animation (Manim or a similar library) rendered from the checked script, with TTS voiceover and generated captions. This is chosen over AI video-generation models because those regularly garble written math, and on-screen math has to be exactly right. AI image generation is fine for backgrounds and characters in interest variants. Manim also needs system LaTeX, Cairo/Pango and ffmpeg on the authoring machine.
+   - *Video:* programmatic animation (Manim or a similar library) rendered from the checked script, with TTS voiceover and generated captions. This is chosen over AI video-generation models because those regularly garble written math, and on-screen math has to be exactly right. AI image generation is fine for backgrounds and characters in interest variants and template skins. Short reels are templates instead (§7.2). Manim also needs system LaTeX, Cairo/Pango and ffmpeg on the authoring machine.
    - *Songs:* lyrics written and math-checked in step 3, then an AI music service sets them to music. Check each service's commercial-use terms before relying on it.
    - *Proposed services (2026-10-18), author time only.* No student data ever reaches them. Live speech-to-text (R-19) is a separate path that goes through the gateway.
      - **Voice: ElevenLabs.** It plugs into Manim through the `manim-voiceover` plugin and has a free tier for prototyping. Alternatives are Azure or OpenAI TTS, which the same plugin also supports, or Kokoro (Apache 2.0, self-hostable) if we later want no vendor at all.
@@ -320,7 +343,7 @@ Rough throughput target, inferred rather than measured: once the templates exist
 | Format | Items | Notes |
 |---|---|---|
 | Worked-example clip | 3 (one per skill) | Proves the Manim + TTS pipeline |
-| Reel | 2 base × 3 interest variants = 6 | Balance-scale hook; the "subtract or divide first?" misconception |
+| Reel | 2 templates × 3 skins | Balance-scale hook; the "subtract or divide first?" misconception. Proves the template approach (§7.2) |
 | Puzzle | 3 templates × generated problems | Balance-scale, missing-step, spot-the-error; all produce evidence |
 | Short story | 2 base × 3 variants = 6 | Closing problem is a real two-step equation |
 | Song | 1 | "Undo it in reverse" mnemonic; proves the music path and its licensing |
@@ -348,7 +371,7 @@ Numbering continues after R-31 (the age gate, in PR #1). R-28 to R-30 and P-14 a
 - **R-32 Content library.** Items with validated descriptors (§5), stored as packaged data and keyed to skill-map node ids; a descriptor naming a missing node, or reusing a probe's equation, fails validation.
 - **R-33 Content math checks.** R-29 applied to the library: no item goes live unless its math block passes `primer.mathcheck` and a human reviewed it, and every interactive check is decided by mathcheck or exact UI state.
 - **R-34 Content selection.** A pure `select_item` that policy calls; showing an item is a tutor move that passes `checks.py` (including reveal rules, R-02). With no match, the tutor falls back to chat. R-05 retries prefer a different angle and format.
-- **R-35 Interest variants.** Pre-made per interest tag from a fixed vocabulary; the library never sees free-text profile data.
+- **R-35 Interest variants and skins.** Template skins and pre-made variants per interest tag from a fixed vocabulary, made per tag and never per student (§7); the library never sees free-text profile data.
 - **R-36 Content events and format affinity.** Structured engagement events and per-format counts; session-only in the demo, distilled state (P-8) once there's a store.
 - **R-37 Self-hosted media.** All content media and players are served by Platy itself; no third-party embeds or SDKs at runtime. *(Could instead be P-16 in `PRIVACY.md`, since it is really P-11 applied to content.)*
 - **R-38 Whiteboard.** A canvas with library scenes, snapping student tools, freehand scratch ink and a fixed set of tutor marks that pass policy checks (§4.1). Only structured actions count as evidence. "Check my work" goes through the gateway with a pinned ZDR vision role, safety first, with correctness decided by mathcheck. Student ink is kid content and is never stored. *Agreed for V1; needs A-8's text updated first.*
