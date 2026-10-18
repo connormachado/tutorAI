@@ -42,7 +42,7 @@ Give each one the diff command (`git diff HEAD`, or `git status --short` + file 
 
 **Triage every finding:** fix it (a reproducible bug gets a failing test first) or dismiss it in one line saying why. **Codex findings are hypotheses:** reproduce each as a failing test, or dismiss it, and never apply a Codex rewrite. Append one line per Codex review to `.claude/codex-log.md`: `YYYY-MM-DD <sha-or-"uncommitted"> <focus> accepted:<n> dismissed:<n>`. After any fix, re-run step 1.
 
-## 3. Summary for Connor and Michael (exactly this block)
+## 3. Summary for Connor or Michael (exactly this block)
 ```
 R-id: R-xx — <task>        acceptance test: <path::name> PASS
 gate: green | eval: pass/skipped (cached)/n.a. | gate files changed: y/n (<files>)
