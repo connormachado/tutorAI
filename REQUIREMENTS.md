@@ -56,12 +56,18 @@ These are written as testable rules because the pedagogy eval (`scripts/eval`, n
 - **R-27 Target devices.** It runs in a browser on a school Chromebook (1366×768) and on a phone. Inference is in the cloud, on Connor's own servers (A-1).
 - **R-31 Age gate.** *(R-28–R-30 and P-14 are reserved by Connor's pending demo spec in `CLAUDE.md`.)* Sign-up asks for age in a neutral way (no hint that 13 is the cutoff) before collecting anything else. Anyone under 13 is turned away and nothing they entered is kept (P-15). Sign-up isn't the only way to learn a student's age: if a student says or shows during a session that they're under 13 (in the onboarding chat, a message or a photo), the session ends kindly and their stored state (personality file, mastery, session records) is deleted. How the tutor spots this is Open, like R-22 detection, and the signal is recorded only as a code (P-1, P-10). V1's 13+ audience depends on all of this, but the gate keeps Platy outside COPPA's parental-consent rules only if Platy also isn't "directed to children" (open question 5).
 
+## Content library
+
+*R-32 and R-35 approved by Michael, 2026-10-18 (Michael and Connor have equal say). Design: `docs/content-library.md`. R-33, R-34 and R-36 to R-38 are proposed there (§10) and aren't approved yet.*
+
+- **R-32 Content library.** The primer teaches with a library of content items (puzzles, reels, worked-example clips, stories, songs, whiteboard scenes). Each item is one skill × angle × format, described by a validated descriptor keyed to skill-map node ids, and holds no student data. Players for each format are components in `web/`. Policy chooses which item to show; the server generates every problem and grades every check with `primer.mathcheck`, never the browser or a model. Whether content goes in the demo itself is Open (open question 7).
+- **R-35 Interest skins and slots.** Template items (puzzles, games, whiteboard scenes, short reels) expose named slots: colors, team and player names, an emblem and setting words. A skin per interest tag, from a fixed vocabulary, fills them with defaults, and the student's own picks from fixed lists override them. Slots never change an item's math or interaction. Content never uses real logos, team names or player names. Recorded media (narrated video, songs) varies per interest tag, never per student.
+
 ## Not V1: code for these gets a CUT verdict
 
 - Whiteboard or drawing surface (A-8, V1.5); real-world grounding; teacher sync; hardware or wearables; audiences beyond K-12 kids.
 - Students under 13, and anything parent-facing: parent accounts, consent flows, the questionnaire, summaries, notes or a dashboard (V2/V3, see below).
 - Subjects other than algebra, and abstractions for multiple subjects.
-- The RAG ground-truth content layer. The vision doc sequences it after the core loop is validated, so it needs its own R-id when that happens.
 - School or district integration and deployment (A-1, A-9).
 - Tone or acoustic emotion detection (A-7).
 
@@ -81,3 +87,4 @@ Kept so the R-ids stay stable. Code for these in V1 gets a CUT verdict.
 4. **Safety escalation without parents (R-22).** With no parent contact in V1, is crisis resources plus "talk to a trusted adult" enough for 13–17-year-olds, or is anything else needed? Detection is already Open in `DECISIONS.md`.
 5. **COPPA and teen privacy laws.** 13+ avoids COPPA's parental-consent rule only if Platy isn't "directed to children" and doesn't knowingly collect from under-13s (R-31). The FTC judges "directed to children" on the whole picture: subject matter, animated characters (like the cartoon Platy mascot in `web/`), the ages of intended and actual users, and marketing. Some accelerated 7th graders take Algebra 1, so expect under-13 interest. Ask a lawyer to confirm Platy is a general-audience service, and what in a chat counts as knowing a student is under 13 (a stated age, a grade, a joke). Separately, some laws still cover 13–17-year-olds (for example California for under-16s and New York's Child Data Protection Act for under-18s), and the EU sets digital consent at 13–16 depending on the country. All of this needs a lawyer's look before the first real users.
 6. **The demo contract in `CLAUDE.md` vs. V1 scope.** It makes Streamlit the only demo UI, while `web/` (PR #1) is a React app; pick one demo frontend. It also has a safety disclosure send a codes-only `ParentNotice`, but V1 has no parent contact (R-22, question 4).
+7. **Content in the demo (R-32).** The vision doc sequences the content layer after the core loop is validated. Content players are built in `web/` against the mock now; does any content go in the demo itself, or does it wait for the core loop?
