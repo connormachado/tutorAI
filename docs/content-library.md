@@ -22,7 +22,7 @@ The existing specs are primer-first. Content touches them in these places:
 | R-21 De-escalation ladder | Rung 2 switches to a confidence-building topic | Rung 2 asks the library for a low-difficulty, game- or puzzle-format item on a mastered skill. |
 | REQUIREMENTS "Not V1" | "The RAG ground-truth content layer ... needs its own R-id" | This doc is that layer, broadened from text explanations to all formats. It proposes R-29 to R-35 (§10). |
 | Vision §2 "Ground-truth content" | Core math must be anchored to something verified, not improvised | Every item's math is machine-checked before it ships (§8, step 3). The tutor talks *about* a verified item instead of inventing math. |
-| A-8 Whiteboard (locked) | Deferred to V1.5 | **Michael wants it in V1** (2026-10-18). This doc proposes a small V1 whiteboard (§4.1); Connor has to amend A-8 before it's built. |
+| A-8 Whiteboard (locked) | Deferred to V1.5 | **Michael and Connor agreed it's V1** (2026-10-18). This doc proposes a small V1 whiteboard (§4.1). Connor still has to update A-8's text before it's built. |
 | P-1 Kid content | "Anything the kid or the tutor said or showed" is never persisted | Library items are made ahead of time and contain no student data, so storing them is fine. Anything generated *for one student during a session* is kid content and is never stored or cached (§7). |
 | P-2 / P-11 Egress | Only `primer.gateway` reaches third parties; nothing new phones home | No third-party players or embeds (YouTube, Spotify, game SDKs, analytics in game engines). Media is self-hosted on Connor's servers (A-1). |
 | P-8 Distilled state | Only skill ids, outcome codes, counts, timestamps | Content engagement is stored as item ids and outcome codes (§6.4). That fits P-8 with no change. |
@@ -72,7 +72,7 @@ Status: **V1** = in the first build; **V1.x** = soon after, no spec conflict; **
 | Mini-game | A few minutes of play where moves are skill checks | practice, confidence, retrieval | Yes | Small game templates in `web/`, parameterised by problem generators | V1.x |
 | Explainer video | 3–6 min deeper explanation of one concept | introduce | No | Same pipeline as clips, longer script | V1.x |
 | Long project | Multi-session task (design a budget, plan a trip, model a sports stat) | apply | Yes, at checkpoints | Hand-designed briefs with checkpoint problems | V1.x |
-| Whiteboard | Shared canvas where tutor and student both work (§4.1) | introduce, practice, repair | Yes, structured actions only | Scenes authored with `whiteboard-v1`; the board itself is built in `web/` | **V1** (once A-8 is amended) |
+| Whiteboard | Shared canvas where tutor and student both work (§4.1) | introduce, practice, repair | Yes, structured actions only | Scenes authored with `whiteboard-v1`; the board itself is built in `web/` | **V1** (agreed; A-8 text pending) |
 | Student-made music | Student generates a song about a concept | apply, motivation | No | Live AI generation through the gateway; output is kid content, never stored | V2+ |
 | Collaborative project | Work with friends on a shared project | apply | Yes | Needs friend accounts, moderation, teen messaging safety | V2+ |
 
@@ -80,7 +80,7 @@ Formats are added by writing a **player** (a React component in `web/`) and a **
 
 ### 4.1 The whiteboard in V1
 
-**Michael's call (2026-10-18): the whiteboard is in V1.** A-8 is Connor's locked decision deferring it to V1.5, and `REQUIREMENTS.md` lists it under "Not V1". So this section is a proposal until Connor amends A-8. Until then `architect-reviewer` will flag whiteboard code as drift, so building it waits for that amendment; designing and authoring scenes doesn't.
+**Michael and Connor agreed on 2026-10-18 that the whiteboard is in V1.** The text hasn't caught up yet: A-8 in `DECISIONS.md` still defers it to V1.5, and `REQUIREMENTS.md` still lists it under "Not V1". Connor updates both, since only he edits `DECISIONS.md`. Until that edit lands, `architect-reviewer` will flag whiteboard code as drift, so building waits for it. Designing and authoring scenes don't have to wait. The shape below is still a proposal for Connor to accept.
 
 V1's whiteboard is deliberately small: a canvas beside the chat with three layers.
 
@@ -242,6 +242,9 @@ Pipeline for one item:
 4. **Media.**
    - *Video and reels:* programmatic animation (Manim or a similar library) rendered from the checked script, with TTS voiceover and generated captions. This is chosen over AI video-generation models because those regularly garble written math, and on-screen math has to be exactly right. AI image generation is fine for backgrounds and characters in interest variants.
    - *Songs:* lyrics written and math-checked in step 3, then an AI music service sets them to music. Check each service's commercial-use terms before relying on it.
+   - *Proposed services (2026-10-18), used only at author time.* No student data ever reaches them, so they sit outside the gateway's scope. Live speech-to-text (R-19) is a separate path and does go through the gateway.
+     - **Voice: ElevenLabs.** It plugs into Manim through the `manim-voiceover` plugin and has a free tier for prototyping. Alternatives are Azure or OpenAI TTS, which the same plugin also supports, or Kokoro (Apache 2.0, self-hostable) if we later want no vendor at all.
+     - **Music: ElevenLabs' Eleven Music.** ElevenLabs says it was trained on licensed catalogues (Merlin, Kobalt), and it blocks prompts that name real artists. The alternative is Suno's v6 models, licensed after its Warner settlement and launched in September 2026; free users can't download songs. Confirm commercial-use terms on the plan we buy.
    - *Puzzles and games:* not generated media. A template in `web/` plus a problem generator that produces valid, checked problems for a skill and difficulty.
    - *Stories:* text from step 2, with an optional generated illustration.
 5. **Human review.** Michael reviews each base item. For pedagogy, a second reviewer with tutoring experience (Michael's mom, the vision doc's built-in advisor) spot-checks a sample. Interest variants get a lighter pass.
@@ -272,7 +275,7 @@ Interest tags for the slice: `soccer`, `gaming`, `music`.
 
 1. Descriptor schema, validator and the `content/` layout (Michael).
 2. The math checker (step 3), because nothing ships without it.
-3. Players in `web/`: video/reel player, puzzle player, story reader, then the whiteboard (once A-8 is amended). The mock server serves items so this works before the backend exists.
+3. Players in `web/`: video/reel player, puzzle player, story reader, then the whiteboard (once A-8's text is updated). The mock server serves items so this works before the backend exists.
 4. Author the items above.
 5. The `select()` call and content events in the primer (Connor), with rule-based selection (§6.2).
 6. Try it on a few real students 13+ (the vision doc's test group) and compare completion and next-attempt-correct by format.
@@ -289,12 +292,12 @@ Numbering continues after R-28 (the age gate, in PR #1).
 - **R-32 Interest variants.** Pre-made per interest tag from a fixed vocabulary; the library never sees free-text profile data.
 - **R-33 Content events and format affinity.** Structured engagement events and per-format counts, stored as distilled state (P-8).
 - **R-34 Self-hosted media.** All content media and players are served from Platy's own servers; no third-party embeds or SDKs. *(Could instead be a P-id in `PRIVACY.md`, since it is really P-11 applied to content.)*
-- **R-35 Whiteboard.** A canvas with library scenes, snapping student tools, freehand scratch ink and a fixed set of tutor marks (§4.1). Only structured actions count as evidence. Student ink is kid content: never stored, and sent only through the gateway when the student asks for a check. *Needs A-8 amended first.*
+- **R-35 Whiteboard.** A canvas with library scenes, snapping student tools, freehand scratch ink and a fixed set of tutor marks (§4.1). Only structured actions count as evidence. Student ink is kid content: never stored, and sent only through the gateway when the student asks for a check. *Agreed for V1; needs A-8's text updated first.*
 
 ## 11. Open questions
 
 **For Connor**
-1. Michael wants the whiteboard in V1. Will you amend A-8 (and drop it from "Not V1" in `REQUIREMENTS.md`), and accept structured checks only as the V1 answer to the Open "whiteboard-to-BKT" item (§4.1)?
+1. You agreed the whiteboard is in V1 (2026-10-18). Please update A-8 in `DECISIONS.md` and drop the whiteboard from "Not V1" in `REQUIREMENTS.md`. Do you accept structured checks only as V1's answer to the Open "whiteboard-to-BKT" item (§4.1)?
 2. Does `select()` belong inside the primer (a `src/primer/content/` module) or as a separate service the primer calls?
 3. Is the `content/` + `tools/content/` layout outside `src/primer` OK with the egress contract and the gate?
 4. The protocol addition in §6.5.
