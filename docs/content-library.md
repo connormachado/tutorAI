@@ -209,7 +209,7 @@ UI renders the item; check results come back as codes
 - **Showing an item is a tutor move,** so the usual checks apply. A worked example of the exact problem the student is on is an answer reveal, and policy has to allow a reveal first (R-02).
 - **Items can be offered on any turn policy allows,** including mid-problem for R-05's "change the angle". Hard resets (A-4) are a separate thing and still happen only at natural breakpoints.
 - **R-30:** before an interactive item's checks are graded, policy runs the confidence check. Afterwards, the item's `reflection_prompt` gives the tutor a reflection to ask.
-- **Puzzles don't give feedback on their own.** On a wrong check, the player reports the result (with the matched misconception id, as a code) and stops. Policy then decides what's next: ask the student to explain their step first (R-03), and allow a hint level only after a further attempt (R-02). Authored hints and feedback are material the tutor draws on, which policy allows by id, not text the player shows by itself.
+- **Puzzles don't give feedback on their own.** The player sends what the student did and stops. The server grades it, matches the misconception, and sends the result back as a code. Policy then decides what's next: ask the student to explain their step first (R-03), and give no hint before a first try or while that explanation is still owed (R-02). Misses on a puzzle count toward the de-escalation ladder like misses on a problem (R-21). Authored hints and feedback are material the tutor draws on, which policy allows by id, not text the player shows by itself.
 
 The call:
 
@@ -258,7 +258,7 @@ Later, item quality is the aggregate across students: completion rate, skip poin
 | { type: "slot_pick"; colors: PaletteId }  // R-35, from a fixed palette
 ```
 
-A second `puzzle` event with the same `instance_id` only changes the skin, so the student keeps their progress. The browser draws a balance-scale move only after the server's `puzzle_result` accepts it. Hints used and response times for R-11 stay on the server, which already sees every move and hint request.
+A second `puzzle` event with the same `instance_id` only changes the skin, so the student keeps their progress. The browser draws a balance-scale move only after the server's `puzzle_result` accepts it. `kid_message` carries no problem or puzzle id, so the server reads it against whatever is current when it's handled. The browser therefore holds the chat while a move waits for its verdict and from `puzzle_next` (or a solved problem) until the next `problem` or `puzzle` arrives, and the server must always answer `puzzle_next` with `puzzle_done`. Adding the on-screen id to `kid_message` would let the server drop a stale message instead; that's a contract question for the backend. Hints used and response times for R-11 stay on the server, which already sees every move and hint request.
 
 **Other formats (proposed, not built).** Videos, songs, stories and the whiteboard would add:
 
@@ -309,7 +309,7 @@ An existing library such as Remotion (React-based, with an in-browser player) co
 
 Michael's framing (2026-10-18): one large, standard library, where each item can be tweaked slightly for each student. Two students who both like football play the same game, but each sees it in their own team's colors. That makes the template layer finer-grained:
 
-- **Every template exposes named slots:** `color_primary`, `color_secondary`, `team_name`, `player_names`, `emblem` (from Platy's own art set) and a few setting words. The core animation, the interaction and the math never read a slot, so filling slots can't break an item or need its math re-checked.
+- **Every template exposes named slots:** `colors` (a pair from Platy's palette), `team_name`, `player_names`, `emblem` (from Platy's own art set) and a few setting words. The core animation, the interaction and the math never read a slot, so filling slots can't break an item or need its math re-checked.
 - **An interest skin fills the slots with defaults** (the football skin: a made-up team, a field, positions). **The student's own picks override them:** colors from a fixed palette and names from authored lists, chosen during onboarding. They're structured choices rather than free text, so they fit the profile's distilled state (P-8) and the library still never sees free text about a student.
 - **No real logos, team names or player names in content.** They're licensed trademarks and publicity rights. Colors are generally fine, so a Buccaneers fan gets a made-up team in red and pewter. The tutor can still mention a student's real team in chat (layer 4), because that's conversation, not branded content. To confirm with a lawyer before real users.
 - **What can take slots:** anything drawn live in `web/` (puzzles, games, whiteboard scenes, template reels, the text of stories). Recorded media (narrated videos, songs) varies only per interest tag, because changing a word means re-recording it.

@@ -3,8 +3,9 @@ import { checkAnswer, matchesValue, readAnswer } from "../mock/answers";
 import { seeded } from "../mock/generate";
 import { gradeMove, INTERESTS, type Interest, type LivePuzzle, line, newPuzzle, nextHint, skinFor, toWire } from "../mock/puzzles";
 import {
-  BACK_TO_IT, CLOSING, CONFIDENCE_BUILDER, DEMO_LEAD, LESSON, NO_ANSWERS, NO_ANSWERS_TRY_FIRST, NUDGES, OPENING, OUT_OF_HINTS,
-  PUZZLE_NUDGE, PUZZLE_UNREADABLE, REPAIR_LEAD, SAFETY_RESOURCES, type ScriptedProblem, TRY_FIRST, UNREADABLE,
+  BACK_TO_IT, CLOSING, CONFIDENCE_BUILDER, DEMO_LEAD, EXPLAIN_FIRST, LESSON, NO_ANSWERS, NO_ANSWERS_TRY_FIRST, NUDGES, OPENING,
+  OUT_OF_HINTS, PUZZLE_NUDGE, PUZZLE_UNREADABLE, REPAIR_LEAD, SAFETY_RESOURCES, type ScriptedProblem, TAKE_A_BREATH, TRY_FIRST,
+  UNREADABLE,
 } from "../mock/script";
 import type { ClientEvent, ServerEvent, SessionMode } from "../protocol";
 import type { DemoTrigger, TutorTransport } from "./types";
@@ -204,9 +205,7 @@ export class MockTransport implements TutorTransport {
       await this.startPuzzle(slip.repair, REPAIR_LEAD);
     } else if (this.misses >= 3 && !this.pivoted) {
       // Third miss on one problem: first rung of the de-escalation ladder (R-21).
-      this.paused = true;
-      await this.say("This one's being stubborn. Let's take a breath.");
-      this.out({ type: "pause_suggested" });
+      await this.suggestPause();
     } else if (slip) {
       await this.say(slip.reply);
     } else if (this.misses === 1) {
@@ -216,6 +215,12 @@ export class MockTransport implements TutorTransport {
     } else {
       await this.say(p.secondMiss);
     }
+  }
+
+  private async suggestPause(): Promise<void> {
+    this.paused = true;
+    await this.say(TAKE_A_BREATH);
+    this.out({ type: "pause_suggested" });
   }
 
   private async pivot(): Promise<void> {
@@ -229,8 +234,9 @@ export class MockTransport implements TutorTransport {
     this.out({ type: "topic_switch", label: "Quick confidence builder" });
     this.out({ type: "reset", reason: "topic_switch" });
     await this.sleep(this.timing.resetMs);
-    // Come back to the problem they were stuck on after the easier one.
-    this.order.splice(this.index, 0, CONFIDENCE_BUILDER);
+    // Come back to the problem they were stuck on after the easier one. A pause during the
+    // warm-up itself starts it again rather than adding a second one.
+    if (this.order[this.index] !== CONFIDENCE_BUILDER) this.order.splice(this.index, 0, CONFIDENCE_BUILDER);
     await this.present(CONFIDENCE_BUILDER);
   }
 
@@ -303,6 +309,7 @@ export class MockTransport implements TutorTransport {
     // A first try unlocks hints (R-02). Starting over or an unreadable line isn't one.
     const startOver = move.check === "move" && move.move.op === "start_over";
     if (!startOver && v.outcome !== "unreadable") live.tried = true;
+    if (v.outcome === "incorrect") live.misses++;
     live.outcomes[v.check] = v.outcome;
     if (v.pans && live.template === "balance") live.pans = v.pans;
     this.out({ type: "puzzle_result", instance_id: live.instance_id, check: v.check, outcome: v.outcome });
@@ -313,6 +320,9 @@ export class MockTransport implements TutorTransport {
     this.puzzleNudge = null;
     if (v.outcome === "unreadable") {
       await this.say(PUZZLE_UNREADABLE);
+    } else if (v.ask && live.misses >= 3 && !this.pivoted) {
+      // Third miss on one puzzle: the same first rung as on a problem (R-21).
+      await this.suggestPause();
     } else if (v.ask) {
       // A miss: the puzzle stops and the tutor asks first (R-03). The nudge waits for the kid.
       this.puzzleNudge = v.ask.nudge;
@@ -327,8 +337,14 @@ export class MockTransport implements TutorTransport {
   }
 
   private async puzzleHint(live: LivePuzzle): Promise<void> {
+    // Solved: the reflection question is waiting, and there's nothing left to hint at.
+    if (this.reflecting) return;
     if (!live.tried) {
       await this.say(TRY_FIRST); // no hint before a first try (R-02)
+      return;
+    }
+    if (this.puzzleNudge) {
+      await this.say(EXPLAIN_FIRST); // their explanation of the miss comes first (R-03)
       return;
     }
     const hint = nextHint(live, this.skin());

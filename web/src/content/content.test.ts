@@ -12,6 +12,15 @@ describe("balance scale", () => {
     expect(r).toEqual({ ok: true, pans: { left: { x: 3, units: 0 }, right: { x: 0, units: 15 } } });
   });
 
+  it("refuses a count that isn't a whole number, since the browser's moves aren't trusted", () => {
+    for (const n of [1.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      expect(applyMove(start, start, { op: "remove_units", n })).toEqual({ ok: false, reason: "nothing" });
+    }
+    for (const groups of [2.5, Number.NaN]) {
+      expect(applyMove(start, start, { op: "split", groups })).toEqual({ ok: false, reason: "nothing" });
+    }
+  });
+
   it("refuses to take more units than a pan has", () => {
     expect(applyMove(start, start, { op: "remove_units", n: 6 })).toEqual({ ok: false, reason: "too_many" });
   });

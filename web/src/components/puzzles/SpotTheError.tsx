@@ -34,9 +34,11 @@ export function SpotTheError({ state, onMove, actions }: Props) {
               <button
                 type="button"
                 className={`step${wrong ? " step--wrong" : tapped === i ? " step--tapped" : ""}`}
-                disabled={stage !== "find" || busy}
+                disabled={stage !== "find"}
+                aria-disabled={busy || undefined}
                 aria-pressed={tapped === i}
                 onClick={() => {
+                  if (busy) return;
                   setTapped(i);
                   onMove({ check: "found_error", line: i }, `I think line ${i + 1} is wrong.`);
                 }}
@@ -72,6 +74,7 @@ export function SpotTheError({ state, onMove, actions }: Props) {
           placeholder="The fixed line"
           button="Check my line"
           busy={busy}
+          autoFocus
           onSubmit={(text) => {
             setFixed(text);
             onMove({ check: "fixed_step", text }, text);
@@ -87,6 +90,7 @@ export function SpotTheError({ state, onMove, actions }: Props) {
           placeholder="Your answer, like x = 4"
           button="Check my answer"
           busy={busy}
+          autoFocus
           onSubmit={(text) => onMove({ check: "final_answer", text }, text)}
         >
           {actions}

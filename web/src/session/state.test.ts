@@ -92,6 +92,27 @@ describe("session reducer", () => {
       expect(reducer(s, { type: "server", event: { type: "reset", reason: "problem_end" } }).puzzle).toBeNull();
     });
 
+    it("holds the chat from keep going until the next problem, so nothing lands on the wrong one", () => {
+      const problem = {
+        type: "problem" as const, problem_id: "p1", skill_id: "s", prompt: "3x + 5 = 20", instruction: "Solve", position: 1, total: 3,
+      };
+      let s = verdict(show(live(), scale), "solved", "correct");
+      expect(s.moving).toBe(false);
+      s = reducer(s, { type: "puzzle_next_sent" });
+      expect(s.moving).toBe(true);
+      // A new look for the same puzzle doesn't count as arriving somewhere new.
+      s = show(s, { ...scale, skin: SKINS.gaming });
+      s = reducer(s, { type: "server", event: { type: "puzzle_done", instance_id: "balance-1" } });
+      s = reducer(s, { type: "server", event: { type: "reset", reason: "problem_end" } });
+      expect(s.moving).toBe(true);
+      s = reducer(s, { type: "server", event: problem });
+      expect(s.moving).toBe(false);
+      // The same holds after a solved problem, and a new puzzle ends it too.
+      s = reducer(s, { type: "server", event: { type: "answer_result", problem_id: "p1", result: "correct" } });
+      expect(s.moving).toBe(true);
+      expect(show(s, { ...scale, instance_id: "balance-2" }).moving).toBe(false);
+    });
+
     it("ignores verdicts for another puzzle", () => {
       const s = show(live(), scale);
       const other = reducer(s, { type: "server", event: { type: "puzzle_result", instance_id: "x", check: "solved", outcome: "correct" } });

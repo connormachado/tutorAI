@@ -1,4 +1,4 @@
-import { type CSSProperties, useState } from "react";
+import { type CSSProperties, useEffect, useRef, useState } from "react";
 import { pansLatex } from "../content/balance";
 import { PALETTE } from "../content/palette";
 import type { PaletteId, PuzzleMove } from "../content/types";
@@ -12,6 +12,10 @@ import { chip, Swatches } from "./puzzles/Swatches";
 
 interface Props {
   state: PuzzleState;
+  /** Keep going was tapped; the next problem is on its way. */
+  moving: boolean;
+  /** Called once the puzzle is solved, to move focus on from controls that are now gone. */
+  onSolved: () => void;
   onMove: (instanceId: string, move: PuzzleMove, echo?: string) => void;
   onHint: (instanceId: string) => void;
   onNext: (instanceId: string) => void;
@@ -20,27 +24,45 @@ interface Props {
 
 // Shows a puzzle in place of the problem card (R-32) in the student's skin (R-35). It reports
 // what the student did and shows the server's verdicts; it never decides "correct" itself.
-export function PuzzlePlayer({ state, onMove, onHint, onNext, onColors }: Props) {
-  const { puzzle, done } = state;
+export function PuzzlePlayer({ state, moving, onSolved, onMove, onHint, onNext, onColors }: Props) {
+  const { puzzle, done, pending } = state;
   const id = puzzle.instance_id;
   const colors = PALETTE[puzzle.skin.colors];
   const [picking, setPicking] = useState(false);
   const style = { "--team": colors.primary, "--team-2": colors.secondary } as CSSProperties;
   const move = (m: PuzzleMove, echo?: string) => onMove(id, m, echo);
   const fb = feedback(state);
+  const card = useRef<HTMLElement>(null);
 
+  // Solving removes the control that had focus. Move on unless the kid is already elsewhere.
+  useEffect(() => {
+    const at = document.activeElement;
+    if (done && (at === document.body || card.current?.contains(at))) onSolved();
+  }, [done, onSolved]);
+
+  // Held, not disabled, while waiting, so a keyboard user's focus stays put.
   const actions = done ? (
-    <button type="button" className="btn btn--primary" onClick={() => onNext(id)}>
+    <button type="button" className="btn btn--primary" aria-disabled={moving || undefined} onClick={() => !moving && onNext(id)}>
       Keep going
     </button>
   ) : (
-    <button type="button" className="btn btn--quiet" onClick={() => onHint(id)}>
+    <button
+      type="button"
+      className="btn btn--quiet"
+      aria-disabled={pending !== null || undefined}
+      onClick={() => pending === null && onHint(id)}
+    >
       I need a hint
     </button>
   );
 
   return (
-    <section className={`card problem puzzle${done ? " problem--solved" : ""}`} style={style} aria-labelledby="puzzle-heading">
+    <section
+      ref={card}
+      className={`card problem puzzle${done ? " problem--solved" : ""}`}
+      style={style}
+      aria-labelledby="puzzle-heading"
+    >
       <div className="puzzle__team">
         <span className="puzzle__badge">
           <Emblem id={puzzle.skin.emblem} />

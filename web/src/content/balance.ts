@@ -14,13 +14,14 @@ export function applyMove(pans: Pans, start: Pans, move: BalanceMove): MoveResul
       return { ok: true, pans: start };
     case "remove_units": {
       const n = move.n;
-      if (n < 1) return { ok: false, reason: "nothing" };
+      // The browser's counts aren't trusted: 1.5 or NaN would pass the comparisons below.
+      if (!Number.isInteger(n) || n < 1) return { ok: false, reason: "nothing" };
       if (n > pans.left.units || n > pans.right.units) return { ok: false, reason: "too_many" };
       return { ok: true, pans: { left: take(pans.left, n), right: take(pans.right, n) } };
     }
     case "split": {
       const g = move.groups;
-      if (g < 2) return { ok: false, reason: "nothing" };
+      if (!Number.isInteger(g) || g < 2) return { ok: false, reason: "nothing" };
       const sides = [pans.left, pans.right];
       // Name the x-containers first: if they won't share out, taking units away can't help.
       if (!sides.every((p) => p.x % g === 0)) return { ok: false, reason: "uneven_x" };

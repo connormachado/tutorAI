@@ -23,7 +23,8 @@ function play(p: LivePuzzle, move: PuzzleMove) {
   return v;
 }
 
-// Nicknames of real pro teams (NFL, NBA, MLB, NHL, MLS, WNBA). A skin's team may share none.
+// Nicknames of real pro teams (NFL, NBA, MLB, NHL, MLS, WNBA, Premier League) and common club
+// words. A skin's team may share none.
 const REAL_TEAMS = `cardinals falcons ravens bills panthers bears bengals browns cowboys broncos lions packers
   texans colts jaguars chiefs raiders chargers rams dolphins vikings patriots saints giants jets eagles steelers
   49ers seahawks buccaneers titans commanders hawks celtics nets hornets bulls cavaliers mavericks nuggets pistons
@@ -33,7 +34,9 @@ const REAL_TEAMS = `cardinals falcons ravens bills panthers bears bengals browns
   jays nationals ducks bruins sabres flames hurricanes blackhawks avalanche jackets stars wings oilers wild
   canadiens predators devils islanders senators flyers penguins sharks kraken blues lightning leafs canucks knights
   capitals mammoth galaxy sounders timbers whitecaps earthquakes dynamo rapids revolution herons aces dream fever
-  liberty lynx mercury mystics sparks storm valkyries`.split(/\s+/);
+  liberty lynx mercury mystics sparks storm valkyries sky sun tempo union crew fire united city inter
+  foxes gunners toffees magpies hammers villans villa cherries bees seagulls clarets cottagers wolves citizens
+  canaries owls blades potters baggies cats forest palace rovers wanderers albion athletic county`.split(/\s+/);
 
 describe("interest skins", () => {
   it("fills every slot, with Platy's own colors and made-up teams (R-35)", () => {
@@ -45,6 +48,13 @@ describe("interest skins", () => {
       for (const word of Object.values(s.words)) expect(word.trim()).not.toBe("");
       const words = s.team_name.toLowerCase().split(/\s+/);
       expect(words.filter((w) => REAL_TEAMS.includes(w)), s.team_name).toEqual([]);
+    }
+  });
+
+  it("names each team so it reads after 'the'", () => {
+    for (const interest of INTERESTS) {
+      const intro = line(live("spot_the_error"), SKINS[interest], (i) => i.intro);
+      expect(intro).not.toMatch(/\bthe team\b/i);
     }
   });
 
@@ -79,6 +89,13 @@ describe("puzzle items", () => {
     expect(b.instance_id).toBe(a.instance_id);
     expect(b.equation).toBe(a.equation);
     expect(b.instructions).not.toBe(a.instructions);
+  });
+
+  it("says one ball, not one balls", () => {
+    const p = live("balance");
+    p.n = { ...p.n, b: 1 };
+    p.hints = 2;
+    expect(nextHint(p, skin)).toContain("Take 1 ball off both sides");
   });
 
   it("has three hints, none of which gives the answer (R-02)", () => {
@@ -153,6 +170,35 @@ describe("spot the error grading", () => {
     expect(play(p, { check: "final_answer", text: `${answer} = x` })).toMatchObject({ outcome: "correct", solved: true });
   });
 
+  it("takes x on its own in any form, the way the item's equivalent_to check says", () => {
+    for (const form of ["x = N", "N = x", "1x = N", "N = 1x", "x + 0 = N", "(x) = N", "x/1 = N", "X = N", "N"]) {
+      const p = live("spot_the_error");
+      const { a, b, c, answer } = p.n;
+      play(p, { check: "found_error", line: 0 });
+      play(p, { check: "fixed_step", text: `${a}x = ${c + b}` });
+      expect(play(p, { check: "final_answer", text: form.replace("N", String(answer)) }), form).toMatchObject({ outcome: "correct", solved: true });
+    }
+  });
+
+  it("won't take another letter for x", () => {
+    const p = live("spot_the_error");
+    const { a, b, c, answer } = p.n;
+    play(p, { check: "found_error", line: 0 });
+    play(p, { check: "fixed_step", text: `${a}x = ${c + b}` });
+    expect(play(p, { check: "final_answer", text: `y = ${answer}` })?.outcome).toBe("unreadable");
+  });
+
+  it("reads the whole line, not just the part before a stray symbol", () => {
+    const p = live("spot_the_error");
+    const { a, b, c, answer } = p.n;
+    play(p, { check: "found_error", line: 0 });
+    for (const junk of [") - 5", " ] 3", " # 3", " % 3"]) {
+      expect(play(p, { check: "fixed_step", text: `${a}x = ${c + b}${junk}` })?.outcome, junk).toBe("unreadable");
+    }
+    play(p, { check: "fixed_step", text: `${a}x = ${c + b}` });
+    expect(play(p, { check: "final_answer", text: `x = ${answer * 2} : 2` })?.outcome).toBe("unreadable");
+  });
+
   it("notices when the final answer is the old line's answer", () => {
     const p = live("spot_the_error");
     const { a, b, c } = p.n;
@@ -185,8 +231,8 @@ describe("missing step grading", () => {
     const p = live("missing_step");
     const { a, b, c, answer } = p.n;
     expect(play(p, { check: "missing_line", text: `${a}x = ${c + b}` })?.ask?.ask).toContain(`adds $${b}$`);
-    expect(play(p, { check: "missing_line", text: `x = ${answer}` })?.ask?.ask).toContain("between these two lines");
-    expect(play(p, { check: "missing_line", text: `${a}x = 1` })?.ask?.ask).toContain("from the first line");
+    expect(play(p, { check: "missing_line", text: `x = ${answer}` })?.ask?.ask).toContain("where the solution ends up");
+    expect(play(p, { check: "missing_line", text: `${a}x = 1` })?.ask?.ask).toContain("from the problem");
   });
 });
 

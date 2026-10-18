@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Chat } from "./components/Chat";
 import { Mascot } from "./components/Mascot";
 import { OverlayPanel } from "./components/Overlays";
@@ -10,6 +10,9 @@ import type { DemoTrigger } from "./transport/types";
 export function App() {
   const s = useTutorSession();
   const { phase } = s.state;
+  const chatInput = useRef<HTMLInputElement>(null);
+  // A solved puzzle's reflection question arrives in the chat, so that's where focus goes next.
+  const focusChat = useCallback(() => chatInput.current?.focus(), []);
 
   return (
     <div className="app">
@@ -40,6 +43,8 @@ export function App() {
             <PuzzlePlayer
               key={s.state.puzzle.puzzle.instance_id}
               state={s.state.puzzle}
+              moving={s.state.moving}
+              onSolved={focusChat}
               onMove={s.puzzleMove}
               onHint={s.puzzleHint}
               onNext={s.puzzleNext}
@@ -52,6 +57,8 @@ export function App() {
             messages={s.state.messages}
             resetNote={s.state.resetNote}
             disabled={s.state.overlay !== null}
+            hold={s.state.moving || (s.state.puzzle !== null && s.state.puzzle.pending !== null)}
+            inputRef={chatInput}
             onSay={s.say}
           />
           {s.state.overlay && (
