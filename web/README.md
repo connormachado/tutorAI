@@ -93,7 +93,8 @@ Client to server: `kid_message {text}`, `answer {problem_id, text}`, `hint_reque
 Puzzles (R-32, R-35) add `puzzle {puzzle}`, `puzzle_result {instance_id, check, outcome}` and
 `puzzle_done {instance_id}` from the server, and `puzzle_move {instance_id, move}`,
 `puzzle_hint {instance_id}`, `puzzle_next {instance_id}` and `slot_pick {colors}` from the
-client. `docs/content-library.md` §6.5 explains them.
+client. `docs/content-library.md` §6.5 explains them, including why the chat waits between one
+problem or puzzle and the next.
 
 `answer_result`, `instruction`/`position`/`total` on `problem`, and `resume` are additions to the
 plan's first draft; they let the problem card give feedback and show progress. Answers are sent

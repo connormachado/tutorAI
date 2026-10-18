@@ -25,9 +25,10 @@ interface Props {
   disabled?: boolean;
   /** The symbol keys. Off where only a plain linear line is wanted, like a puzzle line. */
   keys?: boolean;
+  autoFocus?: boolean;
 }
 
-export function MathInput({ id, label, value, placeholder, onChange, onSubmit, disabled, keys = true }: Props) {
+export function MathInput({ id, label, value, placeholder, onChange, onSubmit, disabled, keys = true, autoFocus }: Props) {
   const input = useRef<HTMLInputElement>(null);
   const latex = kidMathToLatex(value);
 
@@ -56,6 +57,7 @@ export function MathInput({ id, label, value, placeholder, onChange, onSubmit, d
         value={value}
         placeholder={placeholder}
         disabled={disabled}
+        autoFocus={autoFocus}
         autoComplete="off"
         autoCorrect="off"
         autoCapitalize="off"

@@ -18,8 +18,10 @@ export function BalanceScale({ state, onMove, actions }: Props) {
   const { words } = puzzle.skin;
   const [take, setTake] = useState(1);
   const [groups, setGroups] = useState(2);
-  const busy = pending !== null || done;
-  const move = (m: BalanceMove) => onMove({ check: "move", move: m });
+  // Held, not disabled, while a move is graded, so focus stays on the button just pressed.
+  const busy = pending !== null;
+  const hold = busy || undefined;
+  const move = (m: BalanceMove) => !busy && onMove({ check: "move", move: m });
 
   return (
     <>
@@ -30,16 +32,16 @@ export function BalanceScale({ state, onMove, actions }: Props) {
       {!done && (
         <div className="balance__moves">
           <div className="balance__move">
-            <Stepper value={take} min={1} max={30} label={words.units} onChange={setTake} disabled={busy} />
+            <Stepper value={take} min={1} max={30} label={words.units} onChange={setTake} />
             <span className="balance__noun">{take === 1 ? words.unit : words.units}</span>
-            <button type="button" className="btn btn--primary" disabled={busy} onClick={() => move({ op: "remove_units", n: take })}>
+            <button type="button" className="btn btn--primary" aria-disabled={hold} onClick={() => move({ op: "remove_units", n: take })}>
               Take off both sides
             </button>
           </div>
           <div className="balance__move">
-            <Stepper value={groups} min={2} max={9} label="groups" onChange={setGroups} disabled={busy} />
+            <Stepper value={groups} min={2} max={9} label="groups" onChange={setGroups} />
             <span className="balance__noun">equal groups</span>
-            <button type="button" className="btn btn--primary" disabled={busy} onClick={() => move({ op: "split", groups })}>
+            <button type="button" className="btn btn--primary" aria-disabled={hold} onClick={() => move({ op: "split", groups })}>
               Split both sides
             </button>
           </div>
@@ -47,7 +49,7 @@ export function BalanceScale({ state, onMove, actions }: Props) {
       )}
       <div className="problem__actions">
         {!done && (
-          <button type="button" className="btn btn--quiet" disabled={busy} onClick={() => move({ op: "start_over" })}>
+          <button type="button" className="btn btn--quiet" aria-disabled={hold} onClick={() => move({ op: "start_over" })}>
             Start over
           </button>
         )}
@@ -57,15 +59,26 @@ export function BalanceScale({ state, onMove, actions }: Props) {
   );
 }
 
-function Stepper(props: { value: number; min: number; max: number; label: string; disabled: boolean; onChange: (n: number) => void }) {
-  const { value, min, max, label, disabled, onChange } = props;
+// At a limit the button is held rather than disabled, so pressing it to the end keeps focus.
+function Stepper(props: { value: number; min: number; max: number; label: string; onChange: (n: number) => void }) {
+  const { value, min, max, label, onChange } = props;
   return (
     <span className="stepper">
-      <button type="button" aria-label={`Fewer ${label}`} disabled={disabled || value <= min} onClick={() => onChange(value - 1)}>
+      <button
+        type="button"
+        aria-label={`Fewer ${label}`}
+        aria-disabled={value <= min || undefined}
+        onClick={() => onChange(Math.max(min, value - 1))}
+      >
         −
       </button>
       <output aria-live="polite">{value}</output>
-      <button type="button" aria-label={`More ${label}`} disabled={disabled || value >= max} onClick={() => onChange(value + 1)}>
+      <button
+        type="button"
+        aria-label={`More ${label}`}
+        aria-disabled={value >= max || undefined}
+        onClick={() => onChange(Math.min(max, value + 1))}
+      >
         +
       </button>
     </span>

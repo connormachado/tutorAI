@@ -88,7 +88,9 @@ export function missingStep(rng: Rng): MissingInstance {
     const answer = int(r, 1, 12);
     const b = int(r, 1, 20);
     const c = a * answer + b;
-    if (answer === a || answer === b || c > 120) return null;
+    // a and b share no factor, so no divide works before the b comes off and the blanked line
+    // is the only next step.
+    if (gcd(a, b) !== 1 || answer === a || answer === b || c > 120) return null;
     return {
       a, b, c, answer,
       equation: `${a}*x + ${b} = ${c}`,

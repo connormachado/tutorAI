@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ClientEvent, ServerEvent } from "../protocol";
+import { EXPLAIN_FIRST } from "../mock/script";
 import { MockTransport } from "./mock";
 
 const FAST = { thinkMs: 0, wordMs: 0, resetMs: 0 };
@@ -80,6 +81,18 @@ describe("MockTransport", () => {
     expect(h.problems()).toEqual(["p1", "warmup", "p1"]);
   });
 
+  it("adds the warm-up only once when a pause comes during the warm-up", async () => {
+    const h = harness();
+    await h.settle();
+    h.t.demo("pause");
+    await h.send({ type: "resume" });
+    h.t.demo("pause");
+    await h.send({ type: "resume" });
+    expect(h.problems()).toEqual(["p1", "warmup", "warmup"]);
+    await h.send({ type: "answer", problem_id: "warmup", text: "5" });
+    expect(h.problems()).toEqual(["p1", "warmup", "warmup", "p1"]);
+  });
+
   it("takes a partial answer to x^2 = 49 and asks for the other root", async () => {
     const h = harness();
     await h.settle();
@@ -149,7 +162,7 @@ describe("MockTransport", () => {
       expect(h.said(mark)).toEqual(["What does that line do to both sides, and does it follow from the line just above it?"]);
       mark = h.events.length;
       await h.send({ type: "kid_message", text: "it divides by 2" });
-      expect(h.said(mark).join(" ")).toContain("Look one line up");
+      expect(h.said(mark).join(" ")).toContain("Check each line against the one before it");
     });
 
     it("gives no hint before a first try (R-02)", async () => {
@@ -162,9 +175,10 @@ describe("MockTransport", () => {
       await h.send({ type: "puzzle_hint", instance_id: id });
       expect(h.said(mark).join(" ")).toContain("one try first");
       await h.send({ type: "puzzle_move", instance_id: id, move: { check: "missing_line", text: "x = 0" } });
+      await h.send({ type: "kid_message", text: "I guessed" });
       mark = h.events.length;
       await h.send({ type: "puzzle_hint", instance_id: id });
-      expect(h.said(mark).join(" ")).toContain("first line and the last line");
+      expect(h.said(mark).join(" ")).toContain("the problem and the last line");
     });
 
     it("changes the skin without touching the math or the progress (R-35)", async () => {
@@ -243,6 +257,52 @@ describe("MockTransport", () => {
       const reply = h.said(mark).join(" ");
       expect(reply).toContain("one try first");
       expect(reply).not.toContain("Want a hint?");
+    });
+
+    it("waits for the kid's explanation before giving a hint after a miss (R-03)", async () => {
+      const h = harness();
+      await h.settle();
+      h.t.demo("spot_the_error");
+      await h.settle();
+      const id = puzzlesIn(h)[0]!.instance_id;
+      await h.send({ type: "puzzle_move", instance_id: id, move: { check: "found_error", line: 1 } });
+      let mark = h.events.length;
+      await h.send({ type: "puzzle_hint", instance_id: id });
+      await h.send({ type: "puzzle_hint", instance_id: id });
+      expect(h.said(mark)).toEqual([EXPLAIN_FIRST, EXPLAIN_FIRST]);
+      await h.send({ type: "kid_message", text: "it divides by the number" });
+      mark = h.events.length;
+      await h.send({ type: "puzzle_hint", instance_id: id });
+      expect(h.said(mark).join(" ")).toContain("Go line by line");
+    });
+
+    it("suggests a pause after three misses on a puzzle, as on a problem (R-21)", async () => {
+      const h = harness();
+      await h.settle();
+      h.t.demo("missing_step");
+      await h.settle();
+      const id = puzzlesIn(h)[0]!.instance_id;
+      for (const text of ["x = 0", "x = 100", "x = 101"]) {
+        await h.send({ type: "puzzle_move", instance_id: id, move: { check: "missing_line", text } });
+        if (!h.events.some((e) => e.type === "pause_suggested")) await h.send({ type: "kid_message", text: "I guessed" });
+      }
+      expect(h.events.filter((e) => e.type === "pause_suggested")).toHaveLength(1);
+      await h.send({ type: "resume" });
+      expect(h.problems()).toEqual(["p1", "warmup"]);
+    });
+
+    it("gives no hint once the puzzle is solved, while the reflection question waits", async () => {
+      const h = harness();
+      await h.settle();
+      h.t.demo("balance");
+      await h.settle();
+      const p = puzzlesIn(h)[0]!;
+      if (p.template !== "balance") throw new Error("expected balance");
+      await h.send({ type: "puzzle_move", instance_id: p.instance_id, move: { check: "move", move: { op: "remove_units", n: p.start.left.units } } });
+      await h.send({ type: "puzzle_move", instance_id: p.instance_id, move: { check: "move", move: { op: "split", groups: p.start.left.x } } });
+      const mark = h.events.length;
+      await h.send({ type: "puzzle_hint", instance_id: p.instance_id });
+      expect(h.said(mark)).toEqual([]);
     });
 
     it("moves on from a finished puzzle when the kid taps keep going", async () => {

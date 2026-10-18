@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { type Ref, useEffect, useRef, useState } from "react";
 import { MathText } from "../math/MathText";
 import type { ChatMessage } from "../session/state";
 import { Mascot } from "./Mascot";
@@ -6,11 +6,18 @@ import { Mascot } from "./Mascot";
 interface Props {
   messages: ChatMessage[];
   resetNote: string | null;
+  /** An overlay is up. */
   disabled: boolean;
+  /**
+   * The server isn't ready for a message: a puzzle move is being graded, or the next problem
+   * is on its way. Typing still works; sending waits.
+   */
+  hold: boolean;
+  inputRef?: Ref<HTMLInputElement>;
   onSay: (text: string) => void;
 }
 
-export function Chat({ messages, resetNote, disabled, onSay }: Props) {
+export function Chat({ messages, resetNote, disabled, hold, inputRef, onSay }: Props) {
   const [draft, setDraft] = useState("");
   const end = useRef<HTMLDivElement>(null);
   const last = messages.at(-1);
@@ -22,7 +29,7 @@ export function Chat({ messages, resetNote, disabled, onSay }: Props) {
 
   const send = (text: string) => {
     const t = text.trim();
-    if (!t || disabled) return;
+    if (!t || disabled || hold) return;
     onSay(t);
     setDraft("");
   };
@@ -61,13 +68,14 @@ export function Chat({ messages, resetNote, disabled, onSay }: Props) {
           send(draft);
         }}
       >
-        <button type="button" className="chip" disabled={disabled} onClick={() => send("I'm stuck")}>
+        <button type="button" className="chip" disabled={disabled} aria-disabled={hold || undefined} onClick={() => send("I'm stuck")}>
           I'm stuck
         </button>
         <label htmlFor="say" className="visually-hidden">
           Message Platy
         </label>
         <input
+          ref={inputRef}
           id="say"
           className="chat__field"
           value={draft}
@@ -76,7 +84,7 @@ export function Chat({ messages, resetNote, disabled, onSay }: Props) {
           disabled={disabled}
           onChange={(e) => setDraft(e.target.value)}
         />
-        <button type="submit" className="btn btn--primary" disabled={disabled || !draft.trim()}>
+        <button type="submit" className="btn btn--primary" disabled={disabled || !draft.trim()} aria-disabled={hold || undefined}>
           Send
         </button>
       </form>

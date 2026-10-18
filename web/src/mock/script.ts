@@ -131,11 +131,15 @@ export const UNREADABLE = "Hmm, I couldn't read that as a number. Try something 
 
 export const OUT_OF_HINTS = "That's all my hints for this one. Give it a try, I'm right here.";
 
+/** The first rung of the de-escalation ladder (R-21), before the pause is suggested. */
+export const TAKE_A_BREATH = "This one's being stubborn. Let's take a breath.";
+
 // Puzzle turns (R-32). The items' own lines are in mock/puzzles.ts.
 export const REPAIR_LEAD =
   "I have a hunch about what happened there. Let's look at someone else's work first, then come back to this one.";
 export const DEMO_LEAD = "Let's try a quick puzzle.";
 export const TRY_FIRST = "Give it one try first, even a guess. Then I'll help.";
+export const EXPLAIN_FIRST = "Tell me what you were thinking first, then I'll help.";
 export const NO_ANSWERS_TRY_FIRST =
   "I won't just hand it over, because working it out is what makes it stick. Give it one try first, even a guess, and then I'll help.";
 export const PUZZLE_UNREADABLE = "I couldn't read that one. Write it as an equation with x, like the lines above.";

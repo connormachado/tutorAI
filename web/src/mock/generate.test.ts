@@ -42,6 +42,13 @@ describe("missing step generator", () => {
       expect([p.a, p.b]).not.toContain(p.answer);
     }
   });
+
+  it("never lets a divide come first, so the blanked step is the only next line", () => {
+    for (let seed = 1; seed <= 2000; seed++) {
+      const p = missingStep(seeded(seed));
+      for (let d = 2; d <= p.a; d++) expect(p.a % d === 0 && p.b % d === 0, p.equation).toBe(false);
+    }
+  });
 });
 
 describe("balance generator", () => {

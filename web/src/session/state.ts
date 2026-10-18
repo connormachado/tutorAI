@@ -45,6 +45,11 @@ export interface SessionState {
   /** Shown briefly when a hard reset clears the page. */
   resetNote: string | null;
   overlay: Overlay;
+  /**
+   * Between one problem or puzzle and the next. The chat waits, because the server would read
+   * anything sent now against the next problem.
+   */
+  moving: boolean;
   errorCode: string | null;
   solved: number;
 }
@@ -57,6 +62,7 @@ export const initialState: SessionState = {
   feedback: null,
   resetNote: null,
   overlay: null,
+  moving: false,
   errorCode: null,
   solved: 0,
 };
@@ -67,6 +73,7 @@ export type Action =
   | { type: "kid_said"; id: string; text: string }
   | { type: "answer_sent" }
   | { type: "puzzle_move_sent"; move: PuzzleMove }
+  | { type: "puzzle_next_sent" }
   | { type: "reset_note_done" }
   | { type: "take_break"; until: number }
   | { type: "close_overlay" }
@@ -96,6 +103,8 @@ export function reducer(state: SessionState, action: Action): SessionState {
       if (!p) return state;
       return { ...state, puzzle: { ...p, last: null, pending: action.move } };
     }
+    case "puzzle_next_sent":
+      return { ...state, moving: true };
     case "reset_note_done":
       return { ...state, resetNote: null };
     case "take_break":
@@ -123,22 +132,26 @@ function onServer(state: SessionState, event: ServerEvent): SessionState {
     }
     case "problem": {
       const { type: _type, ...problem } = event;
-      return { ...state, problem, feedback: null };
+      return { ...state, problem, feedback: null, moving: false };
     }
-    case "puzzle":
-      return { ...state, puzzle: onPuzzle(state.puzzle, event.puzzle) };
+    case "puzzle": {
+      // The same instance again is only a new look; a new one means the move is over.
+      const fresh = state.puzzle?.puzzle.instance_id !== event.puzzle.instance_id;
+      return { ...state, puzzle: onPuzzle(state.puzzle, event.puzzle), moving: state.moving && !fresh };
+    }
     case "puzzle_result":
       if (state.puzzle?.puzzle.instance_id !== event.instance_id) return state;
       return { ...state, puzzle: onVerdict(state.puzzle, event.check, event.outcome) };
     case "puzzle_done":
       if (state.puzzle?.puzzle.instance_id !== event.instance_id) return state;
-      return { ...state, puzzle: null };
+      return { ...state, puzzle: null, moving: true };
     case "answer_result":
       if (state.problem?.problem_id !== event.problem_id) return state;
       return {
         ...state,
         feedback: event.result,
         solved: event.result === "correct" ? state.solved + 1 : state.solved,
+        moving: state.moving || event.result === "correct",
       };
     case "reset":
       // A hard reset (R-17): the visible conversation is gone, not hidden.
@@ -148,6 +161,7 @@ function onServer(state: SessionState, event: ServerEvent): SessionState {
         problem: null,
         puzzle: null,
         feedback: null,
+        moving: true,
         // A topic_switch event just before the reset already named the new topic.
         resetNote: event.reason === "topic_switch" && state.resetNote ? state.resetNote : RESET_NOTES[event.reason],
       };

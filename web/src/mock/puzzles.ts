@@ -1,11 +1,10 @@
 import { applyMove, isSolved } from "../content/balance";
 import { balanceStage, missingStage, type Outcomes, spotStage } from "../content/progress";
 import type { CheckId, CheckOutcome, PaletteId, Pans, Puzzle, PuzzleMove, PuzzleTemplate, Skin } from "../content/types";
-import { checkAnswer, matchesValue } from "./answers";
 import {
   balance, type BalanceInstance, type MissingInstance, missingStep, type Rng, type SpotInstance, spotTheError,
 } from "./generate";
-import { hasSolution, readable, sameLine } from "./grade";
+import { bareNumber, hasSolution, readable, sameLine } from "./grade";
 
 // Mock-only puzzle items, interest skins and grading. They stand in for the server (R-32,
 // R-35): pick an item, generate an instance, resolve the skin, grade each move, and pick the
@@ -30,12 +29,12 @@ export const SKINS: Record<Interest, Skin> = {
     words: { container: "crate", containers: "crates", unit: "football", units: "footballs" },
   },
   gaming: {
-    interest: "gaming", colors: "purple_black", team_name: "Pixel Foxes", emblem: "bolt",
+    interest: "gaming", colors: "purple_black", team_name: "Pixel Pandas", emblem: "bolt",
     player_names: ["Rin", "Sam", "Zoe"],
     words: { container: "loot chest", containers: "loot chests", unit: "coin", units: "coins" },
   },
   neutral: {
-    interest: "neutral", colors: "blue_red", team_name: "Team Platy", emblem: "shield",
+    interest: "neutral", colors: "blue_red", team_name: "Platy Squad", emblem: "shield",
     player_names: ["Maya", "Omar", "Lena"],
     words: { container: "bag", containers: "bags", unit: "block", units: "blocks" },
   },
@@ -92,7 +91,7 @@ export const ITEMS: Record<PuzzleTemplate, Item> = {
     asks: {
       wrong_line: {
         ask: "What does that line do to both sides, and does it follow from the line just above it?",
-        nudge: "That line is done right, so the trouble starts earlier. Look one line up.",
+        nudge: "Check each line against the one before it, starting from the problem. Where does it stop following?",
       },
       same_op: {
         ask: "The equation takes ${b}$ away from ${a}x$. What did your line do to the ${b}$?",
@@ -129,7 +128,7 @@ export const ITEMS: Record<PuzzleTemplate, Item> = {
     intro: "{player} solved this for the {team}, but a line went missing.",
     instructions: "One line of {player}'s solution is missing. Write the line that goes in the gap.",
     hints: [
-      "Look at the first line and the last line. What has to happen in between?",
+      "Look at the problem and the last line. What has to happen to get from one to the other?",
       "Before you can divide, the ${b}$ has to go. What undoes adding it?",
       "Subtract ${b}$ from both sides. What line does that leave?",
     ],
@@ -142,11 +141,11 @@ export const ITEMS: Record<PuzzleTemplate, Item> = {
         nudge: "Adding ${b}$ again doesn't undo it. What does?",
       },
       skipped: {
-        ask: "That's true, but is it the step between these two lines? What comes right after the first move?",
+        ask: "That's true, but it's where the solution ends up. What does the line look like right after the first move?",
         nudge: "The missing line still has ${a}x$ in it.",
       },
       other: {
-        ask: "How did you get that from the first line?",
+        ask: "How did you get that from the problem?",
         nudge: "What has to happen to the ${b}$ before you can divide?",
       },
     },
@@ -162,7 +161,7 @@ export const ITEMS: Record<PuzzleTemplate, Item> = {
     hints: [
       "What's on the side with the {containers}, besides the {containers}?",
       "Take away the loose {units} first, from both sides so it stays level.",
-      "Take ${b}$ {units} off both sides, then split what's left.",
+      "Take {b_units} off both sides, then split what's left.",
     ],
     replies: {
       solved: "Level, and one {container} is alone. Each {container} holds {answer_units}, so $x = {answer}$.",
@@ -197,6 +196,8 @@ interface LiveBase {
   /** False until the first real attempt, so no hint comes before a try (R-02). */
   tried: boolean;
   hints: number;
+  /** Incorrect checks so far, for the de-escalation ladder (R-21). */
+  misses: number;
 }
 
 /** A puzzle the mock server is running: its numbers stay put when the skin changes. */
@@ -206,7 +207,7 @@ export type LivePuzzle =
   | (LiveBase & { template: "balance"; n: BalanceInstance; pans: Pans });
 
 export function newPuzzle(template: PuzzleTemplate, rng: Rng, instance_id: string): LivePuzzle {
-  const base = { item: ITEMS[template], instance_id, outcomes: {}, tried: false, hints: 0 };
+  const base = { item: ITEMS[template], instance_id, outcomes: {}, tried: false, hints: 0, misses: 0 };
   switch (template) {
     case "spot_the_error":
       return { ...base, template, n: spotTheError(rng) };
@@ -226,6 +227,7 @@ function vars(live: LivePuzzle, skin: Skin): Vars {
   const w = skin.words;
   const v: Vars = { ...w, team: skin.team_name, player: skin.player_names[0] ?? "", a, b, c, answer };
   v.answer_units = `${answer} ${answer === 1 ? w.unit : w.units}`;
+  v.b_units = `${b} ${b === 1 ? w.unit : w.units}`;
   return v;
 }
 
@@ -301,14 +303,20 @@ export function gradeMove(live: LivePuzzle, move: PuzzleMove, skin: Skin): Verdi
         return miss("fixed_step", "fix_other");
       }
       if (move.check === "final_answer" && stage === "finish") {
-        // x on its own ("12", "x = 12", "12 = x") is the answer; another true line isn't finished.
+        // The item's check is equivalent_to x = {answer}: "x = 12", "12 = x" and "1x = 12" are
+        // x on its own, and a bare number counts too. Another true line isn't finished yet.
+        const t = move.text;
         const wrong = Number(n.lines[1]!.split("=")[1]);
-        const result = checkAnswer(move.text, [n.answer]);
-        if (result === "correct") return pass("final_answer", true);
-        if (result !== "unreadable") return miss("final_answer", matchesValue(move.text, wrong) ? "old_answer" : "final_other");
-        if (!readable(move.text)) return unreadable("final_answer");
-        if (hasSolution(move.text, n.answer)) return miss("final_answer", "not_alone");
-        return miss("final_answer", hasSolution(move.text, wrong) ? "old_answer" : "final_other");
+        if (readable(t)) {
+          if (sameLine(t, `x = ${n.answer}`)) return pass("final_answer", true);
+          if (hasSolution(t, n.answer)) return miss("final_answer", "not_alone");
+          return miss("final_answer", hasSolution(t, wrong) ? "old_answer" : "final_other");
+        }
+        const value = bareNumber(t);
+        if (value === null) return unreadable("final_answer");
+        const is = (k: number) => Math.abs(value - k) < 1e-9;
+        if (is(n.answer)) return pass("final_answer", true);
+        return miss("final_answer", is(wrong) ? "old_answer" : "final_other");
       }
       return null;
     }

@@ -1,5 +1,5 @@
 import { evaluate } from "../math/evaluate";
-import { type Node, parseMath } from "../math/parse";
+import { type Node, parseMathStrict } from "../math/parse";
 
 // Mock-only grading for puzzle lines. In the real app the server grades every check with
 // primer.mathcheck (R-32); this stands in for it so the demo runs with no backend. It reads
@@ -33,8 +33,8 @@ function side(node: Node): Side | null {
 }
 
 function sides(text: string): [Side, Side] | null {
-  const node = parseMath(text);
-  if (node.kind !== "rel" || node.ops.length !== 1 || node.ops[0] !== "=") return null;
+  const node = parseMathStrict(text);
+  if (node?.kind !== "rel" || node.ops.length !== 1 || node.ops[0] !== "=") return null;
   const [l, r] = (node.parts as [Node, Node]).map(side);
   return l && r ? [l, r] : null;
 }
@@ -67,6 +67,14 @@ export function sameLine(text: string, expected: string): boolean {
 
 export function readable(text: string): boolean {
   return linearForm(text) !== null;
+}
+
+/** The value of a line that is just a number, like "12" or "24/2", or null. */
+export function bareNumber(text: string): number | null {
+  const node = parseMathStrict(text);
+  if (!node || node.kind === "rel" || node.kind === "list") return null;
+  const r = evaluate(node);
+  return r?.length === 1 ? r[0]! : null;
 }
 
 // Puzzles use x only; a capital X is still x.

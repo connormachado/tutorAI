@@ -21,8 +21,9 @@
       "ranges": { "a": [2, 6], "b": [2, 15], "answer": [2, 12] },
       "constraints": [
         "c = a*answer - b, and c > 0",
+        "c - b > 0, so the flawed line stays positive",
         "a divides 2*b, so the wrong path (subtracting b) also gives a whole number and the error isn't given away by a fraction",
-        "answer is not equal to a or b",
+        "answer is not equal to a, b, c or c - b: no number on screen, including the solution lines, is the answer",
         "the displayed solution subtracts b instead of adding it at step 0, then divides correctly at step 1"
       ]
     },
@@ -41,7 +42,7 @@
         "misconception": null,
         "looks_like": "taps step 1 (the division)",
         "ask": "What does that line do to both sides, and does it follow from the line just above it?",
-        "nudge": "That division is done right, so the trouble starts earlier. Look one line up."
+        "nudge": "Check each line against the one before it, starting from the problem. Where does it stop following?"
       },
       {
         "misconception": "undo_with_same_op",

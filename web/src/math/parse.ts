@@ -87,6 +87,8 @@ const REL_OPS = new Set<string>(["=", "<", ">", "≤", "≥", "≠"]);
 
 class Parser {
   private pos = 0;
+  /** Tokens dropped because they couldn't start anything. */
+  skipped = 0;
   constructor(private readonly toks: Token[]) {}
 
   // "7, -7" is a list. A token that can't start anything (a stray ")") is skipped rather than
@@ -98,6 +100,7 @@ class Parser {
         this.pos++;
         items.push(this.relation());
       } else {
+        this.skipped++;
         this.pos++;
       }
     }
@@ -238,4 +241,11 @@ export function unwrap(node: Node): Node {
 
 export function parseMath(src: string): Node {
   return new Parser(tokenize(src)).parse();
+}
+
+/** Like parseMath, but null when any of the input had to be dropped, so grading never reads a prefix. */
+export function parseMathStrict(src: string): Node | null {
+  const parser = new Parser(tokenize(src));
+  const node = parser.parse();
+  return parser.skipped > 0 ? null : node;
 }
