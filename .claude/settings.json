@@ -10,12 +10,18 @@
       "Bash(uv run lint-imports:*)",
       "Bash(git status:*)",
       "Bash(git diff:*)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [
       "Skill(codex:rescue)",
       "Skill(codex:rescue *)",
-      "Agent(codex:codex-rescue)"
+      "Agent(codex:codex-rescue)",
+      "Bash(git commit *--no-veri*)",
+      "Bash(git commit -n*)",
+      "Bash(git commit * -n*)",
+      "Bash(*ALLOW_GATE_CHANGE*)"
     ]
   },
   "hooks": {

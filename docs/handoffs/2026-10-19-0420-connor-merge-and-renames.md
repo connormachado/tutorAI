@@ -27,7 +27,7 @@
 - **One demo frontend:** `web/`, not Streamlit (A-11). "No async" is relaxed to "none outside the server's request/WebSocket handlers", because FastAPI WebSockets need it.
 - **The safety parent notice stays without parent features.** It's a legal duty, not a feature.
 - **`web/` is `[privacy]`** so browser-side child-content flows (storage, console, analytics, other hosts) get reviewed.
-- **Claude may commit non-gate changes** (Connor, 2026-10-19: `CLAUDE.md` The loop step 3, `/ship`, `/handoff`). It commits only what you or Connor decided, never rules it made up, and gate files still need you or Connor with `ALLOW_GATE_CHANGE=1`.
+- **Claude may commit non-gate changes** (Connor, 2026-10-19: `CLAUDE.md` The loop step 3, `/ship`, `/handoff`). It commits only what you or Connor decided, never rules it made up, and gate files still need you or Connor with `ALLOW_GATE_CHANGE=1`. `.claude/settings.json` allows `git add`/`git commit` and denies `--no-verify`, `-n` and any command naming `ALLOW_GATE_CHANGE`, so Claude can't set it or skip the hook (checked with dry runs).
 - **RAG restored to Not-V1** (Connor's call). `docs/content-library.md` §5 calls `tutor_notes` the RAG ground-truth layer, so scope-skeptic will CUT `tutor_notes` code until it has an R-id.
 
 ## Contract changes
