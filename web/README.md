@@ -114,5 +114,5 @@ as the kid typed them (`x^2 = 49`, `±7`); the server does the grading.
 
 Players for the other content formats (videos, songs, stories, the whiteboard), voice and
 photo input, onboarding mode (which also fills the personality file in V1), the
-13+ age gate (R-36) and a landing page. There's no parent side in V1: V1 is for students 13
-and up, and parent features come in V2/V3 (`REQUIREMENTS.md` § Audience).
+13+ age gate (R-36) and a landing page. There's no parent side in V1 beyond the safety parent notice on the
+demo panel (R-22): V1 is for students 13 and up, and parent features come in V2/V3 (`REQUIREMENTS.md` § Audience).

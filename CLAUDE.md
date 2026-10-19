@@ -1,6 +1,6 @@
 # The Primer
 
-Adaptive, privacy-first algebra tutor. V1 is for students 13 and up, with no parent features; parents come in V2/V3 (`REQUIREMENTS.md` § Audience). Python 3.12 + uv. Source of truth: `REQUIREMENTS.md` (R-ids), `PRIVACY.md` (P-ids), `DECISIONS.md` (A-ids, Connor's and Michael's; never edit). Harness design: `02-harness-proposal.md`.
+Adaptive, privacy-first algebra tutor. V1 is for students 13 and up, with no parent onboarding or account features (A-9 note); the safety parent notice stays. Parents come in V2/V3 (`REQUIREMENTS.md` § Audience). Python 3.12 + uv. Source of truth: `REQUIREMENTS.md` (R-ids), `PRIVACY.md` (P-ids), `DECISIONS.md` (A-ids, Connor's and Michael's; never edit). Harness design: `02-harness-proposal.md`.
 
 IMPORTANT: never persist raw conversation. Kid messages, model replies, transcripts, audio and photos never reach a DB, file, temp file, cache or log (P-1, P-10). Only `primer.gateway` talks to third-party networks (P-2).
 
@@ -45,7 +45,7 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 - Error text carries codes, never payloads: use `errors(include_input=False)` and `raise … from None`. Never set `ANTHROPIC_LOG`.
 
 **Every turn**
-- Safety runs first on every kid message. A disclosure gets the fixed text from `prompts/safety_escalation.md` (self-harm includes 988), sends exactly one codes-only `ParentNotice`, and stops tutoring. A safety stop is not an A-4 reset. If the safety call itself errors, the session fails closed and never falls through to the tutor.
+- Safety runs first on every kid message. A disclosure gets the fixed text from `prompts/safety_escalation.md` (self-harm includes 988), sends exactly one codes-only `ParentNotice` (held in memory and shown on the demo panel; A-9 note), and stops tutoring. A safety stop is not an A-4 reset. If the safety call itself errors, the session fails closed and never falls through to the tutor.
 - Policy (pure) decides each turn's allowed and required actions and its probe candidates. The tutor returns a `TutorMove` (action, probe_id, message). Every move passes `policy/checks.py` before the kid sees it: answer leak (via `mathcheck`, unless policy allows a reveal), length cap (R-06), a real probe id from policy's candidates (R-01), and the allowed or required action (R-02, R-30). On a violation, regenerate once with the violation codes. If it fails again, show the fixed recovery line from `prompts/`.
 
 **Kid content and files**

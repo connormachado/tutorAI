@@ -22,6 +22,7 @@
 *Amended 2026-10-18 (Connor and Michael): moved from V1.5 to V1. It read: "Deferred to V1.5. V1 is chat/voice only, algebra only, no shared visual canvas. A diff that adds a drawing/whiteboard surface contradicts this."*
 
 **A-9. Onboarding.** Two tracks: (1) kid-facing warm chat with embedded low-stakes diagnostic problems, generating real BKT signal — not self-report; (2) parent-facing questionnaire (interests, motivational hooks, sensitive topics — the personality file) plus an optional one-time grade/transcript share, used only as a rough bootstrap prior and then discarded. No school-record integration (parent-shared data about their own child is not FERPA-covered).
+*Note 2026-10-18 (Connor and Michael): the V1 demo is for students 13 and up, with no parent onboarding or parent account features. Track (2) is deferred until after the demo, so in V1 the student fills the personality file in the track (1) chat. The safety parent-notice path stays: detection, then an in-memory notice, shown on the demo panel. It's a legal duty, not a parent feature.*
 
 **A-10. Efficacy metric.** Learning-gain (pretest/posttest on related-but-not-identical material) is the external validity metric — not raw BKT prediction accuracy, which is an internal engineering diagnostic only.
 
