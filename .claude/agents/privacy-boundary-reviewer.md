@@ -16,6 +16,7 @@ The caller gives you the diff command, the matched `[privacy]` paths, and the da
 - **PII store:** fields outside the allowlist, free-form text fields, access that bypasses `platy.store` (P-6); unencrypted profile or mastery state (P-7).
 - **Upload path:** anything leaving for BKT fitting without opt-in, or with identifiable fields (P-9).
 - **Tooling:** real child data in fixtures, demos or evals (P-13).
+- **Browser (`web/`):** child content written to localStorage, sessionStorage, IndexedDB, cookies or a service-worker cache, logged to the console, or put in a URL or query string (P-1, P-10); an analytics, error-tracking or remote script/font dependency (P-11); a secret in a `VITE_` variable, which Vite ships to the browser; a request or socket to any host other than Platy's own server (P-2, P-11).
 - **Age data:** an entered age or birth date that is stored, logged, sent anywhere or put in exception text. The age gate keeps only a yes/no "13 or older" (P-15).
 
 ## Don't re-check what's mechanical

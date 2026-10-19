@@ -32,7 +32,7 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 - Pure functions with no I/O: `skills`, `mathcheck`, `mastery`, `policy`, prompt rendering, cost estimates. I/O lives only in `config`, `gateway`, `fsio`, `session`, `server` and `evaluation`. Reading packaged data via `importlib.resources` (skill graph, BKT params, prompts, demo profile) is allowed anywhere; writes, network and env reads are not.
 - Prompt text and fixed child-facing text live only in `src/platy/prompts/*.md` (`[pedagogy]`, so the eval gate runs). Never inline them in Python.
 - Config: `src/platy/config.toml` + `config.py` (both `[privacy]`). The only env var is `ANTHROPIC_API_KEY`: read once, held as `SecretStr`, passed explicitly to the client, and never in a file, log or repr. Model ids can't be overridden from env.
-- The FastAPI server runs with `debug=False`, sends no telemetry, and answers errors with codes only, never exception text or payloads (P-10, P-11), asserted by a fast test when it lands. `web/` never holds `ANTHROPIC_API_KEY` or any other secret (Vite ships every `VITE_` variable to the browser), and `web/src/privacy.test.ts` keeps it off browser storage, the console, analytics and remote assets (P-1, P-10, P-11).
+- The FastAPI server (`[privacy]`) runs with `debug=False`, sends no telemetry, and answers errors with codes only, never exception text or payloads (P-10, P-11), asserted by a fast test when it lands. `web/` (`[privacy]`) never holds `ANTHROPIC_API_KEY` or any other secret (Vite ships every `VITE_` variable to the browser), and `web/src/privacy.test.ts` keeps it off browser storage, the console, analytics and remote assets (P-1, P-10, P-11).
 - `pyBKT` and `sympy` are each imported in exactly one module (`mastery/bkt.py`, `mathcheck.py`), behind typed functions. Pyright suppressions name the rule.
 
 **LLM calls**
@@ -54,7 +54,7 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 - All file writes go through `platy.fsio`: a temp file in the same dir, fsync, then `os.replace`. The single exception is the usage JSONL: one `O_APPEND` line, then fsync. Every persisted JSON has `schema_version`. Runtime output goes in `var/` (gitignored).
 - Correctness is decided by sympy, never by a model. Child input is whitelisted before sympy sees it, because `sympify` calls `eval`.
 
-**Tests**: every module gets unit tests, with LLM calls faked. Live tests use `@pytest.mark.llm` (the registered marker the gate excludes; never `live`) and are skipped unless `PRIMER_RUN_LLM=1`. The canary test lands with the first session code. Done means `scripts/check` is green, and pyright strict is the type gate.
+**Tests**: every module gets unit tests, with LLM calls faked. Live tests use `@pytest.mark.llm` (the registered marker the gate excludes; never `live`) and are skipped unless `PLATY_RUN_LLM=1`. The canary test lands with the first session code. Done means `scripts/check` is green, and pyright strict is the type gate.
 
 **Scope**: no features, UI polish or abstractions nobody asked for. List them at the end of your reply instead.
 

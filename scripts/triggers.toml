@@ -4,8 +4,8 @@
 
 [privacy]       # -> privacy-boundary-reviewer + Codex (/ship); diagram LLM refresh
 paths = ["src/platy/gateway/*", "src/platy/store/*", "src/platy/session/*",
-         "src/platy/logging*", "src/platy/config*", "pyproject.toml",
-         ".streamlit/*"]
+         "src/platy/logging*", "src/platy/config*", "src/platy/server*",
+         "src/platy/fsio*", "pyproject.toml", "web/*", ".streamlit/*"]
 
 [mastery_math]  # -> Codex (/ship)
 paths = ["src/platy/mastery/*"]
