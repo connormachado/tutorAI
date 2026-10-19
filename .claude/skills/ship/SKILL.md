@@ -1,11 +1,11 @@
 ---
 name: ship
-description: The per-task review loop for The Primer. Run when a task's code and tests are done. Gate, then eval if triggered, then diagram, then the reviewers in parallel, then a summary and commit message. Never commits; Connor or Michael does.
+description: The per-task review loop for The Primer. Run when a task's code and tests are done. Gate, then eval if triggered, then diagram, then the reviewers in parallel, then a summary and commit message. Commits non-gate changes; gate-file changes are Connor's or Michael's to commit.
 ---
 
 # /ship
 
-Run this at the end of every task. It is the review step and the last step before Connor or Michael commits. **Never run `git commit` yourself.**
+Run this at the end of every task. It is the review step and the last step before the commit. **You may commit non-gate changes yourself. Gate-file changes are committed only by Connor or Michael, with `ALLOW_GATE_CHANGE=1`, which you never set** (CLAUDE.md, The loop, step 3).
 
 ## 0. Task header (required)
 State it before anything else. If you can't fill a line, stop and ask:
@@ -57,4 +57,4 @@ UI changed → consider /demo-check        (only if web/ changed)
 Run the `change-summarizer` agent (default mode, short message). Show the message.
 
 ## 5. Handoff
-Run `/handoff` so the note lands in the same commit, then **stop**. Connor or Michael stages with `git add -A` and commits. Pre-commit re-runs the gate, the eval (cached) and the diagram (stamp fresh, so no LLM call), and stages AS-BUILT.md into the commit.
+Run `/handoff` so the note lands in the same commit. If `gate files changed: n`, you may stage with `git add -A` and commit with the step 4 message; otherwise Connor or Michael commits. Then **stop**. Pre-commit re-runs the gate, the eval (cached) and the diagram (stamp fresh, so no LLM call), and stages AS-BUILT.md into the commit.

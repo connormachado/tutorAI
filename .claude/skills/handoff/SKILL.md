@@ -1,6 +1,6 @@
 ---
 name: handoff
-description: Write the session handoff note in docs/handoffs/ so the other cofounder and their AI tools can pick up where this session left off. Run at the end of any session or run that changed the repo, after /ship when there is one. Never commits.
+description: Write the session handoff note in docs/handoffs/ so the other cofounder and their AI tools can pick up where this session left off. Run at the end of any session or run that changed the repo, after /ship when there is one. Doesn't commit by itself; the note goes in the session's commit.
 ---
 
 # /handoff
@@ -52,4 +52,4 @@ Use exactly these headings. Keep it under about 60 lines; link to files, PRs and
 - No secrets, tokens or local paths from your machine.
 - State what was checked (a test name, `scripts/check` output) versus what is inferred.
 - Don't hand-edit `diagrams/AS-BUILT.md` or gate files to "document" them; note the change here instead.
-- Write the note, show its path, then stop. The handoff is committed with the session's other changes (Connor or Michael commits on `main`; branch work goes in its PR).
+- Write the note and show its path. It's committed with the session's other changes: by you if no gate file changed, otherwise by Connor or Michael (CLAUDE.md, The loop, step 3). On `main` that's one commit; branch work goes in its PR. Then stop.
