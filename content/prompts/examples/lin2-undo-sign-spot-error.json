@@ -1,0 +1,102 @@
+{
+  "descriptor": {
+    "schema_version": 1,
+    "format": "puzzle",
+    "role": "repair",
+    "skills": { "primary": "two_step_equations", "touches": ["one_step_equations"] },
+    "angle": "spot-the-error",
+    "misconceptions": ["undo_with_same_op"],
+    "difficulty": 2,
+    "duration_s": 90,
+    "interest_tags": [],
+    "sensitive_tags": [],
+    "base_item": null,
+    "reading_level": 6
+  },
+  "body": {
+    "template": "spot_the_error",
+    "instructions": "One line in this solution is wrong. Tap it, then write what it should say.",
+    "generator": {
+      "shape": "a*x - b = c",
+      "ranges": { "a": [2, 6], "b": [2, 15], "answer": [2, 12] },
+      "constraints": [
+        "c = a*answer - b, and c > 0",
+        "c - b > 0, so the flawed line stays positive",
+        "a divides 2*b, so the wrong path (subtracting b) also gives a whole number and the error isn't given away by a fraction",
+        "answer is not equal to a, b, c or c - b: no number on screen, including the solution lines, is the answer",
+        "the displayed solution subtracts b instead of adding it at step 0, then divides correctly at step 1"
+      ]
+    },
+    "checks": [
+      { "check": "found_error", "skill": "one_step_equations", "kind": "ui_state", "expected": "the student taps step 0" },
+      { "check": "fixed_step", "skill": "one_step_equations", "kind": "equivalent_to", "expected": "{a}*x = {c + b}" },
+      { "check": "final_answer", "skill": "two_step_equations", "kind": "equivalent_to", "expected": "x = {answer}" }
+    ],
+    "hints": [
+      "Go line by line. For each line, ask: does this undo what's being done to x?",
+      "Look at how the 'minus' part was handled. What's the opposite of taking something away?",
+      "To undo a subtraction, add the same amount to both sides. Which line didn't do that?"
+    ],
+    "wrong_answer_prompts": [
+      {
+        "misconception": null,
+        "looks_like": "taps step 1 (the division)",
+        "ask": "What does that line do to both sides, and does it follow from the line just above it?",
+        "nudge": "Check each line against the one before it, starting from the problem. Where does it stop following?"
+      },
+      {
+        "misconception": "undo_with_same_op",
+        "looks_like": "replaces step 0 with a*x = c - b again, or with another subtraction",
+        "ask": "The equation takes b away from a*x. What did your line do to the b?",
+        "nudge": "Taking b away a second time doesn't undo it. Think about what would put it back."
+      }
+    ]
+  },
+  "math": {
+    "problems": [
+      {
+        "id": "p1",
+        "variable": "x",
+        "equation": "2*x - 7 = 9",
+        "steps": [
+          { "expr": "2*x = 2", "says": "Subtract 7 from both sides. (Wrong: it should add 7.)" },
+          { "expr": "x = 1", "says": "Divide both sides by 2." }
+        ],
+        "answer": "8",
+        "intentional_error_step": 0,
+        "from_words": null
+      },
+      {
+        "id": "p2",
+        "variable": "x",
+        "equation": "3*x - 9 = 12",
+        "steps": [
+          { "expr": "3*x = 3", "says": "Subtract 9 from both sides. (Wrong: it should add 9.)" },
+          { "expr": "x = 1", "says": "Divide both sides by 3." }
+        ],
+        "answer": "7",
+        "intentional_error_step": 0,
+        "from_words": null
+      },
+      {
+        "id": "p3",
+        "variable": "x",
+        "equation": "4*x - 6 = 14",
+        "steps": [
+          { "expr": "4*x = 8", "says": "Subtract 6 from both sides. (Wrong: it should add 6.)" },
+          { "expr": "x = 2", "says": "Divide both sides by 4." }
+        ],
+        "answer": "5",
+        "intentional_error_step": 0,
+        "from_words": null
+      }
+    ]
+  },
+  "tutor_notes": {
+    "key_idea": "To undo taking a number away, add it back to both sides.",
+    "worked_problem": "2x - 7 = 9",
+    "follow_up_prompt": "How could you have caught that mistake without redoing the whole problem?",
+    "reflection_prompt": "What made you suspect that line? Where would you start looking next time?"
+  },
+  "author_notes": "The 'says' text marks the wrong step for reviewers only; the student sees just the equations. The follow-up is meant to lead to checking by substitution."
+}

@@ -1,7 +1,11 @@
+import type { PaletteId, PuzzleMove, PuzzleTemplate } from "../content/types";
 import { checkAnswer, matchesValue, readAnswer } from "../mock/answers";
+import { seeded } from "../mock/generate";
+import { gradeMove, INTERESTS, type Interest, type LivePuzzle, line, newPuzzle, nextHint, skinFor, toWire } from "../mock/puzzles";
 import {
-  CLOSING, CONFIDENCE_BUILDER, LESSON, NO_ANSWERS, NUDGES, OPENING, OUT_OF_HINTS,
-  SAFETY_RESOURCES, type ScriptedProblem, UNREADABLE,
+  BACK_TO_IT, CLOSING, CONFIDENCE_BUILDER, DEMO_LEAD, EXPLAIN_FIRST, LESSON, NO_ANSWERS, NO_ANSWERS_TRY_FIRST, NUDGES, OPENING,
+  OUT_OF_HINTS, PUZZLE_NUDGE, PUZZLE_UNREADABLE, REPAIR_LEAD, SAFETY_RESOURCES, type ScriptedProblem, TAKE_A_BREATH, TRY_FIRST,
+  UNREADABLE,
 } from "../mock/script";
 import type { ClientEvent, ServerEvent, SessionMode } from "../protocol";
 import type { DemoTrigger, TutorTransport } from "./types";
@@ -37,7 +41,21 @@ export class MockTransport implements TutorTransport {
   private solved = 0;
   private nudge = 0;
 
-  constructor(private readonly timing: MockTiming = DEMO_TIMING) {}
+  // Puzzles (R-37). While one runs, `current` is null and `returnTo` holds the problem to go
+  // back to. The skin's interest and the kid's color pick last for the session (R-38).
+  private puzzle: LivePuzzle | null = null;
+  private returnTo: ScriptedProblem | null = null;
+  private puzzles = 0;
+  private interest: Interest = "soccer";
+  private colors: PaletteId | null = null;
+  private puzzleNudge: string | null = null;
+  private reflecting = false;
+  private repaired = false;
+
+  constructor(
+    private readonly timing: MockTiming = DEMO_TIMING,
+    private readonly seed = 20261018,
+  ) {}
 
   async start(_mode: SessionMode, onEvent: (event: ServerEvent) => void): Promise<void> {
     this.emit = onEvent;
@@ -75,8 +93,15 @@ export class MockTransport implements TutorTransport {
           this.closed = true;
           return;
         case "skip":
-          if (this.current) await this.finishProblem();
+          if (this.puzzle) await this.finishPuzzle();
+          else if (this.current) await this.finishProblem();
           return;
+        case "interest":
+          this.interest = INTERESTS[(INTERESTS.indexOf(this.interest) + 1) % INTERESTS.length]!;
+          this.reskin();
+          return;
+        default:
+          await this.startPuzzle(trigger, DEMO_LEAD);
       }
     });
   }
@@ -109,7 +134,21 @@ export class MockTransport implements TutorTransport {
         if (p && event.problem_id === p.problem_id) await this.answer(p, event.text);
         return;
       case "kid_message":
-        await this.chat(p, event.text);
+        if (this.puzzle) await this.puzzleChat(this.puzzle, event.text);
+        else await this.chat(p, event.text);
+        return;
+      case "puzzle_move":
+        if (this.puzzle?.instance_id === event.instance_id) await this.puzzleMove(this.puzzle, event.move);
+        return;
+      case "puzzle_hint":
+        if (this.puzzle?.instance_id === event.instance_id) await this.puzzleHint(this.puzzle);
+        return;
+      case "puzzle_next":
+        if (this.puzzle?.instance_id === event.instance_id && this.reflecting) await this.finishPuzzle();
+        return;
+      case "slot_pick":
+        this.colors = event.colors;
+        this.reskin();
         return;
     }
   }
@@ -160,11 +199,13 @@ export class MockTransport implements TutorTransport {
     }
     this.misses++;
     const slip = p.misconceptions.find((m) => matchesValue(text, m.value));
-    if (this.misses >= 3 && !this.pivoted) {
+    if (slip?.repair && !this.repaired) {
+      // A slip with a repair puzzle: work on it there first, then come back (R-37).
+      this.repaired = true;
+      await this.startPuzzle(slip.repair, REPAIR_LEAD);
+    } else if (this.misses >= 3 && !this.pivoted) {
       // Third miss on one problem: first rung of the de-escalation ladder (R-21).
-      this.paused = true;
-      await this.say("This one's being stubborn. Let's take a breath.");
-      this.out({ type: "pause_suggested" });
+      await this.suggestPause();
     } else if (slip) {
       await this.say(slip.reply);
     } else if (this.misses === 1) {
@@ -176,13 +217,26 @@ export class MockTransport implements TutorTransport {
     }
   }
 
+  private async suggestPause(): Promise<void> {
+    this.paused = true;
+    await this.say(TAKE_A_BREATH);
+    this.out({ type: "pause_suggested" });
+  }
+
   private async pivot(): Promise<void> {
     this.pivoted = true;
+    // The reset below clears any puzzle on screen, so drop it here too. The lesson picks up
+    // where it was after the warm-up.
+    this.puzzle = null;
+    this.returnTo = null;
+    this.reflecting = false;
+    this.puzzleNudge = null;
     this.out({ type: "topic_switch", label: "Quick confidence builder" });
     this.out({ type: "reset", reason: "topic_switch" });
     await this.sleep(this.timing.resetMs);
-    // Come back to the problem they were stuck on after the easier one.
-    this.order.splice(this.index, 0, CONFIDENCE_BUILDER);
+    // Come back to the problem they were stuck on after the easier one. A pause during the
+    // warm-up itself starts it again rather than adding a second one.
+    if (this.order[this.index] !== CONFIDENCE_BUILDER) this.order.splice(this.index, 0, CONFIDENCE_BUILDER);
     await this.present(CONFIDENCE_BUILDER);
   }
 
@@ -203,14 +257,14 @@ export class MockTransport implements TutorTransport {
     await this.present(next);
   }
 
-  private async present(p: ScriptedProblem): Promise<void> {
+  private async present(p: ScriptedProblem, intro = p.intro): Promise<void> {
     this.current = p;
     this.misses = 0;
     this.hintsUsed = 0;
     this.awaitingWhy = false;
     const lessonOnly = this.order.filter((q) => q !== CONFIDENCE_BUILDER);
     const position = lessonOnly.indexOf(p) + 1;
-    for (const line of p.intro) await this.say(line);
+    for (const text of intro) await this.say(text);
     this.out({
       type: "problem",
       problem_id: p.problem_id,
@@ -220,6 +274,126 @@ export class MockTransport implements TutorTransport {
       position, // 0 for the confidence builder, which isn't one of the lesson's problems
       total: lessonOnly.length,
     });
+  }
+
+  private skin() {
+    return skinFor(this.interest, this.colors);
+  }
+
+  private async startPuzzle(template: PuzzleTemplate, lead: string): Promise<void> {
+    if (!this.puzzle) this.returnTo = this.current;
+    this.current = null;
+    this.awaitingWhy = false;
+    this.puzzleNudge = null;
+    this.reflecting = false;
+    await this.say(lead);
+    this.out({ type: "topic_switch", label: "Quick puzzle" });
+    this.out({ type: "reset", reason: "topic_switch" });
+    await this.sleep(this.timing.resetMs);
+    this.puzzles++;
+    const live = newPuzzle(template, seeded(this.seed + this.puzzles), `${template}-${this.puzzles}`);
+    this.puzzle = live;
+    await this.say(line(live, this.skin(), (i) => i.intro));
+    this.out({ type: "puzzle", puzzle: toWire(live, this.skin()) });
+  }
+
+  /** Same puzzle, same progress, new look: an interest switch or the kid's color pick. */
+  private reskin(): void {
+    if (this.puzzle) this.out({ type: "puzzle", puzzle: toWire(this.puzzle, this.skin()) });
+  }
+
+  private async puzzleMove(live: LivePuzzle, move: PuzzleMove): Promise<void> {
+    const skin = this.skin();
+    const v = gradeMove(live, move, skin);
+    if (!v) return;
+    // A first try unlocks hints (R-02). Starting over or an unreadable line isn't one.
+    const startOver = move.check === "move" && move.move.op === "start_over";
+    if (!startOver && v.outcome !== "unreadable") live.tried = true;
+    if (v.outcome === "incorrect") live.misses++;
+    live.outcomes[v.check] = v.outcome;
+    if (v.pans && live.template === "balance") live.pans = v.pans;
+    this.out({ type: "puzzle_result", instance_id: live.instance_id, check: v.check, outcome: v.outcome });
+    if (v.solved && live.template === "balance") {
+      live.outcomes.solved = "correct";
+      this.out({ type: "puzzle_result", instance_id: live.instance_id, check: "solved", outcome: "correct" });
+    }
+    this.puzzleNudge = null;
+    if (v.outcome === "unreadable") {
+      await this.say(PUZZLE_UNREADABLE);
+    } else if (v.ask && live.misses >= 3 && !this.pivoted) {
+      // Third miss on one puzzle: the same first rung as on a problem (R-21).
+      await this.suggestPause();
+    } else if (v.ask) {
+      // A miss: the puzzle stops and the tutor asks first (R-03). The nudge waits for the kid.
+      this.puzzleNudge = v.ask.nudge;
+      await this.say(v.ask.ask);
+    } else {
+      if (v.reply) await this.say(v.reply);
+      if (v.solved) {
+        this.reflecting = true;
+        await this.say(line(live, skin, (i) => i.reflection));
+      }
+    }
+  }
+
+  private async puzzleHint(live: LivePuzzle): Promise<void> {
+    // Solved: the reflection question is waiting, and there's nothing left to hint at.
+    if (this.reflecting) return;
+    if (!live.tried) {
+      await this.say(TRY_FIRST); // no hint before a first try (R-02)
+      return;
+    }
+    if (this.puzzleNudge) {
+      await this.say(EXPLAIN_FIRST); // their explanation of the miss comes first (R-03)
+      return;
+    }
+    const hint = nextHint(live, this.skin());
+    if (hint === null) {
+      await this.say(OUT_OF_HINTS);
+      return;
+    }
+    live.hints++;
+    await this.say(hint);
+  }
+
+  private async puzzleChat(live: LivePuzzle, text: string): Promise<void> {
+    if (this.reflecting) {
+      await this.say(line(live, this.skin(), (i) => i.thanks));
+      await this.finishPuzzle();
+    } else if (this.puzzleNudge) {
+      const nudge = this.puzzleNudge;
+      this.puzzleNudge = null;
+      await this.say(nudge);
+    } else if (/just tell me|what'?s the answer|give me the answer|tell me the answer/i.test(text)) {
+      // NO_ANSWERS offers a hint, which can't come before a first try (R-02).
+      await this.say(live.tried ? NO_ANSWERS : NO_ANSWERS_TRY_FIRST);
+    } else if (/\b(idk|i don'?t know|stuck|confused|hint|help)\b/i.test(text)) {
+      await this.puzzleHint(live);
+    } else {
+      await this.say(PUZZLE_NUDGE);
+    }
+  }
+
+  private async finishPuzzle(): Promise<void> {
+    const live = this.puzzle;
+    if (!live) return;
+    this.out({ type: "puzzle_done", instance_id: live.instance_id });
+    this.puzzle = null;
+    this.reflecting = false;
+    this.puzzleNudge = null;
+    await this.sleep(this.timing.resetMs);
+    this.out({ type: "reset", reason: "problem_end" });
+    await this.sleep(this.timing.resetMs);
+    const back = this.returnTo;
+    this.returnTo = null;
+    const next = back ?? this.order[this.index];
+    if (!next) {
+      await this.say(CLOSING);
+      this.out({ type: "session_end", solved: this.solved });
+      this.closed = true;
+      return;
+    }
+    await this.present(next, back ? [BACK_TO_IT] : next.intro);
   }
 
   private async say(text: string): Promise<void> {

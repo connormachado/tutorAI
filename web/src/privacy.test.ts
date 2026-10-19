@@ -14,6 +14,14 @@ function sources(dir: string): string[] {
   });
 }
 
+function stylesheets(dir: string): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const path = join(dir, name);
+    if (statSync(path).isDirectory()) return stylesheets(path);
+    return name.endsWith(".css") ? [path] : [];
+  });
+}
+
 describe("browser privacy guardrails", () => {
   const files = sources(join(root, "src")).map((path) => ({ path, text: readFileSync(path, "utf8") }));
 
@@ -35,8 +43,9 @@ describe("browser privacy guardrails", () => {
 
   it("loads no remote scripts, styles or fonts", () => {
     const html = readFileSync(join(root, "index.html"), "utf8");
-    const css = readFileSync(join(root, "src/styles.css"), "utf8");
     expect(html).not.toMatch(/(src|href)="https?:/);
-    expect(css).not.toMatch(/@import\s+url\(\s*["']?https?:/);
+    for (const path of stylesheets(join(root, "src"))) {
+      expect(readFileSync(path, "utf8"), path).not.toMatch(/(@import|url\()\s*["']?https?:/);
+    }
   });
 });

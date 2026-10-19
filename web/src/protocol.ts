@@ -2,6 +2,8 @@
 // proposal (see web/README.md) until Connor's backend agrees it. The mock transport and
 // the WebSocket transport both speak exactly these events.
 
+import type { CheckId, CheckOutcome, PaletteId, Puzzle, PuzzleMove } from "./content/types";
+
 export type SessionMode = "onboarding" | "tutoring";
 
 export interface Problem {
@@ -36,7 +38,15 @@ export type ServerEvent =
   | { type: "safety_escalation"; resources: SafetyResource[] }
   /** Fail closed (P-3): the session is over, show a calm error. */
   | { type: "error"; code: string }
-  | { type: "session_end"; solved: number };
+  | { type: "session_end"; solved: number }
+  /**
+   * Content (R-37). A puzzle replaces the problem card until puzzle_done. A second puzzle
+   * event with the same instance_id only changes its look (a new skin), not its progress.
+   */
+  | { type: "puzzle"; puzzle: Puzzle }
+  /** The server's verdict on one move. "solved" arrives when a balance scale is finished. */
+  | { type: "puzzle_result"; instance_id: string; check: CheckId; outcome: CheckOutcome }
+  | { type: "puzzle_done"; instance_id: string };
 
 export type ClientEvent =
   | { type: "kid_message"; text: string }
@@ -44,4 +54,11 @@ export type ClientEvent =
   | { type: "hint_requested"; problem_id: string }
   /** The kid chose "keep going" on the pause screen. */
   | { type: "resume" }
-  | { type: "end_session" };
+  | { type: "end_session" }
+  /** What the student did in a puzzle. The server grades it; the client never sends "correct". */
+  | { type: "puzzle_move"; instance_id: string; move: PuzzleMove }
+  | { type: "puzzle_hint"; instance_id: string }
+  /** The student finished a puzzle and is ready to move on. */
+  | { type: "puzzle_next"; instance_id: string }
+  /** The student's own pick for a skin slot (R-38), from a fixed palette, never free text. */
+  | { type: "slot_pick"; colors: PaletteId };

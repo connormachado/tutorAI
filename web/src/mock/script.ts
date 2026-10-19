@@ -3,6 +3,7 @@
 // short replies with one idea each (R-06), and a pivot when a kid keeps missing (R-21).
 // Everything here is fake content; no real kid data is involved (P-13).
 
+import type { PuzzleTemplate } from "../content/types";
 import type { SafetyResource } from "../protocol";
 
 export interface ScriptedProblem {
@@ -20,8 +21,11 @@ export interface ScriptedProblem {
   /** Reply to the second wrong answer. */
   secondMiss: string;
   partial?: string;
-  /** Wrong answers that point at one specific slip, with a reply that names it. */
-  misconceptions: { value: number; reply: string }[];
+  /**
+   * Wrong answers that point at one specific slip, with a reply that names it. A slip with a
+   * repair puzzle sends the kid there first, once (the content library's repair role).
+   */
+  misconceptions: { value: number; reply: string; repair?: PuzzleTemplate }[];
   correct: string[];
 }
 
@@ -45,7 +49,11 @@ export const LESSON: ScriptedProblem[] = [
     secondMiss: "Close. Try it step by step: $3x + 5 - 5 = 20 - 5$, so $3x = 15$. What's $x$?",
     misconceptions: [
       { value: 15, reply: "So close! $3x = 15$ is right. One more step: $x$ is still being multiplied by $3$." },
-      { value: 25 / 3, reply: "I think the $5$ got added to both sides. To undo $+5$, we subtract $5$ instead." },
+      {
+        value: 25 / 3,
+        reply: "I think the $5$ got added to both sides. To undo $+5$, we subtract $5$ instead.",
+        repair: "spot_the_error",
+      },
     ],
     correct: ["Yes! $x = 5$. You undid the $+5$, then the $\\times 3$.", "Check it: $3(5) + 5 = 20$. It works."],
   },
@@ -122,6 +130,21 @@ export const NUDGES = [
 export const UNREADABLE = "Hmm, I couldn't read that as a number. Try something like x = 4.";
 
 export const OUT_OF_HINTS = "That's all my hints for this one. Give it a try, I'm right here.";
+
+/** The first rung of the de-escalation ladder (R-21), before the pause is suggested. */
+export const TAKE_A_BREATH = "This one's being stubborn. Let's take a breath.";
+
+// Puzzle turns (R-37). The items' own lines are in mock/puzzles.ts.
+export const REPAIR_LEAD =
+  "I have a hunch about what happened there. Let's look at someone else's work first, then come back to this one.";
+export const DEMO_LEAD = "Let's try a quick puzzle.";
+export const TRY_FIRST = "Give it one try first, even a guess. Then I'll help.";
+export const EXPLAIN_FIRST = "Tell me what you were thinking first, then I'll help.";
+export const NO_ANSWERS_TRY_FIRST =
+  "I won't just hand it over, because working it out is what makes it stick. Give it one try first, even a guess, and then I'll help.";
+export const PUZZLE_UNREADABLE = "I couldn't read that one. Write it as an equation with x, like the lines above.";
+export const PUZZLE_NUDGE = "Give it a go in the puzzle. I'm right here if you get stuck.";
+export const BACK_TO_IT = "Now back to the one from before. You've got this.";
 
 export const SAFETY_RESOURCES: SafetyResource[] = [
   { name: "A trusted adult", contact: "A parent, guardian, teacher or school counselor", description: "Someone you know who can help right now." },

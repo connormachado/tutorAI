@@ -22,6 +22,8 @@ describe("kidMathToLatex", () => {
     ["2*3", "2 \\cdot 3"],
     ["2 3", "2 \\cdot 3"],
     ["pi x", "\\pi x"],
+    ["18 + -11", "18 + -11"],
+    ["18 - -11", "18 - -11"],
   ])("%s", (src, latex) => {
     expect(kidMathToLatex(src)).toBe(latex);
   });
