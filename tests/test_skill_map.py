@@ -4,7 +4,24 @@ import pytest
 from pydantic import ValidationError
 from skill_map_builders import node, skill_map
 
-from platy.skills.skill_map import SkillNode
+from platy.skills.skill_map import SkillNode, load_skill_map
+from platy.skills.validate_skill_map import validate
+
+# The 10 nodes the demo spec names, plus fraction_coefficient_equations and the unit goal.
+REQUIRED_IDS = {
+    "integer_arithmetic",
+    "order_of_operations",
+    "fraction_operations",
+    "inverse_operations",
+    "combining_like_terms",
+    "distributive_property",
+    "one_step_equations",
+    "two_step_equations",
+    "multi_step_equations",
+    "variables_both_sides",
+    "fraction_coefficient_equations",
+    "linear_equation_word_problems",
+}
 
 
 def node_data(**overrides: Any) -> dict[str, Any]:
@@ -53,3 +70,22 @@ def test_prerequisite_chain_nearest_first_each_once(depth: int, expected: list[s
 def test_prerequisite_chain_unknown_node() -> None:
     with pytest.raises(KeyError):
         CHAIN_MAP.prerequisite_chain("ghost", 1)
+
+
+def test_shipped_skill_map_is_valid() -> None:
+    shipped = load_skill_map()
+    summary = validate(shipped)
+    assert 14 <= summary.nodes <= 18
+    ids = [n.id for n in shipped.nodes]
+    assert REQUIRED_IDS - set(ids) == set()
+    required = {p for n in shipped.nodes for p in n.prerequisites}
+    assert [i for i in ids if i not in required] == ["linear_equation_word_problems"]
+
+
+def test_shipped_prerequisite_chain_two_levels_down() -> None:
+    assert load_skill_map().prerequisite_chain("two_step_equations", 2) == [
+        "one_step_equations",
+        "order_of_operations",
+        "inverse_operations",
+        "integer_arithmetic",
+    ]

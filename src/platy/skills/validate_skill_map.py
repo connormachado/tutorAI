@@ -1,11 +1,14 @@
 """R-10 checks on a SkillMap: unique ids, known prerequisites, a DAG, one top-level node, and
-every probe answer verified by sympy (via mathcheck). Each check names every offender."""
+every probe answer verified by sympy (via mathcheck). Each check names every offender.
 
+Checks the shipped map: `uv run python -m platy.skills.validate_skill_map`."""
+
+import sys
 from collections import Counter
 from dataclasses import dataclass
 
 from platy.mathcheck import MathParseError, expressions_equal, solution_set_is
-from platy.skills.skill_map import ProbeProblem, SkillMap, SkillNode
+from platy.skills.skill_map import ProbeProblem, SkillMap, SkillNode, load_skill_map
 
 
 class SkillMapError(ValueError):
@@ -114,3 +117,22 @@ def _probe_problem(probe: ProbeProblem) -> str | None:
     except MathParseError as err:
         return err.code
     return None if correct else "wrong answer"
+
+
+def main() -> int:
+    """Print the shipped map's summary, or validate()'s failures to stderr. The only stdout in
+    skills."""
+    skill_map = load_skill_map()
+    try:
+        summary = validate(skill_map)
+    except SkillMapError as err:
+        print(err, file=sys.stderr)
+        return 1
+    print(f"{skill_map.subject}: {skill_map.unit}")
+    print(f"nodes: {summary.nodes}  max depth: {summary.max_depth}  probes: {summary.probes}")
+    print("all checks passed")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

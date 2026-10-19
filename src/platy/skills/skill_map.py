@@ -1,5 +1,7 @@
-"""R-10 skill graph models. Structural and sympy checks live in validate_skill_map."""
+"""R-10 skill graph models and the shipped map's loader. Structural and sympy checks live in
+validate_skill_map."""
 
+from importlib.resources import files
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -51,3 +53,9 @@ class SkillMap(BaseModel):
                         next_level.append(by_id[prereq])
             level = next_level
         return chain
+
+
+def load_skill_map() -> SkillMap:
+    """The shipped map for the demo unit, read from package data."""
+    data = files("platy.skills") / "data" / "skill_map.json"
+    return SkillMap.model_validate_json(data.read_text(encoding="utf-8"))
