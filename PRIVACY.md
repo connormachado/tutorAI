@@ -1,6 +1,6 @@
 # The Primer: Privacy Invariants
 
-*DRAFT, pending Connor's approval. Every P-id traces to `DECISIONS.md` A-2 or A-3, or to an approved Q-default (Q5). `privacy-boundary-reviewer` cites a P-id for every finding. Where a check is mechanical, the reviewer doesn't re-check it; it looks for what tests can't see: new data flows, new sinks, and dependencies that phone home.*
+*DRAFT, pending Connor's or Michael's approval. Every P-id traces to `DECISIONS.md` A-2 or A-3, or to an approved Q-default (Q5). `privacy-boundary-reviewer` cites a P-id for every finding. Where a check is mechanical, the reviewer doesn't re-check it; it looks for what tests can't see: new data flows, new sinks, and dependencies that phone home.*
 
 **Kid content** means anything the kid or the tutor said or showed during a session: typed messages, model replies, transcribed speech, audio, and photos of work.
 
@@ -29,7 +29,7 @@ Arrives with the first session code (`tests/`, fast and deterministic, so it's p
 3. Afterwards, search every DB file, log file, temp directory, and **every captured log record and exception** for the canary.
 4. Any hit fails the test. That covers P-1, P-8 and P-10.
 
-## Open (Connor to decide; not findings until decided)
+## Open (Connor or Michael to decide; not findings until decided)
 
 - Encryption-at-rest mechanism and key custody for P-7 (e.g. SQLCipher vs. app-level field encryption).
 - Whether parent summaries (R-24) may contain any free text written by the model (P-8 currently says structured only).
