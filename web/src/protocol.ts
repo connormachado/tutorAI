@@ -49,10 +49,10 @@ export type ServerEvent =
   | { type: "puzzle_done"; instance_id: string };
 
 export type ClientEvent =
-  | { type: "kid_message"; text: string }
+  | { type: "child_message"; text: string }
   | { type: "answer"; problem_id: string; text: string }
   | { type: "hint_requested"; problem_id: string }
-  /** The kid chose "keep going" on the pause screen. */
+  /** The child chose "keep going" on the pause screen. */
   | { type: "resume" }
   | { type: "end_session" }
   /** What the student did in a puzzle. The server grades it; the client never sends "correct". */

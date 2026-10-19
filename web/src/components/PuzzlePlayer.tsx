@@ -34,7 +34,7 @@ export function PuzzlePlayer({ state, moving, onSolved, onMove, onHint, onNext, 
   const fb = feedback(state);
   const card = useRef<HTMLElement>(null);
 
-  // Solving removes the control that had focus. Move on unless the kid is already elsewhere.
+  // Solving removes the control that had focus. Move on unless the child is already elsewhere.
   useEffect(() => {
     const at = document.activeElement;
     if (done && (at === document.body || card.current?.contains(at))) onSolved();

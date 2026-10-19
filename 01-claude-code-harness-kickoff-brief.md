@@ -9,7 +9,7 @@
 Full vision: `the-primer-initial-vision.md` (project file). Read it in full before proposing anything.
 
 **Locked architectural decisions — do not re-litigate these:**
-- **Hybrid privacy model ("Option B"):** cloud handles reasoning/compute; sensitive per-kid PII (personality file, mastery scores) stored in a separate store behind an allowlist gateway. Raw conversation transcripts are never persisted — only distilled state (skill confidence, personality file, short session summaries), encrypted at rest.
+- **Hybrid privacy model ("Option B"):** cloud handles reasoning/compute; sensitive per-child PII (personality file, mastery scores) stored in a separate store behind an allowlist gateway. Raw conversation transcripts are never persisted — only distilled state (skill confidence, personality file, short session summaries), encrypted at rest.
 - **Mastery model:** Bayesian Knowledge Tracing (BKT) via `pyBKT`, using contextual extensions (Baker, Corbett & Aleven, 2008) that let hint usage, response time, and self-explanation modulate guess/slip. Cold-start parameter estimation is an **open research item** (see item below) — do not assume it's solved.
 - **Skill map:** machine-queryable graph (JSON or graph DB), Common Core algebra as the starting skeleton. Human-readable view is *generated from* the graph, never maintained separately.
 - **Emotional detection via voice tone:** explicitly out of scope. Use behavioral proxies instead (explicit self-report, silence, wrong attempts, response latency).

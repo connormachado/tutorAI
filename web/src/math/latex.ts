@@ -48,6 +48,6 @@ function implicitSep(right: Node): string {
   return first.kind === "var" || first.kind === "pi" ? "" : " ";
 }
 
-export function kidMathToLatex(src: string): string {
+export function childMathToLatex(src: string): string {
   return src.trim() === "" ? "" : toLatex(parseMath(src));
 }

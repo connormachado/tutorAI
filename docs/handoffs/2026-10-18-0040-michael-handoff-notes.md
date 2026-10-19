@@ -8,7 +8,7 @@
 - New `/handoff` skill: `.claude/skills/handoff/SKILL.md` writes one note per session in `docs/handoffs/`.
 - `CLAUDE.md` now tells every session to read the newest notes first and run `/handoff` before ending.
 - `/ship` gained step 5, which runs `/handoff` so the note lands in the same commit.
-- `docs/handoffs/README.md` explains naming and the no-kid-data rule.
+- `docs/handoffs/README.md` explains naming and the no-child-data rule.
 
 ## Decisions and why
 - No subagent: it wouldn't see the session's conversation, which is where the "why" lives, and `02-harness-proposal.md` argues against extra agents.

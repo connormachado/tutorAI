@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { splitMath } from "./MathText";
-import { kidMathToLatex } from "./latex";
+import { childMathToLatex } from "./latex";
 
-describe("kidMathToLatex", () => {
+describe("childMathToLatex", () => {
   it.each([
     ["3x+5=20", "3x + 5 = 20"],
     ["x^2", "{x}^{2}"],
@@ -25,20 +25,20 @@ describe("kidMathToLatex", () => {
     ["18 + -11", "18 + -11"],
     ["18 - -11", "18 - -11"],
   ])("%s", (src, latex) => {
-    expect(kidMathToLatex(src)).toBe(latex);
+    expect(childMathToLatex(src)).toBe(latex);
   });
 
-  it("shows a box for what the kid hasn't typed yet", () => {
-    expect(kidMathToLatex("x^")).toBe("{x}^{\\square}");
-    expect(kidMathToLatex("3/")).toBe("\\frac{3}{\\square}");
+  it("shows a box for what the child hasn't typed yet", () => {
+    expect(childMathToLatex("x^")).toBe("{x}^{\\square}");
+    expect(childMathToLatex("3/")).toBe("\\frac{3}{\\square}");
   });
 
   it("closes an open parenthesis instead of failing", () => {
-    expect(kidMathToLatex("2(x-3")).toBe("2 \\left(x - 3\\right)");
+    expect(childMathToLatex("2(x-3")).toBe("2 \\left(x - 3\\right)");
   });
 
   it("is empty for empty input", () => {
-    expect(kidMathToLatex("  ")).toBe("");
+    expect(childMathToLatex("  ")).toBe("");
   });
 });
 

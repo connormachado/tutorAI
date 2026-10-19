@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { spotStage } from "../../content/progress";
 import type { PuzzleMove, SpotTheErrorPuzzle } from "../../content/types";
-import { kidMathToLatex } from "../../math/latex";
+import { childMathToLatex } from "../../math/latex";
 import { Tex } from "../../math/MathText";
 import type { PuzzleState } from "../../session/state";
 import { LineEntry } from "./LineEntry";
@@ -52,7 +52,7 @@ export function SpotTheError({ state, onMove, actions }: Props) {
                   <span className="step__n" aria-hidden="true">
                     ✓
                   </span>
-                  <Tex latex={kidMathToLatex(fixed)} />
+                  <Tex latex={childMathToLatex(fixed)} />
                   <span className="step__tag">your fix</span>
                 </div>
               )}

@@ -3,7 +3,7 @@ import { type Node, parseMathStrict } from "../math/parse";
 
 // Mock-only grading for puzzle lines. In the real app the server grades every check with
 // primer.mathcheck (R-37); this stands in for it so the demo runs with no backend. It reads
-// what a kid types ("2x = 16", "16 = 2x") with the same parser as the answer box.
+// what a child types ("2x = 16", "16 = 2x") with the same parser as the answer box.
 
 const EPS = 1e-9;
 const near = (a: number, b: number) => Math.abs(a - b) < EPS;

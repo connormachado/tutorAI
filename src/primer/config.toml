@@ -9,5 +9,5 @@
 #   30-day retention, cannot run under ZDR — would void the privacy story).
 # NOTE: ZDR itself is a contract requested from Anthropic's account team,
 #   not a toggle. Default API retention is 30 days until it's signed.
-#   Agreement must be in place before any real-kid testing.
+#   Agreement must be in place before any real-child testing.
 # ────────────────────────────────────────────────────────────────────────

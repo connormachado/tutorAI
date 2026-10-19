@@ -2,7 +2,7 @@
 
 Adaptive, privacy-first algebra tutor. V1 is for students 13 and up, with no parent onboarding or account features (A-9 note); the safety parent notice stays. Parents come in V2/V3 (`REQUIREMENTS.md` § Audience). Python 3.12 + uv. Source of truth: `REQUIREMENTS.md` (R-ids), `PRIVACY.md` (P-ids), `DECISIONS.md` (A-ids, Connor's and Michael's; never edit). Harness design: `02-harness-proposal.md`.
 
-IMPORTANT: never persist raw conversation. Kid messages, model replies, transcripts, audio and photos never reach a DB, file, temp file, cache or log (P-1, P-10). Only `primer.gateway` talks to third-party networks (P-2).
+IMPORTANT: never persist raw conversation. Child messages, model replies, transcripts, audio and photos never reach a DB, file, temp file, cache or log (P-1, P-10). Only `primer.gateway` talks to third-party networks (P-2).
 
 ## Commands
 - `scripts/check`: the gate (ruff, pyright strict, pytest `-m "not llm"`, import-linter). It must be green before a turn ends; the Stop hook enforces it.
@@ -30,7 +30,7 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 **Boundaries**
 - `src/primer/gateway/llm.py` is the single client wrapper and the only importer of `anthropic` (A-2; import-linter enforces it). It is the gateway now, not a placeholder: one allowlisted host, fail-closed (P-3), no server-side `fallbacks`, no fallback model. Provider specifics stay behind it.
 - Pure functions with no I/O: `skills`, `mathcheck`, `mastery`, `policy`, prompt rendering, cost estimates. I/O lives only in `config`, `gateway`, `fsio`, `session`, `server` and `evaluation`. Reading packaged data via `importlib.resources` (skill graph, BKT params, prompts, demo profile) is allowed anywhere; writes, network and env reads are not.
-- Prompt text and fixed kid-facing text live only in `src/primer/prompts/*.md` (`[pedagogy]`, so the eval gate runs). Never inline them in Python.
+- Prompt text and fixed child-facing text live only in `src/primer/prompts/*.md` (`[pedagogy]`, so the eval gate runs). Never inline them in Python.
 - Config: `src/primer/config.toml` + `config.py` (both `[privacy]`). The only env var is `ANTHROPIC_API_KEY`: read once, held as `SecretStr`, passed explicitly to the client, and never in a file, log or repr. Model ids can't be overridden from env.
 - The FastAPI server runs with `debug=False`, sends no telemetry, and answers errors with codes only, never exception text or payloads (P-10, P-11), asserted by a fast test when it lands. `web/` never holds `ANTHROPIC_API_KEY` or any other secret (Vite ships every `VITE_` variable to the browser), and `web/src/privacy.test.ts` keeps it off browser storage, the console, analytics and remote assets (P-1, P-10, P-11).
 - `pyBKT` and `sympy` are each imported in exactly one module (`mastery/bkt.py`, `mathcheck.py`), behind typed functions. Pyright suppressions name the rule.
@@ -39,20 +39,20 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 - Roles: `tutor`, `updater`, `safety_classifier` and `judge` return structured output; `simulated_student` returns text. Each sets `model`, `max_tokens` and `effort`. There's no `temperature`, because current models reject non-default values.
 - Model ids are pinned by `tests/test_model_pins.py`. Changing one needs a ZDR check by Connor or Michael plus privacy review. Never use a retention-excluded model.
 - Structured output: one tool per call with `strict: true`, its schema generated from the pydantic model (`extra="forbid"`), and `tool_choice` auto plus an instruction to call it. Validate the input with that model. A missing or invalid call is an error. Never parse JSON out of text.
-- Prompt caching (ZDR-eligible, per Connor 2026-10-17): `system` is sent as blocks, and the static role-prompt block carries `cache_control: {"type": "ephemeral"}` (5-minute TTL; it caches the tool definition plus that block). That is the only `cache_control` in any request: never on `messages`, tool results or later system blocks, and no `ttl` override. Tool definitions are static, built once per role from the pydantic model, with no per-turn enums or descriptions (`probe_id` is checked by `policy/checks.py`, not the schema). Anything that varies by kid, session or turn (profile, turn plan, probe candidates) goes in a later system block with no marker, so the cached prefix stays byte-stable and holds nothing per-kid. Prefixes under 512 tokens (Sonnet/Haiku 5.5) silently don't cache. Tests: a fast unit test builds requests for two seeded fake kids with canaries in their messages and profiles, and asserts exactly one marker, on `system[0]`, with `tools` + `system[0]` byte-identical and canary-free. An `llm` test asserts that a repeated call shows `cache_read_input_tokens > 0`.
+- Prompt caching (ZDR-eligible, per Connor 2026-10-17): `system` is sent as blocks, and the static role-prompt block carries `cache_control: {"type": "ephemeral"}` (5-minute TTL; it caches the tool definition plus that block). That is the only `cache_control` in any request: never on `messages`, tool results or later system blocks, and no `ttl` override. Tool definitions are static, built once per role from the pydantic model, with no per-turn enums or descriptions (`probe_id` is checked by `policy/checks.py`, not the schema). Anything that varies by child, session or turn (profile, turn plan, probe candidates) goes in a later system block with no marker, so the cached prefix stays byte-stable and holds nothing per-child. Prefixes under 512 tokens (Sonnet/Haiku 5.5) silently don't cache. Tests: a fast unit test builds requests for two seeded fake children with canaries in their messages and profiles, and asserts exactly one marker, on `system[0]`, with `tools` + `system[0]` byte-identical and canary-free. An `llm` test asserts that a repeated call shows `cache_read_input_tokens > 0`.
 - Retries: only the SDK's built-in retry, set explicitly to `max_retries=3` (it retries 408, 409, 429, 5xx, timeouts and connection errors), with the request timeout from config. After that, or on a `refusal` or `max_tokens` stop, raise a content-free `GatewayError`, and the session shows an error state.
 - Write one JSONL usage line per call: role, model, latency, tokens (input, output, cache write, cache read), cost estimate (cache writes and reads priced at their own rates), outcome, request id. Never content.
 - Error text carries codes, never payloads: use `errors(include_input=False)` and `raise … from None`. Never set `ANTHROPIC_LOG`.
 
 **Every turn**
-- Safety runs first on every kid message. A disclosure gets the fixed text from `prompts/safety_escalation.md` (self-harm includes 988), sends exactly one codes-only `ParentNotice` (held in memory and shown on the demo panel; A-9 note), and stops tutoring. A safety stop is not an A-4 reset. If the safety call itself errors, the session fails closed and never falls through to the tutor.
-- Policy (pure) decides each turn's allowed and required actions and its probe candidates. The tutor returns a `TutorMove` (action, probe_id, message). Every move passes `policy/checks.py` before the kid sees it: answer leak (via `mathcheck`, unless policy allows a reveal), length cap (R-06), a real probe id from policy's candidates (R-01), and the allowed or required action (R-02, R-30). On a violation, regenerate once with the violation codes. If it fails again, show the fixed recovery line from `prompts/`.
+- Safety runs first on every child message. A disclosure gets the fixed text from `prompts/safety_escalation.md` (self-harm includes 988), sends exactly one codes-only `ParentNotice` (held in memory and shown on the demo panel; A-9 note), and stops tutoring. A safety stop is not an A-4 reset. If the safety call itself errors, the session fails closed and never falls through to the tutor.
+- Policy (pure) decides each turn's allowed and required actions and its probe candidates. The tutor returns a `TutorMove` (action, probe_id, message). Every move passes `policy/checks.py` before the child sees it: answer leak (via `mathcheck`, unless policy allows a reveal), length cap (R-06), a real probe id from policy's candidates (R-01), and the allowed or required action (R-02, R-30). On a violation, regenerate once with the violation codes. If it fails again, show the fixed recovery line from `prompts/`.
 
-**Kid content and files**
-- Kid state lives in memory only: the server's per-session state and React state in `web/`, never browser storage. The live conversation is cleared at problem boundaries and rebuilt from the skill map and profile (A-4). No cache (`functools.cache`, `lru_cache`, HTTP caching) on anything holding kid content.
-- Transcripts: only simulated-student eval runs write `var/transcripts/`. They're synthetic (simulated student, seeded fake profile, P-13) and are the one exception to the IMPORTANT rule above; a real kid's session never reaches them. Session and server code never write files, and the canary test enforces it.
+**Child content and files**
+- Child state lives in memory only: the server's per-session state and React state in `web/`, never browser storage. The live conversation is cleared at problem boundaries and rebuilt from the skill map and profile (A-4). No cache (`functools.cache`, `lru_cache`, HTTP caching) on anything holding child content.
+- Transcripts: only simulated-student eval runs write `var/transcripts/`. They're synthetic (simulated student, seeded fake profile, P-13) and are the one exception to the IMPORTANT rule above; a real child's session never reaches them. Session and server code never write files, and the canary test enforces it.
 - All file writes go through `primer.fsio`: a temp file in the same dir, fsync, then `os.replace`. The single exception is the usage JSONL: one `O_APPEND` line, then fsync. Every persisted JSON has `schema_version`. Runtime output goes in `var/` (gitignored).
-- Correctness is decided by sympy, never by a model. Kid input is whitelisted before sympy sees it, because `sympify` calls `eval`.
+- Correctness is decided by sympy, never by a model. Child input is whitelisted before sympy sees it, because `sympify` calls `eval`.
 
 **Tests**: every module gets unit tests, with LLM calls faked. Live tests use `@pytest.mark.llm` (the registered marker the gate excludes; never `live`) and are skipped unless `PRIMER_RUN_LLM=1`. The canary test lands with the first session code. Done means `scripts/check` is green, and pyright strict is the type gate.
 
@@ -75,9 +75,9 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 - Every Codex finding either becomes a failing test and then a fix, or is dismissed in one line. Log each review in `.claude/codex-log.md`.
 
 ## Design skills (dormant until `web/` exists)
-- `frontend-design` governs all kid-facing UI.
-- `design-taste-frontend` is only for the marketing landing page. On kid UI, the dials are about VARIANCE 3, MOTION 2, DENSITY 3.
-- When the two disagree: frontend-design wins on kid UI, taste-skill on the landing page. Neither picks the frontend stack.
+- `frontend-design` governs all child-facing UI.
+- `design-taste-frontend` is only for the marketing landing page. On child UI, the dials are about VARIANCE 3, MOTION 2, DENSITY 3.
+- When the two disagree: frontend-design wins on child UI, taste-skill on the landing page. Neither picks the frontend stack.
 
 ## Gotchas
 - pyBKT 1.4.3 needs `numpy<2`, `pandas<3`, `scikit-learn<1.8`. It runs as pure Python, and its multiprocessing needs an `if __name__ == "__main__":` guard.

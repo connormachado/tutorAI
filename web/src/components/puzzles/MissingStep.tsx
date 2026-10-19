@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 import type { MissingStepPuzzle, PuzzleMove } from "../../content/types";
-import { kidMathToLatex } from "../../math/latex";
+import { childMathToLatex } from "../../math/latex";
 import { Tex } from "../../math/MathText";
 import type { PuzzleState } from "../../session/state";
 import { LineEntry } from "./LineEntry";
@@ -27,7 +27,7 @@ export function MissingStep({ state, onMove, actions }: Props) {
             {line === null ? (
               <div className={`step ${done ? "step--fixed" : "step--gap"}`}>
                 <span className="step__n">{i + 1}</span>
-                {done ? <Tex latex={kidMathToLatex(sent)} /> : <span className="step__blank">missing line</span>}
+                {done ? <Tex latex={childMathToLatex(sent)} /> : <span className="step__blank">missing line</span>}
               </div>
             ) : (
               <div className="step">

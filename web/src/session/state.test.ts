@@ -13,26 +13,26 @@ describe("session reducer", () => {
     expect(s.messages).toEqual([{ id: "t1", from: "tutor", text: "Hi there", streaming: false }]);
   });
 
-  it("keeps a streamed reply in one bubble when the kid speaks mid-stream", () => {
+  it("keeps a streamed reply in one bubble when the child speaks mid-stream", () => {
     let s = live();
     s = reducer(s, { type: "server", event: { type: "tutor_message", message_id: "t1", delta: "What does ", done: false } });
-    s = reducer(s, { type: "kid_said", id: "k1", text: "I think line 1 is wrong." });
+    s = reducer(s, { type: "child_said", id: "k1", text: "I think line 1 is wrong." });
     s = reducer(s, { type: "server", event: { type: "tutor_message", message_id: "t1", delta: "that do?", done: true } });
     expect(s.messages.map((m) => [m.id, m.text])).toEqual([["t1", "What does that do?"], ["k1", "I think line 1 is wrong."]]);
   });
 
   it("clears the conversation on a hard reset (R-17)", () => {
     let s = live();
-    s = reducer(s, { type: "kid_said", id: "k1", text: "x = 5" });
+    s = reducer(s, { type: "child_said", id: "k1", text: "x = 5" });
     s = reducer(s, { type: "server", event: { type: "reset", reason: "problem_end" } });
     expect(s.messages).toEqual([]);
     expect(s.problem).toBeNull();
     expect(s.resetNote).not.toBeNull();
   });
 
-  it("drops everything the kid said when the session errors (P-3)", () => {
+  it("drops everything the child said when the session errors (P-3)", () => {
     let s = live();
-    s = reducer(s, { type: "kid_said", id: "k1", text: "secret canary" });
+    s = reducer(s, { type: "child_said", id: "k1", text: "secret canary" });
     s = reducer(s, { type: "server", event: { type: "error", code: "socket_closed" } });
     expect(JSON.stringify(s)).not.toContain("secret canary");
     expect(s.phase).toBe("error");

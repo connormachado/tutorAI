@@ -1,8 +1,8 @@
 import { useRef } from "react";
-import { kidMathToLatex } from "../math/latex";
+import { childMathToLatex } from "../math/latex";
 import { Tex } from "../math/MathText";
 
-// Each key inserts plain text the parser understands, so what the kid sees in the box
+// Each key inserts plain text the parser understands, so what the child sees in the box
 // stays editable and the preview below shows how Platy reads it.
 const KEYS: { label: string; aria: string; insert: string; caret?: number }[] = [
   { label: "x²", aria: "squared", insert: "^2" },
@@ -30,7 +30,7 @@ interface Props {
 
 export function MathInput({ id, label, value, placeholder, onChange, onSubmit, disabled, keys = true, autoFocus }: Props) {
   const input = useRef<HTMLInputElement>(null);
-  const latex = kidMathToLatex(value);
+  const latex = childMathToLatex(value);
 
   const insert = (text: string, caret = 0) => {
     const el = input.current;

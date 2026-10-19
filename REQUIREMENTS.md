@@ -10,33 +10,33 @@
 
 These are written as testable rules because the pedagogy eval (`scripts/eval`, next phase) checks them.
 
-- **R-01 Diagnose before teaching.** When a kid is stuck, the tutor probes prerequisite sub-skills one or two levels down the skill graph before it explains the target concept.
+- **R-01 Diagnose before teaching.** When a child is stuck, the tutor probes prerequisite sub-skills one or two levels down the skill graph before it explains the target concept.
 - **R-02 Productive struggle.** Never give the answer on the first wrong attempt. Hold off for at least one more try.
-- **R-03 Self-explanation.** Ask the kid to explain their reasoning before correcting it.
+- **R-03 Self-explanation.** Ask the child to explain their reasoning before correcting it.
 - **R-04 Retrieval practice.** Periodically prompt recall of earlier material instead of re-teaching it from scratch. The scheduling layer (R-12) picks what to recall.
 - **R-05 Change the angle.** When an explanation doesn't land, try a different one rather than repeating it.
 - **R-06 Short replies.** Response length is capped, and each reply carries one concept at a time.
-- **R-07 Interest hooks.** Reframe concepts through interests in the kid's personality file (R-14), and approach sensitive topics sideways.
-- **R-08 Pedagogy eval suite.** Scripted fake-student cases (wrong answer, direct request for the answer, frustrated kid, off-topic, safety disclosure, a student who says they're under 13) check R-01…R-07, R-21…R-23 and R-36. It must exist before the first tutoring prompt is committed (the gate fails closed) and must pass before any real kid uses the product.
+- **R-07 Interest hooks.** Reframe concepts through interests in the child's personality file (R-14), and approach sensitive topics sideways.
+- **R-08 Pedagogy eval suite.** Scripted fake-student cases (wrong answer, direct request for the answer, frustrated child, off-topic, safety disclosure, a student who says they're under 13) check R-01…R-07, R-21…R-23 and R-36. It must exist before the first tutoring prompt is committed (the gate fails closed) and must pass before any real child uses the product.
 
 ## Skill map and mastery
 
 - **R-10 Skill graph.** One machine-queryable graph (JSON or graph DB) of about 50–100 algebra sub-skills with prerequisite edges, starting from Common Core algebra progressions (A-6).
   - *Demo note (Platy, approved 2026-10-17):* one unit (solving linear equations), 14–18 nodes, exactly one top-level node, three probes per node, every probe answer verified by sympy.
-- **R-11 Mastery model.** Per-kid, per-skill BKT via pyBKT. Hint use, response time and self-explanation quality are bucketed into discrete `multigs` classes (A-5). Skills are independent, with no DBN.
+- **R-11 Mastery model.** Per-child, per-skill BKT via pyBKT. Hint use, response time and self-explanation quality are bucketed into discrete `multigs` classes (A-5). Skills are independent, with no DBN.
 - **R-12 Scheduling layer.** Spaced repetition plus implicit review sits on top of the mastery model: solving a downstream problem counts as review of its prerequisites (A-5).
 - **R-13 Generated skill view.** Any human-readable view of the skill map is generated from R-10, never hand-maintained (A-6).
 
-## Kid profile and onboarding
+## Child profile and onboarding
 
-- **R-14 Personality file.** One per kid, holding interests, motivational hooks and sensitive topics to avoid (A-9). In V1 the student fills it during onboarding (R-15), not a parent.
-- **R-15 Kid onboarding.** A warm, interests-first chat with embedded low-stakes diagnostic problems that produce real BKT signal, not self-report (A-9). In V1 the same chat also asks about interests, what motivates them and topics they'd rather skip, which fills the personality file (R-14).
+- **R-14 Personality file.** One per child, holding interests, motivational hooks and sensitive topics to avoid (A-9). In V1 the student fills it during onboarding (R-15), not a parent.
+- **R-15 Child onboarding.** A warm, interests-first chat with embedded low-stakes diagnostic problems that produce real BKT signal, not self-report (A-9). In V1 the same chat also asks about interests, what motivates them and topics they'd rather skip, which fills the personality file (R-14).
 - **R-16 Parent onboarding.** *Deferred to V2/V3, see below.*
 
 ## Session
 
 - **R-17 Hard resets.** Reset the live conversation only at natural breakpoints (end of a problem, a topic switch), then reload from the skill map and personality file. No summarizing or compacting (A-4).
-- **R-18 Text input.** The kid can type.
+- **R-18 Text input.** The child can type.
 - **R-19 Voice input.** Speech-to-text only. Audio is discarded after transcription, and there's no acoustic inference (A-7).
 - **R-20 Photo input.** A photo of handwritten work is read by a vision model and is not persisted.
 
@@ -46,8 +46,8 @@ These are written as testable rules because the pedagogy eval (`scripts/eval`, n
   1. First occurrence in a session → pivot or pause.
   2. Repeated in the same session → switch to a confidence-building topic.
   3. A multi-day pattern → in V1, a constructive note to the student ("here's a sticking point and what we tried"). The parent version of this note is V2/V3.
-- **R-22 Safety disclosures.** Disclosures of abuse, self-harm or danger get a hard-coded escalation to a parent/guardian and/or crisis resources. V1 has no parent onboarding or account features, but the safety parent-notice path stays (A-9 note): detection, then a codes-only notice held in memory, shown on the demo panel. That's a legal duty, not a parent feature. The student also gets crisis resources and a clear push to reach a trusted adult (open question 4). The tutor never handles one itself or acts as a therapist. Scripted eval cases are required before the first real kid. *The detection design is still Open in `DECISIONS.md`. This R-id only fixes that V1 must have one.*
-- **R-23 Warm, not "your friend".** The tutor is curious and kind, and it nudges the kid back toward real friends and family. It never encourages dependency.
+- **R-22 Safety disclosures.** Disclosures of abuse, self-harm or danger get a hard-coded escalation to a parent/guardian and/or crisis resources. V1 has no parent onboarding or account features, but the safety parent-notice path stays (A-9 note): detection, then a codes-only notice held in memory, shown on the demo panel. That's a legal duty, not a parent feature. The student also gets crisis resources and a clear push to reach a trusted adult (open question 4). The tutor never handles one itself or acts as a therapist. Scripted eval cases are required before the first real child. *The detection design is still Open in `DECISIONS.md`. This R-id only fixes that V1 must have one.*
+- **R-23 Warm, not "your friend".** The tutor is curious and kind, and it nudges the child back toward real friends and family. It never encourages dependency.
 
 ## Privacy, platform and measurement
 
@@ -65,7 +65,7 @@ These are written as testable rules because the pedagogy eval (`scripts/eval`, n
 
 ## Not V1: code for these gets a CUT verdict
 
-- Real-world grounding; teacher sync; hardware or wearables; audiences beyond K-12 kids.
+- Real-world grounding; teacher sync; hardware or wearables; audiences beyond K-12 children.
 - Students under 13, and anything parent-facing: parent accounts, consent flows, the questionnaire, summaries, notes or a dashboard (V2/V3, see below). The exception is R-22's safety parent-notice path, which stays.
 - Subjects other than algebra, and abstractions for multiple subjects.
 - The RAG ground-truth content layer. The vision doc sequences it after the core loop is validated, so it needs its own R-id when that happens.
@@ -77,7 +77,7 @@ These are written as testable rules because the pedagogy eval (`scripts/eval`, n
 Kept so the R-ids stay stable. Code for these in V1 gets a CUT verdict.
 
 - **R-16 Parent onboarding.** A parent questionnaire fills the personality file. An optional one-time grade/transcript share is used as a rough prior and then discarded. There is no school-record integration (A-9).
-- **R-24 Parent summaries** name sticking points and what was tried, never "your kid failed." They're built from distilled state (P-8), not transcripts.
+- **R-24 Parent summaries** name sticking points and what was tried, never "your child failed." They're built from distilled state (P-8), not transcripts.
 - The parent note at R-21 step 3, and delivering R-22's parent notice to a real parent (the V1 demo keeps the notice path and shows it on the demo panel).
 
 ## Open questions for Connor and Michael (no R-id until answered)

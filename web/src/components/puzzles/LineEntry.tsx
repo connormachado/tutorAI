@@ -10,7 +10,7 @@ interface Props {
   onSubmit: (text: string) => void;
   /** A move is waiting for its verdict; the box stays editable but can't send. */
   busy: boolean;
-  /** Take focus on mount: the box replaced the control the kid just used. */
+  /** Take focus on mount: the box replaced the control the child just used. */
   autoFocus?: boolean;
   /** More buttons for the same row, like the hint. */
   children?: ReactNode;

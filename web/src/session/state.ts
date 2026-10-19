@@ -3,13 +3,13 @@ import { balanceStage, missingStage, type Outcomes, spotStage } from "../content
 import type { CheckId, CheckOutcome, Pans, Puzzle, PuzzleMove } from "../content/types";
 import type { Problem, SafetyResource, ServerEvent } from "../protocol";
 
-// Everything here lives in React state only. Kid content is never written to browser
+// Everything here lives in React state only. Child content is never written to browser
 // storage, cookies, the URL or a log (P-1, P-10), and it is dropped on a reset or when
 // the session ends. src/privacy.test.ts guards this.
 
 export interface ChatMessage {
   id: string;
-  from: "tutor" | "kid";
+  from: "tutor" | "child";
   text: string;
   streaming: boolean;
 }
@@ -70,7 +70,7 @@ export const initialState: SessionState = {
 export type Action =
   | { type: "started" }
   | { type: "server"; event: ServerEvent }
-  | { type: "kid_said"; id: string; text: string }
+  | { type: "child_said"; id: string; text: string }
   | { type: "answer_sent" }
   | { type: "puzzle_move_sent"; move: PuzzleMove }
   | { type: "puzzle_next_sent" }
@@ -90,10 +90,10 @@ export function reducer(state: SessionState, action: Action): SessionState {
       return { ...initialState, phase: "live" };
     case "restart":
       return initialState;
-    case "kid_said":
+    case "child_said":
       return {
         ...state,
-        messages: [...state.messages, { id: action.id, from: "kid", text: action.text, streaming: false }],
+        messages: [...state.messages, { id: action.id, from: "child", text: action.text, streaming: false }],
       };
     case "answer_sent":
       // Clear the last verdict so the next one shows even if it's the same.
@@ -120,7 +120,7 @@ function onServer(state: SessionState, event: ServerEvent): SessionState {
   if (state.phase !== "live") return state;
   switch (event.type) {
     case "tutor_message": {
-      // Look past the newest bubble: the kid may have typed or tapped while this one streamed.
+      // Look past the newest bubble: the child may have typed or tapped while this one streamed.
       const i = state.messages.map((m) => m.id).lastIndexOf(event.message_id);
       const open = state.messages[i];
       if (open) {

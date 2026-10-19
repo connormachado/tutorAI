@@ -1,4 +1,4 @@
-/* Kid UI: calm, low motion, low density. Sized for a 1366×768 Chromebook and a phone (R-27).
+/* Child UI: calm, low motion, low density. Sized for a 1366×768 Chromebook and a phone (R-27).
    Fonts are bundled locally; nothing is fetched from a font host (P-11). */
 
 :root {
@@ -128,7 +128,7 @@ button, input { font: inherit; color: inherit; }
   overflow-wrap: anywhere; transition: opacity 300ms;
 }
 .bubble--tutor { align-self: flex-start; background: var(--paper); border-bottom-left-radius: 6px; }
-.bubble--kid { align-self: flex-end; background: var(--river); color: #fff; border-bottom-right-radius: 6px; }
+.bubble--child { align-self: flex-end; background: var(--river); color: #fff; border-bottom-right-radius: 6px; }
 /* One idea on screen at a time: older turns step back. */
 .bubble--older { opacity: 0.65; }
 .bubble--typing { display: flex; gap: 5px; padding: 16px 18px; }

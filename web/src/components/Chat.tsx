@@ -21,7 +21,7 @@ export function Chat({ messages, resetNote, disabled, hold, inputRef, onSay }: P
   const [draft, setDraft] = useState("");
   const end = useRef<HTMLDivElement>(null);
   const last = messages.at(-1);
-  const waiting = !resetNote && (last === undefined || last.from === "kid");
+  const waiting = !resetNote && (last === undefined || last.from === "child");
 
   useEffect(() => {
     end.current?.scrollIntoView({ block: "end" });

@@ -33,7 +33,7 @@ claude plugin marketplace add VoltAgent/awesome-claude-code-subagents
 claude plugin install voltagent-qa-sec
 ```
 
-**Why they're in:** This is the literal "what breaks, what works, what looks funky, what is hard to understand" pass for demo prep — the gap Connor and his co-founder using the product by hand doesn't fully cover, especially under time pressure close to the YC deadline. `accessibility-tester` is worth having from the start on a kid-facing product rather than retrofitted later.
+**Why they're in:** This is the literal "what breaks, what works, what looks funky, what is hard to understand" pass for demo prep — the gap Connor and his co-founder using the product by hand doesn't fully cover, especially under time pressure close to the YC deadline. `accessibility-tester` is worth having from the start on a child-facing product rather than retrofitted later.
 
 **Integration guidance:** These are expensive and non-deterministic — do **not** gate every `/ship` on them. Add a separate command, e.g. `/demo-check`, that runs both agents against the running app ahead of any demo or investor-facing checkpoint. Keep them out of the per-commit path entirely.
 
@@ -45,7 +45,7 @@ claude plugin install voltagent-qa-sec
 - `frontend-design` — Anthropic's own public skill (available via `npx skills add anthropics/skills --skill frontend-design`). Names the actual tells of AI-generated design (the warm-cream-and-terracotta look, the SaaS-card kit, tracked-out ALL-CAPS eyebrows, arrow-suffixed buttons) and enforces a plan → critique-against-brief → build sequence before writing any UI code.
 - `Leonxlnx/taste-skill` (`npx skills add https://github.com/Leonxlnx/taste-skill`) — same anti-slop goal, tunable via three dials (VARIANCE / MOTION / DENSITY) calibrated per project rather than one fixed house style.
 
-**Why they're in:** Connor flagged this as a real V1 need, not a nice-to-have — a kid- and parent-facing product's design credibility matters for both the demo and eventual paying parents, and generic-AI-looking UI undercuts that immediately.
+**Why they're in:** Connor flagged this as a real V1 need, not a nice-to-have — a child- and parent-facing product's design credibility matters for both the demo and eventual paying parents, and generic-AI-looking UI undercuts that immediately.
 
 **Integration guidance:** Same trigger condition as the frontend hooks already deferred in Q1/§4 of the original proposal — install both skills now, but they only actually get exercised once a `web/` (or equivalent frontend) directory exists. No gate, no hook: they inform how UI gets written, not whether a diff passes.
 

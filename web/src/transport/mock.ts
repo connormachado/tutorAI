@@ -21,7 +21,7 @@ export interface MockTiming {
 
 export const DEMO_TIMING: MockTiming = { thinkMs: 550, wordMs: 35, resetMs: 1600 };
 
-// Plays the role of Platy's server, in the browser, from a fixed script. Nothing the kid
+// Plays the role of Platy's server, in the browser, from a fixed script. Nothing the child
 // types is stored: it is read once to pick the scripted reply and then dropped (P-1).
 export class MockTransport implements TutorTransport {
   readonly kind = "mock";
@@ -42,7 +42,7 @@ export class MockTransport implements TutorTransport {
   private nudge = 0;
 
   // Puzzles (R-37). While one runs, `current` is null and `returnTo` holds the problem to go
-  // back to. The skin's interest and the kid's color pick last for the session (R-38).
+  // back to. The skin's interest and the child's color pick last for the session (R-38).
   private puzzle: LivePuzzle | null = null;
   private returnTo: ScriptedProblem | null = null;
   private puzzles = 0;
@@ -133,7 +133,7 @@ export class MockTransport implements TutorTransport {
       case "answer":
         if (p && event.problem_id === p.problem_id) await this.answer(p, event.text);
         return;
-      case "kid_message":
+      case "child_message":
         if (this.puzzle) await this.puzzleChat(this.puzzle, event.text);
         else await this.chat(p, event.text);
         return;
@@ -163,7 +163,7 @@ export class MockTransport implements TutorTransport {
     } else if (/\b(idk|i don'?t know|stuck|confused|hint|help)\b/i.test(text)) {
       await this.hint(p);
     } else if (readAnswer(text)) {
-      // A kid who types the answer into the chat gets it checked, not redirected.
+      // A child who types the answer into the chat gets it checked, not redirected.
       await this.answer(p, text);
     } else {
       await this.say(NUDGES[this.nudge++ % NUDGES.length]!);
@@ -297,7 +297,7 @@ export class MockTransport implements TutorTransport {
     this.out({ type: "puzzle", puzzle: toWire(live, this.skin()) });
   }
 
-  /** Same puzzle, same progress, new look: an interest switch or the kid's color pick. */
+  /** Same puzzle, same progress, new look: an interest switch or the child's color pick. */
   private reskin(): void {
     if (this.puzzle) this.out({ type: "puzzle", puzzle: toWire(this.puzzle, this.skin()) });
   }
@@ -324,7 +324,7 @@ export class MockTransport implements TutorTransport {
       // Third miss on one puzzle: the same first rung as on a problem (R-21).
       await this.suggestPause();
     } else if (v.ask) {
-      // A miss: the puzzle stops and the tutor asks first (R-03). The nudge waits for the kid.
+      // A miss: the puzzle stops and the tutor asks first (R-03). The nudge waits for the child.
       this.puzzleNudge = v.ask.nudge;
       await this.say(v.ask.ask);
     } else {

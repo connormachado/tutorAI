@@ -8,7 +8,7 @@ import { initialState, reducer } from "./state";
 export function useTutorSession(makeTransport: () => TutorTransport = createTransport) {
   const [state, dispatch] = useReducer(reducer, initialState);
   const transport = useRef<TutorTransport | null>(null);
-  const kidMessages = useRef(0);
+  const childMessages = useRef(0);
   const [isMock, setIsMock] = useState(false);
 
   const stop = useCallback(() => {
@@ -44,15 +44,15 @@ export function useTutorSession(makeTransport: () => TutorTransport = createTran
 
   const say = useCallback(
     (text: string) => {
-      dispatch({ type: "kid_said", id: `k${++kidMessages.current}`, text });
-      send({ type: "kid_message", text });
+      dispatch({ type: "child_said", id: `k${++childMessages.current}`, text });
+      send({ type: "child_message", text });
     },
     [send],
   );
 
   const answer = useCallback(
     (problem_id: string, text: string) => {
-      dispatch({ type: "kid_said", id: `k${++kidMessages.current}`, text });
+      dispatch({ type: "child_said", id: `k${++childMessages.current}`, text });
       dispatch({ type: "answer_sent" });
       send({ type: "answer", problem_id, text });
     },
@@ -61,9 +61,9 @@ export function useTutorSession(makeTransport: () => TutorTransport = createTran
 
   const puzzleMove = useCallback(
     (instance_id: string, move: PuzzleMove, echo?: string) => {
-      // What the kid typed or tapped shows in the chat, like an answer does, so the tutor's
+      // What the child typed or tapped shows in the chat, like an answer does, so the tutor's
       // question about it reads in context. It lives in React state only (P-1).
-      if (echo) dispatch({ type: "kid_said", id: `k${++kidMessages.current}`, text: echo });
+      if (echo) dispatch({ type: "child_said", id: `k${++childMessages.current}`, text: echo });
       dispatch({ type: "puzzle_move_sent", move });
       send({ type: "puzzle_move", instance_id, move });
     },
@@ -77,7 +77,7 @@ export function useTutorSession(makeTransport: () => TutorTransport = createTran
     say,
     answer,
     hint: (problem_id: string) => {
-      dispatch({ type: "kid_said", id: `k${++kidMessages.current}`, text: "Can I get a hint?" });
+      dispatch({ type: "child_said", id: `k${++childMessages.current}`, text: "Can I get a hint?" });
       send({ type: "hint_requested", problem_id });
     },
     resume: () => {
@@ -94,7 +94,7 @@ export function useTutorSession(makeTransport: () => TutorTransport = createTran
     demo: (trigger: DemoTrigger) => transport.current?.demo?.(trigger),
     puzzleMove,
     puzzleHint: (instance_id: string) => {
-      dispatch({ type: "kid_said", id: `k${++kidMessages.current}`, text: "Can I get a hint?" });
+      dispatch({ type: "child_said", id: `k${++childMessages.current}`, text: "Can I get a hint?" });
       send({ type: "puzzle_hint", instance_id });
     },
     puzzleNext: (instance_id: string) => {

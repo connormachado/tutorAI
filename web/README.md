@@ -1,6 +1,6 @@
-# Platy web (kid tutor UI)
+# Platy web (child tutor UI)
 
-The browser side of Platy. Right now it runs a demo of the kid tutoring session against a
+The browser side of Platy. Right now it runs a demo of the child tutoring session against a
 scripted mock tutor, so it needs no backend.
 
 Stack: React 19 + Vite + TypeScript, KaTeX for math, Atkinson Hyperlegible (bundled, not
@@ -64,7 +64,7 @@ src/
   mock/                  scripted lesson, answer checking, and puzzle items, skins, problem
                          generators and grading (all go away with the real backend)
   content/               puzzle types, balance-scale moves, team-color palette
-  math/                  kid-math parser, LaTeX output, KaTeX rendering
+  math/                  child-math parser, LaTeX output, KaTeX rendering
   session/               reducer + hook holding all session state in memory
   components/            ProblemCard, PuzzlePlayer (+ puzzles/), MathInput, Chat, Overlays, Mascot
 ```
@@ -87,7 +87,7 @@ skill_id, prompt (LaTeX), instruction, position, total}`, `answer_result {proble
 `reset {reason}`, `pause_suggested`, `topic_switch {label}`, `safety_escalation {resources}`,
 `error {code}`, `session_end {solved}`.
 
-Client to server: `kid_message {text}`, `answer {problem_id, text}`, `hint_requested
+Client to server: `child_message {text}`, `answer {problem_id, text}`, `hint_requested
 {problem_id}`, `resume`, `end_session`.
 
 Puzzles (R-37, R-38) add `puzzle {puzzle}`, `puzzle_result {instance_id, check, outcome}` and
@@ -98,11 +98,11 @@ problem or puzzle and the next.
 
 `answer_result`, `instruction`/`position`/`total` on `problem`, and `resume` are additions to the
 plan's first draft; they let the problem card give feedback and show progress. Answers are sent
-as the kid typed them (`x^2 = 49`, `±7`); the server does the grading.
+as the child typed them (`x^2 = 49`, `±7`); the server does the grading.
 
 ## Privacy rules this code follows
 
-- Kid content lives in React state only and is gone on a reset, at session end or on refresh.
+- Child content lives in React state only and is gone on a reset, at session end or on refresh.
   No browser storage, cookies, URL params or console logging (P-1, P-10).
 - No analytics, error tracking or remote fonts/scripts. The only network calls are to
   Platy's own server (P-2, P-11).

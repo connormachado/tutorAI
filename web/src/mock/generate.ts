@@ -45,7 +45,7 @@ export interface SpotInstance extends Numbers {
   linesLatex: string[];
   /** What line 0 should say. */
   fix: string;
-  /** The line the slip produces, for spotting it when a kid repeats it. */
+  /** The line the slip produces, for spotting it when a child repeats it. */
   slip: string;
 }
 

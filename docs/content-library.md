@@ -28,7 +28,7 @@ The existing specs are primer-first. Content touches them in these places:
 | REQUIREMENTS "Not V1" | "The RAG ground-truth content layer. The vision doc sequences it after the core loop is validated, so it needs its own R-id when that happens." | This doc is that layer, broadened from text explanations to all formats, and proposes building part of it earlier. Whether any of it goes in the demo is a decision for Connor and Michael (§2.1, §11). |
 | Vision §2 "Ground-truth content" | Core math must be anchored to something verified, not improvised | Every item's math is machine-checked before it ships. The tutor talks *about* a verified item instead of inventing math. |
 | A-8 Whiteboard (locked) | In V1 (amended 2026-10-18; was V1.5) | This doc proposes a small V1 whiteboard (§4.1). |
-| P-1 Kid content | "Anything the kid or the tutor said or showed" is never persisted | Library items are made ahead of time and contain no student data, so storing them is fine. Anything generated *for one student during a session* is kid content and is never stored or cached (§7). |
+| P-1 Child content | "Anything the child or the tutor said or showed" is never persisted | Library items are made ahead of time and contain no student data, so storing them is fine. Anything generated *for one student during a session* is child content and is never stored or cached (§7). |
 | P-2 / P-11 Egress | Only `primer.gateway` reaches third parties; nothing new phones home | No third-party players or embeds (YouTube, Spotify, game SDKs, analytics in game engines). Media is served by Platy itself. Authoring tools are a separate case (§8). |
 | P-8 Distilled state | Only skill ids, outcome codes, counts, timestamps | Content engagement is item ids and outcome codes (§6.4). In the demo nothing persists at all ("No DB", memory only); P-8 storage applies once there is a store. |
 | P-14 (pending) | Only pinned, ZDR-verified models and features | Whiteboard "check my work" (vision) and voice (R-19) each need a pinned, ZDR-verified model role before they're built (§4.1). |
@@ -38,12 +38,12 @@ One correction to the framing in the kickoff conversation: the primer should **n
 
 ### 2.1 The demo contract on main
 
-Connor's "Demo contract" in `CLAUDE.md` is binding for all work. It sets: one unit (solving linear equations), one path, 14–18 skill nodes; a closed stack (`anthropic`, `pydantic`, `sympy`, `fastapi`, `pyBKT`; no DB; any new dependency needs approval); policy deciding every turn, with `policy/checks.py` gating every tutor move; sympy as the only judge of correctness; kid state in memory only; and fixed kid-facing text living only in `src/primer/prompts/*.md`, so the pedagogy eval gate covers it.
+Connor's "Demo contract" in `CLAUDE.md` is binding for all work. It sets: one unit (solving linear equations), one path, 14–18 skill nodes; a closed stack (`anthropic`, `pydantic`, `sympy`, `fastapi`, `pyBKT`; no DB; any new dependency needs approval); policy deciding every turn, with `policy/checks.py` gating every tutor move; sympy as the only judge of correctness; child state in memory only; and fixed child-facing text living only in `src/primer/prompts/*.md`, so the pedagogy eval gate covers it.
 
 **The frontend is the React app in `web/`** (A-11, 2026-10-18). As first written, the contract made the demo Streamlit only; A-11 replaces Streamlit with `web/` and a FastAPI server in front of Connor's Python primer. So in this doc:
 
 - **Content players live in `web/`.** Each format gets a player component there, built and tested against PR #1's mock server first. The Python side chooses, checks and grades; the browser only shows items and reports what the student did (§6.4, §6.5).
-- **Everything else in the contract still holds:** items are chosen by policy and gated by `checks.py`, every check is graded by `primer.mathcheck` on the server, kid state lives in memory only (server memory and React state, never browser storage), and nothing is persisted in the demo.
+- **Everything else in the contract still holds:** items are chosen by policy and gated by `checks.py`, every check is graded by `primer.mathcheck` on the server, child state lives in memory only (server memory and React state, never browser storage), and nothing is persisted in the demo.
 - **Still open:** whether any content goes in the demo itself, or the library waits until the core loop is validated, as `REQUIREMENTS.md` sequences it (§11). The "Demo" column in §4 says which formats would fit if it does.
 
 ## 3. The core model: skill × angle × format
@@ -75,7 +75,7 @@ Items play one of a small set of **roles** in the learning loop:
 
 ## 4. Formats
 
-Status: **V1** = in the first V1 build; **V1.x** = soon after, no spec conflict; **V2+** = needs accounts, social safety or kid-content generation, so later. "Demo" says whether the format could be in the demo, if content goes in it (§11): it has to be V1, inside the demo unit, and buildable without an unapproved spec.
+Status: **V1** = in the first V1 build; **V1.x** = soon after, no spec conflict; **V2+** = needs accounts, social safety or child-content generation, so later. "Demo" says whether the format could be in the demo, if content goes in it (§11): it has to be V1, inside the demo unit, and buildable without an unapproved spec.
 
 | Format | What it is | Good for | Evidence | How it's made | Status | Demo |
 |---|---|---|---|---|---|---|
@@ -91,7 +91,7 @@ Status: **V1** = in the first V1 build; **V1.x** = soon after, no spec conflict;
 | Mini-game | A few minutes of play where moves are skill checks | practice, easy_win, retrieval | Yes | Small game templates, parameterised by problem generators | V1.x | No |
 | Explainer video | 3–6 min deeper explanation of one concept | introduce | No | Same pipeline as clips, longer script | V1.x | No (V1.x) |
 | Long project | Multi-session task (design a budget, plan a trip, model a sports stat) | apply | Yes, at checkpoints | Hand-designed briefs with checkpoint problems | V1.x | No (one path) |
-| Student-made music | Student generates a song about a concept | apply, motivation | No | Live AI generation through the gateway; output is kid content, never stored | V2+ | No |
+| Student-made music | Student generates a song about a concept | apply, motivation | No | Live AI generation through the gateway; output is child content, never stored | V2+ | No |
 | Collaborative project | Work with friends on a shared project | apply | Yes | Needs friend accounts, moderation, teen messaging safety | V2+ | No |
 
 A format is added by writing a **player** (a component in `web/`) and a **template** (how items of that format are authored). Adding a format never touches the primer's decision logic, because policy only sees descriptors (§5).
@@ -110,13 +110,13 @@ V1's whiteboard is deliberately small: a canvas beside the chat with three layer
 
 **"Check my work."** When the student asks for a check, the steps are:
 1. The ink or handwriting goes to a vision model through the gateway, like a photo (R-20). That needs a pinned, ZDR-verified vision role (P-14).
-2. The vision model only transcribes. Before anything else, its output gets the same **safety-first step** as any kid message: a disclosure stops tutoring with the fixed safety text, and nothing falls through to the tutor.
+2. The vision model only transcribes. Before anything else, its output gets the same **safety-first step** as any child message: a disclosure stops tutoring with the fixed safety text, and nothing falls through to the tutor.
 3. Correctness of the transcribed lines is then decided by `primer.mathcheck`, never by the model. The "line that went wrong" is the first line whose solution set isn't the answer's, and the tutor only points at it.
-4. Kid-written math needs normalising before mathcheck sees it (`2x` → `2*x`, `X` → `x`, `−` → `-`). Main has no normaliser yet (§11).
+4. Child-written math needs normalising before mathcheck sees it (`2x` → `2*x`, `X` → `x`, `−` → `-`). Main has no normaliser yet (§11).
 
 In V1, a vision-read check isn't counted as mastery evidence.
 
-**Privacy.** Whatever the student draws or writes is kid content, like a photo (P-1, R-20). It lives in memory only: React state in the browser (never browser storage, cookies or the console, as `web/` already does for chat) and session memory on the server. It is never stored, cached or logged, and it leaves the app only when the student asks for a check, and then only through the gateway. A hard reset (A-4) clears the board, and a safety stop closes it. Scenes are library content, and tutor marks and check results are structured codes.
+**Privacy.** Whatever the student draws or writes is child content, like a photo (P-1, R-20). It lives in memory only: React state in the browser (never browser storage, cookies or the console, as `web/` already does for chat) and session memory on the server. It is never stored, cached or logged, and it leaves the app only when the student asks for a check, and then only through the gateway. A hard reset (A-4) clears the board, and a safety stop closes it. Scenes are library content, and tutor marks and check results are structured codes.
 
 **It also helps with math input,** which is a known gap. Write-in boxes accept handwriting, read by the vision model on request, alongside typed math.
 
@@ -230,7 +230,7 @@ constraints: device ("chromebook" | "phone"), audio_ok, max_duration_s,
 
 ### 6.3 Format affinity
 
-Per student, per format: counts of `shown`, `completed`, `skipped`, and `next_attempt_correct` (whether the next evidence on that skill was correct). In the demo these live in the server's session memory and vanish with the session, like all kid state. Once there is a store, they're counts and codes, so they'd be distilled state under P-8, encrypted with the profile under P-7. Affinity replaces "learning style" with something measured.
+Per student, per format: counts of `shown`, `completed`, `skipped`, and `next_attempt_correct` (whether the next evidence on that skill was correct). In the demo these live in the server's session memory and vanish with the session, like all child state. Once there is a store, they're counts and codes, so they'd be distilled state under P-8, encrypted with the profile under P-7. Affinity replaces "learning style" with something measured.
 
 ### 6.4 Content events and checks
 
@@ -238,7 +238,7 @@ Players emit structured events only: `content_started`, `content_completed`, `co
 
 - **`check_result`** carries the check id, the outcome code, `hints_used` and a response-time bucket, so it can feed R-11's `multigs` classes.
 - **The outcome is computed on the server,** never asserted by the browser. Algebraic checks call `primer.mathcheck` on the student's (normalised) input. UI-state checks (which step was tapped, where a point snapped) compare exact values. The browser sends what the student did; the server grades it, and the result comes back as a code.
-- **No free-text answers are recorded.** A typed answer goes through the same whitelist-then-mathcheck path as any kid input.
+- **No free-text answers are recorded.** A typed answer goes through the same whitelist-then-mathcheck path as any child input.
 
 Later, item quality is the aggregate across students: completion rate, skip point, and how often the next attempt is correct. Aggregates have no student ids and need a store, so they're post-demo.
 
@@ -258,7 +258,7 @@ Later, item quality is the aggregate across students: completion rate, skip poin
 | { type: "slot_pick"; colors: PaletteId }  // R-38, from a fixed palette
 ```
 
-A second `puzzle` event with the same `instance_id` only changes the skin, so the student keeps their progress. The browser draws a balance-scale move only after the server's `puzzle_result` accepts it. `kid_message` carries no problem or puzzle id, so the server reads it against whatever is current when it's handled. The browser therefore holds the chat while a move waits for its verdict and from `puzzle_next` (or a solved problem) until the next `problem` or `puzzle` arrives, and the server must always answer `puzzle_next` with `puzzle_done`. Adding the on-screen id to `kid_message` would let the server drop a stale message instead; that's a contract question for the backend. Hints used and response times for R-11 stay on the server, which already sees every move and hint request.
+A second `puzzle` event with the same `instance_id` only changes the skin, so the student keeps their progress. The browser draws a balance-scale move only after the server's `puzzle_result` accepts it. `child_message` carries no problem or puzzle id, so the server reads it against whatever is current when it's handled. The browser therefore holds the chat while a move waits for its verdict and from `puzzle_next` (or a solved problem) until the next `problem` or `puzzle` arrives, and the server must always answer `puzzle_next` with `puzzle_done`. Adding the on-screen id to `child_message` would let the server drop a stale message instead; that's a contract question for the backend. Hints used and response times for R-11 stay on the server, which already sees every move and hint request.
 
 **Other formats (proposed, not built).** Videos, songs, stories and the whiteboard would add:
 
@@ -295,7 +295,7 @@ This is also where the evidence points. In Walkington's study of 145 high-school
 | **4. The tutor's words** | Personal details ("like your team's league table") | The tutor introduces each item and follows up using the profile. It's chat, within R-06 and the policy checks | A turn the session already pays for | Never (P-1) |
 | **5. Per-student media** | A song or video made for one student | Live generation through the gateway | High, plus a wait | Never, so never reused |
 
-Layer 5 stays V2+. It's the expensive layer, it can't be math-checked or reviewed before the student sees it, and because it's kid content (P-1) it can't be kept, so it's paid for again every time.
+Layer 5 stays V2+. It's the expensive layer, it can't be math-checked or reviewed before the student sees it, and because it's child content (P-1) it can't be kept, so it's paid for again every time.
 
 **Pace is the primer's job, not the media's.** A slower student isn't shown a slower video. They get more practice instances, more worked examples and repair items, and smaller steps between checks. A faster student skips easy wins and reaches `apply` items sooner. Templates make this cheap because they produce a problem at any difficulty on demand, and every player lets students pause and replay.
 
@@ -313,7 +313,7 @@ Michael's framing (2026-10-18): one large, standard library, where each item can
 - **An interest skin fills the slots with defaults** (the football skin: a made-up team, a field, positions). **The student's own picks override them:** colors from a fixed palette and names from authored lists, chosen during onboarding. They're structured choices rather than free text, so they fit the profile's distilled state (P-8) and the library still never sees free text about a student.
 - **No real logos, team names or player names in content.** They're licensed trademarks and publicity rights. Colors are generally fine, so a Buccaneers fan gets a made-up team in red and pewter. The tutor can still mention a student's real team in chat (layer 4), because that's conversation, not branded content. To confirm with a lawyer before real users.
 - **What can take slots:** anything drawn live in `web/` (puzzles, games, whiteboard scenes, template reels, the text of stories). Recorded media (narrated videos, songs) varies only per interest tag, because changing a word means re-recording it.
-- **Slot text is fixed kid-facing text,** so the lists of names and setting words are authored, reviewed and covered by the pedagogy eval like any other item text.
+- **Slot text is fixed child-facing text,** so the lists of names and setting words are authored, reviewed and covered by the pedagogy eval like any other item text.
 
 ### 7.4 What it costs
 
@@ -328,7 +328,7 @@ Rough numbers for the demo unit, inferred rather than measured: about 16 skills 
 Content is made at **author time**, offline, by Michael and tools. No student data is ever in a generation prompt. The proposed layout separates authoring from what the app reads:
 
 - **`content/prompts/`** holds the authoring prompts. They are never loaded at runtime, and they aren't runtime prompts.
-- **`src/primer/content/items/`** holds published item JSON as packaged data, read with `importlib.resources` the same way as the skill graph. Because item text is fixed kid-facing text, this path would be added to the `[pedagogy]` trigger so the pedagogy eval covers it, as `CLAUDE.md` requires for `src/primer/prompts/`. `scripts/triggers.toml` is a gate file, so Connor or Michael makes that change.
+- **`src/primer/content/items/`** holds published item JSON as packaged data, read with `importlib.resources` the same way as the skill graph. Because item text is fixed child-facing text, this path would be added to the `[pedagogy]` trigger so the pedagogy eval covers it, as `CLAUDE.md` requires for `src/primer/prompts/`. `scripts/triggers.toml` is a gate file, so Connor or Michael makes that change.
 - **Media files** (video, audio, images) are served by the app itself from a folder next to it, not embedded from a third party.
 - **`tools/content/`** holds authoring scripts (rendering, voiceover, music, any automated prompt runs). It would be its own uv project with its own lockfile, never part of the deployed app:
   - Manim's recent releases need NumPy 2, which can't share a lockfile with pyBKT's `numpy<2` pin.
@@ -382,7 +382,7 @@ Interest tags for the slice: `soccer`, `gaming`, `music`.
 
 1. **Decisions first** (Connor and Michael): is content in the demo or after it, and where items live (§11). The frontend is settled: `web/`.
 2. **Descriptor model and validator,** in the gate, against the `SkillMap` (Michael).
-3. **The content math check** using `primer.mathcheck` (Michael), plus a kid-input normaliser if Connor wants one shared (§11).
+3. **The content math check** using `primer.mathcheck` (Michael), plus a child-input normaliser if Connor wants one shared (§11).
 4. **Author the items above** with the prompts.
 5. **Players in `web/`** for video and reels, audio, story text and the three puzzle templates, against the mock server first; then the whiteboard.
 6. **`select_item` and the `show_item` action** inside policy and `checks.py` (Connor), with session-only format affinity.
@@ -400,7 +400,7 @@ The age gate (PR #1) is R-36. This doc's R-ids were renumbered at merge to R-37,
 - **R-38 Interest variants, skins and slots.** Template skins and pre-made variants per interest tag from a fixed vocabulary, made per tag and never per student, plus per-student slot choices (colors, names) from fixed lists (§7.3); no real logos, team or player names; the library never sees free-text profile data.
 - **R-45 Content events and format affinity.** Structured engagement events and per-format counts; session-only in the demo, distilled state (P-8) once there's a store.
 - **R-46 Self-hosted media.** All content media and players are served by Platy itself; no third-party embeds or SDKs at runtime. *(Could instead be P-16 in `PRIVACY.md`, since it is really P-11 applied to content.)*
-- **R-47 Whiteboard.** A canvas with library scenes, snapping student tools, freehand scratch ink and a fixed set of tutor marks that pass policy checks (§4.1). Only structured actions count as evidence. "Check my work" goes through the gateway with a pinned ZDR vision role, safety first, with correctness decided by mathcheck. Student ink is kid content and is never stored. *In V1 per A-8 (amended 2026-10-18).*
+- **R-47 Whiteboard.** A canvas with library scenes, snapping student tools, freehand scratch ink and a fixed set of tutor marks that pass policy checks (§4.1). Only structured actions count as evidence. "Check my work" goes through the gateway with a pinned ZDR vision role, safety first, with correctness decided by mathcheck. Student ink is child content and is never stored. *In V1 per A-8 (amended 2026-10-18).*
 
 ## 11. Open questions
 
@@ -410,7 +410,7 @@ The age gate (PR #1) is R-36. This doc's R-ids were renumbered at merge to R-37,
 3. **Where items live.** Is `src/primer/content/items/` as packaged data, added to the `[pedagogy]` trigger, the right home? Does the R-06 length cap apply to fixed item text like a 300-word story?
 4. **Misconceptions.** Add a `misconceptions` field to `SkillNode`, or keep a sibling file keyed by node id?
 5. **Selection in policy.** OK for `select_item` to be a pure function policy calls, with `show_item` as a `TutorMove` action that `checks.py` gates?
-6. **Authoring tools.** OK for `tools/content/` to be a separate uv project (Manim, voiceover, music SDKs) that can't import `primer`? If so, A-2 needs a line saying author-time tooling with no kid data is outside its scope.
-7. **Kid math input.** mathcheck refuses `2x`, `X` and `−`. Should there be one shared normaliser before mathcheck, for typed answers, handwriting and item checks alike?
+6. **Authoring tools.** OK for `tools/content/` to be a separate uv project (Manim, voiceover, music SDKs) that can't import `primer`? If so, A-2 needs a line saying author-time tooling with no child data is outside its scope.
+7. **Child math input.** mathcheck refuses `2x`, `X` and `−`. Should there be one shared normaliser before mathcheck, for typed answers, handwriting and item checks alike?
 8. **Vision and voice.** Pinned, ZDR-verified roles for whiteboard "check my work" (vision) and voice (R-19), and any new gateway host they need (P-4).
 9. **R-37, R-38 and R-43 to R-47:** accept, merge or cut.

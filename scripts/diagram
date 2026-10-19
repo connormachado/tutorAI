@@ -33,7 +33,7 @@ MERMAID_RE = re.compile(r"```mermaid\n(.*?)```", re.S)
 MAX_DIFF_CHARS = 60_000
 
 LLM_RULES = f"""\
-You maintain diagrams/AS-BUILT.md for The Primer, a privacy-first algebra tutor for kids.
+You maintain diagrams/AS-BUILT.md for The Primer, a privacy-first algebra tutor for children.
 Output EXACTLY two fenced ```mermaid blocks and nothing else: first the COMPONENT diagram,
 then the DATA-FLOW diagram.
 
@@ -46,13 +46,13 @@ Grammar (anything else is rejected by a script):
 Component diagram: one node per component listed below (id = component name) and exactly the
 listed real edges (importer --> imported). No other nodes or edges.
 
-Data-flow diagram: how kid data moves (kid input -> session -> gateway -> LLM/speech provider;
+Data-flow diagram: how child data moves (child input -> session -> gateway -> LLM/speech provider;
 profile/mastery state -> encrypted store; the opt-in anonymized upload path, if the code has one).
 Node ids: a component name, or ext_* (third-party service), actor_* (a person), data_* (data at
 rest). Every edge touching an ext_* node must have `{edge_diff.GATEWAY}` on its other end. An edge
 between two components is allowed only if one imports the other.
 Draw ONLY flows the code performs today, visible in the diff or the previous diagram. No planned,
-implied or typical flows: a component that doesn't move kid data yet stays out of this diagram.
+implied or typical flows: a component that doesn't move child data yet stays out of this diagram.
 
 Edit the previous diagram MINIMALLY: keep existing node ids and labels, do not restyle.
 """

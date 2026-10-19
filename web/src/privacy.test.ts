@@ -1,4 +1,4 @@
-// Cheap guardrails for PRIVACY.md in the browser. Kid content must never be persisted
+// Cheap guardrails for PRIVACY.md in the browser. Child content must never be persisted
 // client-side (P-1, P-10) and nothing may phone home (P-2, P-11).
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";

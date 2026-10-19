@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { hasSolution, linearForm, readable, sameLine } from "./grade";
 
 describe("mock puzzle grading", () => {
-  it("reads a line the way a kid types it", () => {
+  it("reads a line the way a child types it", () => {
     expect(linearForm("2x = 16")).toEqual({ a: 2, b: -16 });
     expect(linearForm("2*x = 16")).toEqual({ a: 2, b: -16 });
     expect(linearForm("16 = 2X")).toEqual({ a: -2, b: 16 });

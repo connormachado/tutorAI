@@ -4,7 +4,7 @@
 
 ---
 
-**Reproducible "cold demo" script.** One command, from a clean checkout, fixed seed, fixed fake kid profile, deterministic output. Strongest available antidote to "this is vibe-coded" — a YC partner (or anyone) can clone the repo and get the exact promised behavior themselves, no live demo risk. Build once there's a demo to script.
+**Reproducible "cold demo" script.** One command, from a clean checkout, fixed seed, fixed fake child profile, deterministic output. Strongest available antidote to "this is vibe-coded" — a YC partner (or anyone) can clone the repo and get the exact promised behavior themselves, no live demo risk. Build once there's a demo to script.
 
 **Gateway fault-injection tests.** Narrowly scoped to the allowlist gateway only — not general chaos engineering. Tests: LLM provider timeout, malformed response, dropped connection mid-session. Confirms the system actually fails closed under real failure conditions (A-2), not just on the happy path. Build once the gateway is implemented.
 

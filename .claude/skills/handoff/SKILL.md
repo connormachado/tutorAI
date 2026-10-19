@@ -48,7 +48,7 @@ Use exactly these headings. Keep it under about 60 lines; link to files, PRs and
 ```
 
 ## 3. Rules
-- **Privacy (P-1, P-10):** never paste kid messages, model replies, transcripts, audio, photos or any PII into a handoff, not even as an example. Describe behaviour instead ("the tutor now asks for a worked step before hinting").
+- **Privacy (P-1, P-10):** never paste child messages, model replies, transcripts, audio, photos or any PII into a handoff, not even as an example. Describe behaviour instead ("the tutor now asks for a worked step before hinting").
 - No secrets, tokens or local paths from your machine.
 - State what was checked (a test name, `scripts/check` output) versus what is inferred.
 - Don't hand-edit `diagrams/AS-BUILT.md` or gate files to "document" them; note the change here instead.

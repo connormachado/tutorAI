@@ -29,7 +29,7 @@
 - OK for `select_item` inside policy, `show_item` gated by `checks.py`, and items under `src/primer/content/items/` in `[pedagogy]`? Does R-06's cap apply to item text?
 - `misconceptions` on `SkillNode`, or a sibling file?
 - `tools/content/` as a separate uv project outside A-2's scope, written down as such?
-- One shared normaliser for kid-typed math (`2x`, `X`, `−`) before mathcheck?
+- One shared normaliser for child-typed math (`2x`, `X`, `−`) before mathcheck?
 - Pinned ZDR roles for whiteboard vision and voice (P-14). Accept, merge or cut R-37, R-38 and R-43 to R-47 (§10, §11).
 
 ## Next steps

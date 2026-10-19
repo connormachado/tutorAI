@@ -1,6 +1,6 @@
-// Parses the math a kid types ("3x+5=20", "x^2", "sqrt(49)", "3/4") into a small AST.
+// Parses the math a child types ("3x+5=20", "x^2", "sqrt(49)", "3/4") into a small AST.
 // It never throws: half-typed input ("x^", "(3+") parses with `missing` holes so the
-// live preview can show a box where the kid still has to type something.
+// live preview can show a box where the child still has to type something.
 
 export type Node =
   | { kind: "num"; value: string }

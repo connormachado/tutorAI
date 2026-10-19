@@ -73,7 +73,7 @@ All four additions are in. I checked each source file before writing this, and i
 | D2 | Use the catalog tester agents as-is | Both reference a "context manager" agent we don't have. `ui-ux-tester` has **Write and Edit** tools, and its browser tool names (`chrome-mcp`, `computer-use`) don't match Claude Code's. `accessibility-tester` is Haiku-only and reads code without looking at the running app. | Trim them: remove the dead steps and make them read-only (reports, not fixes). Map the browser tools to whatever you have (Q11). Pair a11y with a deterministic `axe-core` run and target WCAG 2.2 AA. |
 | D3 | Get `architect-reviewer` from the catalog "or write a project-specific version if it doesn't fit cleanly" | The catalog version is a generic checklist: microservices, CQRS, service mesh, horizontal scaling, "evolution path." It also has Write and Edit. It would **push toward the speculative infrastructure the brief bans.** | **Write a project-specific version** (the addendum allows this). It checks against numbered locked decisions, not a scalability checklist. |
 | D4 | Check against "decisions already locked in project memory" | There's no project memory yet, and memory isn't versioned or visible in diffs. | Put them in a checked-in **`DECISIONS.md`**. *(v3: done. You wrote it, with A-1…A-10.)* |
-| D5 | `npx skills add https://github.com/Leonxlnx/taste-skill` | Without a flag that installs **~13 skills**. They include `gpt-taste` (Python-driven random layouts), `output-skill` (overrides truncation behavior) and several fixed house styles that contradict each other. The main skill also **scopes itself** to "landing pages, portfolios… not multi-step product UI," and it defaults to Next.js + Tailwind + heavy motion (VARIANCE 8 / MOTION 6). | Install **only `--skill design-taste-frontend`**. Use it for the **parent-facing landing page**. `frontend-design` governs the kid-facing app. If taste-skill is ever used on kid UI, the dials are low (≈3/2/3), and it doesn't get to choose the frontend stack (Q1 does). |
+| D5 | `npx skills add https://github.com/Leonxlnx/taste-skill` | Without a flag that installs **~13 skills**. They include `gpt-taste` (Python-driven random layouts), `output-skill` (overrides truncation behavior) and several fixed house styles that contradict each other. The main skill also **scopes itself** to "landing pages, portfolios… not multi-step product UI," and it defaults to Next.js + Tailwind + heavy motion (VARIANCE 8 / MOTION 6). | Install **only `--skill design-taste-frontend`**. Use it for the **parent-facing landing page**. `frontend-design` governs the child-facing app. If taste-skill is ever used on child UI, the dials are low (≈3/2/3), and it doesn't get to choose the frontend stack (Q1 does). |
 
 Also worth knowing:
 - **Superpowers v6.4.2 has no slash commands.** brainstorm, write-plan and execute-plan are now skills, invoked as `/superpowers:brainstorming`, `/superpowers:writing-plans` and `/superpowers:executing-plans`.
@@ -94,7 +94,7 @@ These change what gets built. I'll use the **bold default** unless you say other
 | Q4 | **Codex access.** The `codex` CLI isn't on your PATH (ChatGPT.app and `~/.codex` exist). Which ChatGPT plan are you on? | The plugin needs the CLI, and usage limits set how often we can call Codex | **Install the CLI + plugin. Budget roughly 1–3 Codex reviews per day.** |
 | Q5 | **Privacy scope.** Are **photos of handwritten work** and **voice audio** "raw conversation"? *(v3: A-2/A-3 now settle the gateway: it's the only module with third-party network access, fail-closed, and transcripts cross it unscrubbed but are never persisted. Photos and audio are still unaddressed.)* | Sets exactly what the privacy reviewer and the tests enforce | **Photos and audio are handled like transcripts: they may cross the gateway and are never persisted. The PII store is also reachable only through a single module with a fixed field schema.** |
 | Q6 | **Voice in V1.** ~~The vision doc wants voice for emotional signal, but the brief rules out tone detection.~~ | — | **Settled by A-7:** behavioral proxies only, no acoustic inference. Speech-to-text only; audio is discarded after transcription. |
-| Q7 | **Safety disclosures** (abuse, self-harm). Is hard-coded escalation needed before your brother or your mom's clients use it? *(v3: `DECISIONS.md` lists this under "Open," so architect-reviewer won't flag it either way. It's still a real-kid safety question for `REQUIREMENTS.md`.)* | It's real kids, even in V1 | **Yes: a minimal hard-coded escalation path plus scripted eval cases before the first real kid. It becomes an R-id, not an A-id.** |
+| Q7 | **Safety disclosures** (abuse, self-harm). Is hard-coded escalation needed before your brother or your mom's clients use it? *(v3: `DECISIONS.md` lists this under "Open," so architect-reviewer won't flag it either way. It's still a real-child safety question for `REQUIREMENTS.md`.)* | It's real children, even in V1 | **Yes: a minimal hard-coded escalation path plus scripted eval cases before the first real child. It becomes an R-id, not an A-id.** |
 | Q8 | **Requirements list.** The "do we need this" reviewer needs named items to check against. *(v3: `DECISIONS.md` is done.)* | Without IDs, that reviewer is just asking for opinions | **I draft `REQUIREMENTS.md` (R-01…R-nn) and `PRIVACY.md` (P-ids, each tracing to A-2/A-3), and you approve both before any product code.** |
 | Q9 | **Reviewer model cost.** | Opus is roughly 5× Sonnet per token | **Sonnet for scope-skeptic, architect-reviewer and the two testers. Opus for the privacy reviewer.** |
 | Q10 *(v2)* | **Install scope.** | — | **Settled: project scope.** Plugins go in `.claude/settings.json` `enabledPlugins`, and agents and skills are checked in. |
@@ -136,7 +136,7 @@ These change what gets built. I'll use the **bold default** unless you say other
 3. `pytest -q -x -m "not llm"`: fast and deterministic, with no network and no model calls.
 4. **Privacy contracts.** These are product tests, listed here because the gate depends on them:
    - **import-linter** *(v3: per A-2)*: only `primer.gateway` may import third-party network, LLM or speech clients (`anthropic`, `httpx`, `requests`, the speech SDK, `socket`/`urllib` wrappers) via a `forbidden` contract with external packages included. This is structural enforcement, "never by convention." A second contract says only one module may import the PII-store client (Q5).
-   - **Canary test** *(A-2's own verification)*: run a scripted session whose kid messages contain a unique canary string. Afterwards, search every DB file, log, temp dir and captured log record. **The canary must not appear anywhere.** One cheap test covers "raw transcripts are never persisted" (A-3), including leaks through logs or exception traces.
+   - **Canary test** *(A-2's own verification)*: run a scripted session whose child messages contain a unique canary string. Afterwards, search every DB file, log, temp dir and captured log record. **The canary must not appear anywhere.** One cheap test covers "raw transcripts are never persisted" (A-3), including leaks through logs or exception traces.
 
 *(v3)* **`scripts/triggers.toml`** is the one place trigger paths live. `/ship` and pre-commit both read it, and it's a protected gate file:
 
@@ -177,7 +177,7 @@ Same trigger pattern as the privacy reviewer and Codex, but **enforced in the gi
    - If either changed, go to step 3.
 3. **LLM update:** run `claude -p` with Sonnet, read-only tools and no session persistence. Give it the *previous* `AS-BUILT.md`, the component graph and the staged diff.
    - Instruction: **edit minimally, keep existing node IDs (component names), don't restyle.**
-   - It writes two Mermaid diagrams: **component** and **data flow** (kid input → session → gateway → LLM/speech provider; state → encrypted store; the opt-in anonymized upload path per A-3).
+   - It writes two Mermaid diagrams: **component** and **data flow** (child input → session → gateway → LLM/speech provider; state → encrypted store; the opt-in anonymized upload path per A-3).
 4. **Normalize, no LLM:** sort nodes and edges and canonicalize whitespace, so cosmetic reshuffling never shows up as a diff.
 5. **Edge check, no LLM:** `scripts/edge_diff.py` parses the Mermaid and compares it with the grimp graph:
    - **Component diagram, exact both ways.** Any edge the diagram shows that isn't a real import, or any real cross-component import the diagram leaves out, is a **discrepancy.**
@@ -254,7 +254,7 @@ The main session does the implementing. It isn't a custom agent. It gets small t
 - *(v3)* **Also reports:**
   - an **undeclared architecture change**: the `AS-BUILT.md` diagram moved while the task said `arch: none` (§3.1b)
   - declared changes whose diagram diff **doesn't match what was declared**
-- **Why separate:** scope-skeptic asks "is this needed?" and the privacy reviewer asks "does kid data escape?" Neither catches a diff that is needed and private but **built against a locked decision**, or one that quietly reshapes the architecture.
+- **Why separate:** scope-skeptic asks "is this needed?" and the privacy reviewer asks "does child data escape?" Neither catches a diff that is needed and private but **built against a locked decision**, or one that quietly reshapes the architecture.
 - **Tools:** `Read, Grep, Glob, Bash` (read-only). **Model:** Sonnet. Escalate to Opus only if real drift slips past it.
 - **Runs:** on every `/ship`, alongside scope-skeptic.
 - **Later, not built:** if `diagrams/TARGET-ARCHITECTURE.md` exists, also diff it against AS-BUILT (§3.1b).
@@ -266,7 +266,7 @@ The main session does the implementing. It isn't a custom agent. It gets small t
 |---|---|
 | Code with no requirement behind it / bigger than needed / premature abstraction | scope-skeptic |
 | Needed code that contradicts a locked decision (A-1, A-4…A-10), or an undeclared/mismatched architecture change *(v3)* | architect-reviewer |
-| Kid data, transcripts, audio, photos or PII escaping, or new sinks (P-ids → A-2, A-3) | privacy-boundary-reviewer |
+| Child data, transcripts, audio, photos or PII escaping, or new sinks (P-ids → A-2, A-3) | privacy-boundary-reviewer |
 | A real import the diagram leaves out, or a diagram edge with no real import behind it *(v3)* | **nobody. `edge_diff.py` blocks it mechanically** |
 | Bugs | `/code-review` |
 
@@ -278,13 +278,13 @@ The main session does the implementing. It isn't a custom agent. It gets small t
   - profile and mastery state encrypted at rest (A-3)
   - BKT-fitting data leaves only through the **opt-in, anonymized** upload path (A-3)
   - no conversation content in logs, error trackers or analytics
-  - no new outbound destinations for kid data
+  - no new outbound destinations for child data
 - **Unscrubbed transcripts crossing the gateway are a declared exception (A-3), not a finding.**
 - It cites the invariant for every finding. It does **not** re-check what the canary test and import-linter already enforce. Its job is the things tests can't see: new data flows, new sinks, new dependencies that phone home. *(v3: the data-flow diagram diff from §3.1b is part of its input.)*
 - **Why separate:** these are the highest-stakes mistakes, and they need a reviewer that holds nothing but the privacy spec. `/code-review` is looking for bugs, not data flows.
 - **Tools:** `Read, Grep, Glob, Bash` (read-only). **Model:** Opus.
 - **Runs:** only when the diff touches `[privacy].paths` in `scripts/triggers.toml`, or adds a dependency.
-- **Kill criterion:** none before real kids use the product. It's paired with Codex for independence.
+- **Kill criterion:** none before real children use the product. It's paired with Codex for independence.
 
 #### Reused built-ins (no custom agent)
 - **`/code-review`** does the "senior dev" correctness review. It runs on every `/ship` except for docs or test-only diffs.
@@ -296,7 +296,7 @@ The main session does the implementing. It isn't a custom agent. It gets small t
 
 | | `ui-ux-tester` | `accessibility-tester` |
 |---|---|---|
-| **Job** | Walk the running app as **a struggling 14-year-old** and then as **a parent**, through the flows in `REQUIREMENTS.md`. Report what breaks, confuses, looks unfinished or overwhelms (walls of text, too many concepts at once). Screenshots as evidence, and a severity for each item. | Run `axe-core` against each page first, which gives deterministic numbers. Then walk it by keyboard only and check focus, contrast, reduced motion, and whether the copy suits a kid's reading level. Target **WCAG 2.2 AA**. |
+| **Job** | Walk the running app as **a struggling 14-year-old** and then as **a parent**, through the flows in `REQUIREMENTS.md`. Report what breaks, confuses, looks unfinished or overwhelms (walls of text, too many concepts at once). Screenshots as evidence, and a severity for each item. | Run `axe-core` against each page first, which gives deterministic numbers. Then walk it by keyboard only and check focus, contrast, reduced motion, and whether the copy suits a child's reading level. Target **WCAG 2.2 AA**. |
 | **Tools** | Read, Grep, Glob, plus **Playwright MCP** (Q11). **No Write/Edit:** it reports and doesn't fix. | Read, Grep, Glob, Bash (for axe), plus **Playwright MCP**. No Write/Edit. |
 | **Model** | Sonnet | Sonnet (the catalog uses Haiku; bumped because it has to drive a browser) |
 
@@ -309,7 +309,7 @@ The main session does the implementing. It isn't a custom agent. It gets small t
 
 **The limit on "same result every run":** Playwright fixes the *environment*. The testers' written judgments still come from an LLM, and the app's tutor replies come from an LLM too. So the axe numbers and fixed-step screenshots will repeat exactly, and the prose findings will be close but not identical. Making the app's own output fixed (seeded and pinned) is item 1 in `deferred-credibility-checks.md` ("cold demo" script), which **isn't in this round**.
 
-**`/demo-check`** starts the app locally against a **seeded fake-kid profile**, never real kid data: screenshots and LLM calls must not touch a real child's state. It runs both agents and writes one dated report to `demo-reports/`, sorted into must-fix before the demo / should-fix / ignore.
+**`/demo-check`** starts the app locally against a **seeded fake-child profile**, never real child data: screenshots and LLM calls must not touch a real child's state. It runs both agents and writes one dated report to `demo-reports/`, sorted into must-fix before the demo / should-fix / ignore.
 - **When:** before any demo, investor or YC checkpoint, or pilot-family session. You run it by hand.
 - **Kill criterion:** if two demo-checks in a row find nothing you didn't already know from using it yourself, run it less often.
 
@@ -334,10 +334,10 @@ Installed at project scope from `claude-plugins-official` (v6.4.2 at research ti
 
 | Skill | Source | Governs |
 |---|---|---|
-| `frontend-design` | Anthropic, via `claude-plugins-official` (project scope) | **All kid-facing UI.** It works plan → critique the plan against the brief → build, and it names the AI-design tells (cream + terracotta, the SaaS card kit, ALL-CAPS eyebrows, `→` buttons). |
-| `design-taste-frontend` (from `Leonxlnx/taste-skill`, MIT, **only this one skill**, D5) | `npx skills add … --skill design-taste-frontend`, pinned into `.claude/skills/` | **The parent-facing landing page** (its own stated scope). For kid UI the dials are VARIANCE ≈3, MOTION ≈2, DENSITY ≈3, because a struggling kid shouldn't get cinematic motion. |
+| `frontend-design` | Anthropic, via `claude-plugins-official` (project scope) | **All child-facing UI.** It works plan → critique the plan against the brief → build, and it names the AI-design tells (cream + terracotta, the SaaS card kit, ALL-CAPS eyebrows, `→` buttons). |
+| `design-taste-frontend` (from `Leonxlnx/taste-skill`, MIT, **only this one skill**, D5) | `npx skills add … --skill design-taste-frontend`, pinned into `.claude/skills/` | **The parent-facing landing page** (its own stated scope). For child UI the dials are VARIANCE ≈3, MOTION ≈2, DENSITY ≈3, because a struggling child shouldn't get cinematic motion. |
 
-- **Precedence when they disagree** (e.g. taste-skill strongly discourages serif, frontend-design doesn't): `frontend-design` wins on kid UI, taste-skill wins on the landing page.
+- **Precedence when they disagree** (e.g. taste-skill strongly discourages serif, frontend-design doesn't): `frontend-design` wins on child UI, taste-skill wins on the landing page.
 - Neither skill gets to pick the frontend stack. That's Q1.
 - Both are installed now and get used once `web/` exists.
 
@@ -385,7 +385,7 @@ task (1 R-id, acceptance test named, arch: none|<change>)  →  write failing te
                 → eval (hard, cached) → diagram (stamp fresh → no-op) → stage AS-BUILT.md   (v3)
 
 /demo-check (separate, by hand, before demos/pilots; never per commit)                (v2)
-      →  start app with seeded fake-kid profile  →  Playwright (headless, isolated, pinned; 1366×768 + phone)
+      →  start app with seeded fake-child profile  →  Playwright (headless, isolated, pinned; 1366×768 + phone)
       →  axe at fixed steps  →  ui-ux-tester ∥ accessibility-tester
       →  demo-reports/YYYY-MM-DD.md (must-fix / should-fix / ignore)
 ```
@@ -434,7 +434,7 @@ NOT created this round (v3):     scripts/eval + evals/  (next phase; the gate al
 |---|---|
 | Custom "senior dev" agent | `/code-review` already does it, gets maintained, and verifies its own findings. |
 | Test-writer / implementer / planner agents | Splitting up job titles adds handoffs without independence. The main session writes the test first, and plan mode handles planning. |
-| General security-review agent | Kid-data privacy is the real risk, and it has its own agent. Run built-in `/security-review` once before any wider launch. |
+| General security-review agent | Child-data privacy is the real risk, and it has its own agent. Run built-in `/security-review` once before any wider launch. |
 | LLM `agent`/`prompt` hooks as gates | Non-deterministic, slow, and they cost money on every stop. LLMs advise and scripts decide. *(v3: the two LLM steps now on the commit path are **not** LLMs judging code, so this rule still holds.) The pedagogy eval **tests the product**, which is itself an LLM, and its pass/fail is defined by scripted cases. The diagram LLM only **writes**: `edge_diff.py` decides whether its output is true, and it only runs when the import graph or privacy paths change.* |
 | Codex on every diff / Codex review gate | Evidence of net regressions on Claude-written code, plus the README's own usage-drain warning. |
 | Agent teams / workflow fan-outs / worktree parallelism | Small team, pre-MVP, small tasks. Nothing needs parallel coordination yet. *(v2: this also covers superpowers' `subagent-driven-development` and `using-git-worktrees`, which are turned off by preference in §3.2c.)* |

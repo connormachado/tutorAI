@@ -1,7 +1,7 @@
 // Scripted tutor turns for the demo. The wording follows the pedagogy rules the real tutor
-// will be held to: no answer on the first miss (R-02), ask for the kid's reasoning (R-03),
-// short replies with one idea each (R-06), and a pivot when a kid keeps missing (R-21).
-// Everything here is fake content; no real kid data is involved (P-13).
+// will be held to: no answer on the first miss (R-02), ask for the child's reasoning (R-03),
+// short replies with one idea each (R-06), and a pivot when a child keeps missing (R-21).
+// Everything here is fake content; no real child data is involved (P-13).
 
 import type { PuzzleTemplate } from "../content/types";
 import type { SafetyResource } from "../protocol";
@@ -16,14 +16,14 @@ export interface ScriptedProblem {
   hints: string[];
   /** After the first wrong answer: ask for reasoning instead of correcting (R-03). */
   askWhy: string;
-  /** Reply once the kid explains their thinking. */
+  /** Reply once the child explains their thinking. */
   afterWhy: string;
   /** Reply to the second wrong answer. */
   secondMiss: string;
   partial?: string;
   /**
    * Wrong answers that point at one specific slip, with a reply that names it. A slip with a
-   * repair puzzle sends the kid there first, once (the content library's repair role).
+   * repair puzzle sends the child there first, once (the content library's repair role).
    */
   misconceptions: { value: number; reply: string; repair?: PuzzleTemplate }[];
   correct: string[];
