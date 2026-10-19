@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "student_id": "example-student",
+  "display_name": "Example Student",
+  "created_at": "2026-10-19T05:43:47.972942Z",
+  "updated_at": "2026-10-19T05:43:47.972949Z",
+  "consent": {
+    "parent_consented": true,
+    "consented_at": "2026-10-19T05:43:47.972975Z",
+    "consent_note": "Consented tester for the demo."
+  },
+  "confidence": {
+    "integer_arithmetic": 0.9,
+    "order_of_operations": 0.75,
+    "fraction_operations": null,
+    "reciprocals": null,
+    "inverse_operations": null,
+    "combining_like_terms": null,
+    "distributive_property": null,
+    "simplifying_expressions": null,
+    "writing_expressions": null,
+    "one_step_equations": 0.4,
+    "fraction_coefficient_equations": null,
+    "two_step_equations": null,
+    "multi_step_equations": null,
+    "equations_with_fractions": null,
+    "variables_both_sides": null,
+    "linear_equation_word_problems": null
+  },
+  "interests": [
+    "Basketball",
+    "Video games"
+  ],
+  "communication_prefs": {
+    "openings": "direct"
+  },
+  "notes": [
+    "Rushes through negative signs."
+  ],
+  "session_summaries": [
+    {
+      "session_id": "demo-1",
+      "ended_at": "2026-10-19T05:43:47.973034Z",
+      "summary": "Worked one-step equations; cracked-floor check on inverse operations.",
+      "nodes_touched": [
+        "one_step_equations",
+        "inverse_operations"
+      ]
+    }
+  ],
+  "sessions_completed": 1
+}
