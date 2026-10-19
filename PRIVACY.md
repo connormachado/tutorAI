@@ -2,7 +2,7 @@
 
 *DRAFT, pending approval by Connor or Michael. Every P-id traces to `DECISIONS.md` A-2 or A-3, or to an approved Q-default (Q5); a P-id marked *pending* traces to an R-id until Connor or Michael records its A-id. `privacy-boundary-reviewer` cites a P-id for every finding. Where a check is mechanical, the reviewer doesn't re-check it; it looks for what tests can't see: new data flows, new sinks, and dependencies that phone home.*
 
-**Child content** means anything the child or the tutor said or showed during a session: typed messages, model replies, transcribed speech, audio, and photos of work.
+**Child content** means anything the child or the tutor said or showed during a session: typed messages, model replies, transcribed speech, audio, and photos of work. Here "child" means any student using the product, of any age (V1 users are 13 and up); it is not COPPA's under-13 sense.
 
 | P-id | Invariant | Traces to | Enforced by |
 |---|---|---|---|
