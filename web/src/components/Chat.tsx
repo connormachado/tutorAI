@@ -1,0 +1,85 @@
+import { useEffect, useRef, useState } from "react";
+import { MathText } from "../math/MathText";
+import type { ChatMessage } from "../session/state";
+import { Mascot } from "./Mascot";
+
+interface Props {
+  messages: ChatMessage[];
+  resetNote: string | null;
+  disabled: boolean;
+  onSay: (text: string) => void;
+}
+
+export function Chat({ messages, resetNote, disabled, onSay }: Props) {
+  const [draft, setDraft] = useState("");
+  const end = useRef<HTMLDivElement>(null);
+  const last = messages.at(-1);
+  const waiting = !resetNote && (last === undefined || last.from === "kid");
+
+  useEffect(() => {
+    end.current?.scrollIntoView({ block: "end" });
+  }, [messages, waiting]);
+
+  const send = (text: string) => {
+    const t = text.trim();
+    if (!t || disabled) return;
+    onSay(t);
+    setDraft("");
+  };
+
+  return (
+    <section className="card chat" aria-label="Chat with Platy">
+      <div className="chat__log" role="log" aria-live="polite">
+        {resetNote && (
+          <div className="reset-note" role="status">
+            <Mascot size={64} mood="happy" />
+            <p>{resetNote}</p>
+          </div>
+        )}
+        {messages.map((m, i) => (
+          <div
+            key={m.id}
+            className={`bubble bubble--${m.from}${i < messages.length - 3 ? " bubble--older" : ""}`}
+          >
+            {m.from === "tutor" ? <MathText text={m.text} /> : m.text}
+          </div>
+        ))}
+        {waiting && (
+          <div className="bubble bubble--tutor bubble--typing" aria-label="Platy is thinking">
+            <span />
+            <span />
+            <span />
+          </div>
+        )}
+        <div ref={end} />
+      </div>
+
+      <form
+        className="chat__composer"
+        onSubmit={(e) => {
+          e.preventDefault();
+          send(draft);
+        }}
+      >
+        <button type="button" className="chip" disabled={disabled} onClick={() => send("I'm stuck")}>
+          I'm stuck
+        </button>
+        <label htmlFor="say" className="visually-hidden">
+          Message Platy
+        </label>
+        <input
+          id="say"
+          className="chat__field"
+          value={draft}
+          placeholder="Tell Platy your thinking"
+          autoComplete="off"
+          disabled={disabled}
+          onChange={(e) => setDraft(e.target.value)}
+        />
+        <button type="submit" className="btn btn--primary" disabled={disabled || !draft.trim()}>
+          Send
+        </button>
+      </form>
+    </section>
+  );
+}
