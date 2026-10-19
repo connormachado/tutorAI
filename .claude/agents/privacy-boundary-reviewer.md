@@ -13,7 +13,7 @@ The caller gives you the diff command, the matched `[privacy]` paths, and the da
 - **New data flows or sinks for child content:** writes to files, DBs, caches, queues or temp dirs; log or exception messages that could carry message payloads; `repr`/f-strings of request or response objects in logs; debug dumps; pickling session objects.
 - **New destinations:** a host added to the gateway allowlist; a new provider; a dependency that phones home (telemetry, crash reporting, update checks, "anonymous usage stats"), including transitive ones you can see in `uv.lock`.
 - **Gateway behavior:** fallback paths that bypass fail-closed (P-3); a retry through another module; data sent before a check.
-- **PII store:** fields outside the allowlist, free-form text fields, access that bypasses `primer.store` (P-6); unencrypted profile or mastery state (P-7).
+- **PII store:** fields outside the allowlist, free-form text fields, access that bypasses `platy.store` (P-6); unencrypted profile or mastery state (P-7).
 - **Upload path:** anything leaving for BKT fitting without opt-in, or with identifiable fields (P-9).
 - **Tooling:** real child data in fixtures, demos or evals (P-13).
 - **Age data:** an entered age or birth date that is stored, logged, sent anywhere or put in exception text. The age gate keeps only a yes/no "13 or older" (P-15).

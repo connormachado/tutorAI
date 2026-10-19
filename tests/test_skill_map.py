@@ -4,7 +4,7 @@ import pytest
 from pydantic import ValidationError
 from skill_map_builders import node, skill_map
 
-from primer.skills.skill_map import SkillNode
+from platy.skills.skill_map import SkillNode
 
 
 def node_data(**overrides: Any) -> dict[str, Any]:

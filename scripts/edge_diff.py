@@ -68,7 +68,7 @@ def component_of(module: str) -> str:
     return parts[1] if len(parts) > 1 else parts[0]
 
 
-def component_graph(package: str = "primer") -> tuple[set[str], set[Edge]]:
+def component_graph(package: str = "platy") -> tuple[set[str], set[Edge]]:
     """Cross-component edges, importer -> imported. Components = top-level subpackages/modules."""
     graph = grimp.build_graph(package, cache_dir=None)
     real: set[Edge] = set()

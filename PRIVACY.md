@@ -7,11 +7,11 @@
 | P-id | Invariant | Traces to | Enforced by |
 |---|---|---|---|
 | **P-1** | Child content is **never persisted**: not to a DB, file, temp file, cache or queue. It lives in memory for the live session only. | A-3, Q5 | Canary test (§ below) + reviewer |
-| **P-2** | **Only `primer.gateway` has third-party network access** (LLM, speech, vision, telemetry). | A-2 | `.importlinter` contract `a2-egress` (gate) |
+| **P-2** | **Only `platy.gateway` has third-party network access** (LLM, speech, vision, telemetry). | A-2 | `.importlinter` contract `a2-egress` (gate) |
 | **P-3** | The gateway **fails closed.** On a provider error, timeout or malformed response the session gets an error state. There's no fallback provider, no retry through another module, and no degraded path that sends data elsewhere. | A-2 | Reviewer. *(Fault-injection tests are deferred: `deferred-credibility-checks.md`.)* |
 | **P-4** | Gateway destinations are a **fixed allowlist in code.** Adding a host is a privacy-path change. | A-2 | `[privacy]` trigger → reviewer + Codex |
 | **P-5** | **Declared exception:** child content crosses the gateway to the LLM/speech provider unscrubbed. This is intentional and is **not** a finding. | A-3 | — |
-| **P-6** | The **PII store is reached only through `primer.store`,** with a fixed field allowlist and no free-form fields. | Q5 | `.importlinter` contract `pii-store` (gate) + reviewer |
+| **P-6** | The **PII store is reached only through `platy.store`,** with a fixed field allowlist and no free-form fields. | Q5 | `.importlinter` contract `pii-store` (gate) + reviewer |
 | **P-7** | The **profile (personality file) and mastery state are encrypted at rest.** | A-3 | Reviewer |
 | **P-8** | **Only distilled state is persisted:** skill mastery, the personality file, and structured session records (skill ids, outcome codes, counts, timestamps). These records **quote no child content.** | A-3 | Canary test + reviewer |
 | **P-9** | **BKT-fitting data leaves only through the opt-in, anonymized upload path.** Events carry a random pseudonymous id, skill id, correctness and context buckets, with no names, text or profile fields. With no opt-in, nothing is sent. | A-3 | Reviewer + Codex |

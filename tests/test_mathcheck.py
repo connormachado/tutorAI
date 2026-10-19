@@ -2,8 +2,8 @@ from collections.abc import Callable
 
 import pytest
 
-from primer import mathcheck
-from primer.mathcheck import MathParseError, expressions_equal, solution_set_is
+from platy import mathcheck
+from platy.mathcheck import MathParseError, expressions_equal, solution_set_is
 
 
 @pytest.mark.parametrize(

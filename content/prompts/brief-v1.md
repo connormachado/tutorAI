@@ -50,7 +50,7 @@ One JSON object and nothing else:
 
 ## Inputs
 
-Copy these from the skill's node in the skill map (`src/primer/skills/`), so there's only one list of skills. Misconceptions aren't in the skill map yet, so type them in for each run and don't save them as a second list.
+Copy these from the skill's node in the skill map (`src/platy/skills/`), so there's only one list of skills. Misconceptions aren't in the skill map yet, so type them in for each run and don't save them as a second list.
 
 ```
 Skill id:            {{node.id, e.g. two_step_equations}}

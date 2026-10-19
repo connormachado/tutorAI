@@ -1,6 +1,6 @@
 """Tiny skill maps for tests. Each node gets three trivially correct probes unless given some."""
 
-from primer.skills.skill_map import ProbeProblem, SkillMap, SkillNode
+from platy.skills.skill_map import ProbeProblem, SkillMap, SkillNode
 
 
 def probe(

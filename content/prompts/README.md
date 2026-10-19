@@ -24,7 +24,7 @@ skill node ──► brief-v1 ──► one brief per (skill, role, angle, forma
                          │                          │
                          └──────────► critic-v1 ◄───┘
                                       │
-                  math check with primer.mathcheck (§8 step 3), then human review
+                  math check with platy.mathcheck (§8 step 3), then human review
 ```
 
 | File | Input | Output |
@@ -49,6 +49,6 @@ Until there's a script in `tools/content/`, run them by hand in Claude:
 3. In a **separate** conversation, run `critic-v1.md` on that JSON. A fresh conversation matters: a model reviewing its own work in the same conversation tends to approve it.
 4. Fix what the critic flags (by hand, or by pasting the issues back into the first conversation), then run the math check and review it yourself.
 
-**Where the skill input comes from.** The skill map (R-10) is the only list of skills (A-6), so these prompts take a skill node as input instead of keeping their own skill list. Copy the node's fields from the map in `src/primer/skills/` into the brief prompt. Until the linear-equations map lands, and for misconceptions (which the map doesn't hold yet), type them in for that run and don't save them as a second list.
+**Where the skill input comes from.** The skill map (R-10) is the only list of skills (A-6), so these prompts take a skill node as input instead of keeping their own skill list. Copy the node's fields from the map in `src/platy/skills/` into the brief prompt. Until the linear-equations map lands, and for misconceptions (which the map doesn't hold yet), type them in for that run and don't save them as a second list.
 
-[`examples/`](examples/) holds sample outputs, so you can see what good output looks like. Their math passes `primer.mathcheck`. Their skill and misconception ids are placeholders until the linear-equations skill map exists.
+[`examples/`](examples/) holds sample outputs, so you can see what good output looks like. Their math passes `platy.mathcheck`. Their skill and misconception ids are placeholders until the linear-equations skill map exists.

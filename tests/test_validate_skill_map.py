@@ -1,8 +1,8 @@
 import pytest
 from skill_map_builders import node, probe, skill_map
 
-from primer.skills.skill_map import SkillMap
-from primer.skills.validate_skill_map import SkillMapError, Summary, validate
+from platy.skills.skill_map import SkillMap
+from platy.skills.validate_skill_map import SkillMapError, Summary, validate
 
 BAD_MAPS = {
     "missing prerequisite": (skill_map(node("a", ["ghost"])), ["ghost"]),

@@ -2,7 +2,7 @@
 
 *DRAFT proposal from Michael's side (content and learning experience), 2026-10-18. Nothing here is approved until Connor or Michael approves it. It proposes new R-ids (§10) A-8 was amended on 2026-10-18 so the whiteboard is in V1 (§4.1). It does not edit `REQUIREMENTS.md`, `PRIVACY.md` or `DECISIONS.md`.*
 
-*Revised later on 2026-10-18 to fit the binding "Demo contract" Connor added to `CLAUDE.md` on main, together with his skill-map models (`src/primer/skills/`) and `primer.mathcheck`. §2.1 summarises what changed. Updated again the same day after Michael chose the React app in `web/` as the demo frontend: content players live there.*
+*Revised later on 2026-10-18 to fit the binding "Demo contract" Connor added to `CLAUDE.md` on main, together with his skill-map models (`src/platy/skills/`) and `platy.mathcheck`. §2.1 summarises what changed. Updated again the same day after Michael chose the React app in `web/` as the demo frontend: content players live there.*
 
 ## 1. Why this exists
 
@@ -23,13 +23,13 @@ The existing specs are primer-first. Content touches them in these places:
 | R-04 / R-12 Retrieval, scheduling | The scheduler picks what to recall | The scheduler picks the skill; the library supplies a retrieval-role item for it. |
 | R-21 De-escalation ladder | Rung 2 switches to a confidence-building topic | Rung 2 asks for an `easy_win` item: low difficulty, game or puzzle format, on a mastered skill. |
 | R-01 Diagnose first | On main, diagnosis uses the skill map's three probes per node | Diagnosis stays with the probes. Interactive items add evidence after diagnosis; they don't replace it, and they never reuse a probe's equation (§5). |
-| R-29 (pending) | Sympy decides correctness, never a model | Every item's math, and every check on what a student does, goes through `primer.mathcheck` (§8 step 3, §6.4). |
+| R-29 (pending) | Sympy decides correctness, never a model | Every item's math, and every check on what a student does, goes through `platy.mathcheck` (§8 step 3, §6.4). |
 | R-30 (pending) Metacognition | A confidence check and a reflection | Interactive items carry a reflection prompt, and policy runs the confidence check before an item's checks (§6.1). |
 | REQUIREMENTS "Not V1" | "The RAG ground-truth content layer. The vision doc sequences it after the core loop is validated, so it needs its own R-id when that happens." | This doc is that layer, broadened from text explanations to all formats, and proposes building part of it earlier. Whether any of it goes in the demo is a decision for Connor and Michael (§2.1, §11). |
 | Vision §2 "Ground-truth content" | Core math must be anchored to something verified, not improvised | Every item's math is machine-checked before it ships. The tutor talks *about* a verified item instead of inventing math. |
 | A-8 Whiteboard (locked) | In V1 (amended 2026-10-18; was V1.5) | This doc proposes a small V1 whiteboard (§4.1). |
 | P-1 Child content | "Anything the child or the tutor said or showed" is never persisted | Library items are made ahead of time and contain no student data, so storing them is fine. Anything generated *for one student during a session* is child content and is never stored or cached (§7). |
-| P-2 / P-11 Egress | Only `primer.gateway` reaches third parties; nothing new phones home | No third-party players or embeds (YouTube, Spotify, game SDKs, analytics in game engines). Media is served by Platy itself. Authoring tools are a separate case (§8). |
+| P-2 / P-11 Egress | Only `platy.gateway` reaches third parties; nothing new phones home | No third-party players or embeds (YouTube, Spotify, game SDKs, analytics in game engines). Media is served by Platy itself. Authoring tools are a separate case (§8). |
 | P-8 Distilled state | Only skill ids, outcome codes, counts, timestamps | Content engagement is item ids and outcome codes (§6.4). In the demo nothing persists at all ("No DB", memory only); P-8 storage applies once there is a store. |
 | P-14 (pending) | Only pinned, ZDR-verified models and features | Whiteboard "check my work" (vision) and voice (R-19) each need a pinned, ZDR-verified model role before they're built (§4.1). |
 | R-27 Devices | School Chromebook at 1366×768, and phones | Every item declares size and layout needs; video ships at a Chromebook-friendly bitrate with captions. |
@@ -38,12 +38,12 @@ One correction to the framing in the kickoff conversation: the primer should **n
 
 ### 2.1 The demo contract on main
 
-Connor's "Demo contract" in `CLAUDE.md` is binding for all work. It sets: one unit (solving linear equations), one path, 14–18 skill nodes; a closed stack (`anthropic`, `pydantic`, `sympy`, `fastapi`, `pyBKT`; no DB; any new dependency needs approval); policy deciding every turn, with `policy/checks.py` gating every tutor move; sympy as the only judge of correctness; child state in memory only; and fixed child-facing text living only in `src/primer/prompts/*.md`, so the pedagogy eval gate covers it.
+Connor's "Demo contract" in `CLAUDE.md` is binding for all work. It sets: one unit (solving linear equations), one path, 14–18 skill nodes; a closed stack (`anthropic`, `pydantic`, `sympy`, `fastapi`, `pyBKT`; no DB; any new dependency needs approval); policy deciding every turn, with `policy/checks.py` gating every tutor move; sympy as the only judge of correctness; child state in memory only; and fixed child-facing text living only in `src/platy/prompts/*.md`, so the pedagogy eval gate covers it.
 
 **The frontend is the React app in `web/`** (A-11, 2026-10-18). As first written, the contract made the demo Streamlit only; A-11 replaces Streamlit with `web/` and a FastAPI server in front of Connor's Python primer. So in this doc:
 
 - **Content players live in `web/`.** Each format gets a player component there, built and tested against PR #1's mock server first. The Python side chooses, checks and grades; the browser only shows items and reports what the student did (§6.4, §6.5).
-- **Everything else in the contract still holds:** items are chosen by policy and gated by `checks.py`, every check is graded by `primer.mathcheck` on the server, child state lives in memory only (server memory and React state, never browser storage), and nothing is persisted in the demo.
+- **Everything else in the contract still holds:** items are chosen by policy and gated by `checks.py`, every check is graded by `platy.mathcheck` on the server, child state lives in memory only (server memory and React state, never browser storage), and nothing is persisted in the demo.
 - **Still open:** whether any content goes in the demo itself, or the library waits until the core loop is validated, as `REQUIREMENTS.md` sequences it (§11). The "Demo" column in §4 says which formats would fit if it does.
 
 ## 3. The core model: skill × angle × format
@@ -71,7 +71,7 @@ Items play one of a small set of **roles** in the learning loop:
 
 (`easy_win` was called `confidence` in the first draft; it was renamed so it doesn't collide with R-30's confidence check.)
 
-**Evidence matters.** Only interactive items (`practice`, `retrieval`, `easy_win`, most `repair` and `apply`) produce observations for BKT (R-11). Watching a video produces no mastery evidence; it produces an engagement event (§6.4). Each interactive item declares exactly which skill each of its checks observes. A check is decided by sympy through `primer.mathcheck`, or by exact UI state such as which step was tapped, and never by a model or by the browser's say-so.
+**Evidence matters.** Only interactive items (`practice`, `retrieval`, `easy_win`, most `repair` and `apply`) produce observations for BKT (R-11). Watching a video produces no mastery evidence; it produces an engagement event (§6.4). Each interactive item declares exactly which skill each of its checks observes. A check is decided by sympy through `platy.mathcheck`, or by exact UI state such as which step was tapped, and never by a model or by the browser's say-so.
 
 ## 4. Formats
 
@@ -106,12 +106,12 @@ V1's whiteboard is deliberately small: a canvas beside the chat with three layer
 2. **Student tools that snap:** place a point, draw a line through two points, drag a block or tile, mark a spot on a number line, write in a box. There's also freehand ink for scratch work. Snapping matters because drawing freehand with a Chromebook trackpad is hard.
 3. **Tutor marks from a fixed command set:** highlight, circle, arrow, show the next step, move an object. Each one refers to an object in the scene. The tutor doesn't generate free-form drawings, for the same reason video uses Manim: what's drawn has to be exactly right. Marks are tutor moves, so they pass `policy/checks.py` like any other move. For example, `show_step` on the step that contains the answer is an answer reveal, which needs policy to allow one (R-02).
 
-**Evidence.** How the whiteboard feeds BKT is an Open item in `DECISIONS.md`. The proposal for V1 is that only structured actions count, each as a check with an exact rule in the scene. Examples: the point snaps to (0, 3); the line passes through both given points; a block was taken off both pans. Coordinate checks compare snapped values exactly; algebraic checks (a step box) go through `primer.mathcheck`. Freehand ink is never graded automatically.
+**Evidence.** How the whiteboard feeds BKT is an Open item in `DECISIONS.md`. The proposal for V1 is that only structured actions count, each as a check with an exact rule in the scene. Examples: the point snaps to (0, 3); the line passes through both given points; a block was taken off both pans. Coordinate checks compare snapped values exactly; algebraic checks (a step box) go through `platy.mathcheck`. Freehand ink is never graded automatically.
 
 **"Check my work."** When the student asks for a check, the steps are:
 1. The ink or handwriting goes to a vision model through the gateway, like a photo (R-20). That needs a pinned, ZDR-verified vision role (P-14).
 2. The vision model only transcribes. Before anything else, its output gets the same **safety-first step** as any child message: a disclosure stops tutoring with the fixed safety text, and nothing falls through to the tutor.
-3. Correctness of the transcribed lines is then decided by `primer.mathcheck`, never by the model. The "line that went wrong" is the first line whose solution set isn't the answer's, and the tutor only points at it.
+3. Correctness of the transcribed lines is then decided by `platy.mathcheck`, never by the model. The "line that went wrong" is the first line whose solution set isn't the answer's, and the tutor only points at it.
 4. Child-written math needs normalising before mathcheck sees it (`2x` → `2*x`, `X` → `x`, `−` → `-`). Main has no normaliser yet (§11).
 
 In V1, a vision-read check isn't counted as mastery evidence.
@@ -237,7 +237,7 @@ Per student, per format: counts of `shown`, `completed`, `skipped`, and `next_at
 Players emit structured events only: `content_started`, `content_completed`, `content_skipped` (with position), and `check_result`.
 
 - **`check_result`** carries the check id, the outcome code, `hints_used` and a response-time bucket, so it can feed R-11's `multigs` classes.
-- **The outcome is computed on the server,** never asserted by the browser. Algebraic checks call `primer.mathcheck` on the student's (normalised) input. UI-state checks (which step was tapped, where a point snapped) compare exact values. The browser sends what the student did; the server grades it, and the result comes back as a code.
+- **The outcome is computed on the server,** never asserted by the browser. Algebraic checks call `platy.mathcheck` on the student's (normalised) input. UI-state checks (which step was tapped, where a point snapped) compare exact values. The browser sends what the student did; the server grades it, and the result comes back as a code.
 - **No free-text answers are recorded.** A typed answer goes through the same whitelist-then-mathcheck path as any child input.
 
 Later, item quality is the aggregate across students: completion rate, skip point, and how often the next attempt is correct. Aggregates have no student ids and need a store, so they're post-demo.
@@ -290,7 +290,7 @@ This is also where the evidence points. In Walkington's study of 145 high-school
 | Layer | What's tailored | How | Extra cost per student | Stored? |
 |---|---|---|---|---|
 | **1. Selection** (the primer) | Skill, timing, pace, difficulty, role, angle, format | BKT, the scheduler and policy choose; `select_item` ranks by interest tags and format affinity (§6) | None | Only counts and codes (§6.3) |
-| **2. Live templates** | The numbers, difficulty and skin (setting, names, art) | Puzzles, whiteboard scenes and short reels are components in `web/` filled at runtime. A generator picks numbers for the student's level, `primer.mathcheck` verifies them on the server, and the skin for the student's top interest tag is swapped in | None | No, rebuilt each time |
+| **2. Live templates** | The numbers, difficulty and skin (setting, names, art) | Puzzles, whiteboard scenes and short reels are components in `web/` filled at runtime. A generator picks numbers for the student's level, `platy.mathcheck` verifies them on the server, and the skin for the student's top interest tag is swapped in | None | No, rebuilt each time |
 | **3. Pre-made variants** | Interest context in media that has to be recorded or rendered ahead (narrated videos, songs, stories) | One variant per interest tag, not per student, and only where context matters most (hooks, stories, `apply` items) | None; a fixed cost per tag | Yes, it's library content |
 | **4. The tutor's words** | Personal details ("like your team's league table") | The tutor introduces each item and follows up using the profile. It's chat, within R-06 and the policy checks | A turn the session already pays for | Never (P-1) |
 | **5. Per-student media** | A song or video made for one student | Live generation through the gateway | High, plus a wait | Never, so never reused |
@@ -328,20 +328,20 @@ Rough numbers for the demo unit, inferred rather than measured: about 16 skills 
 Content is made at **author time**, offline, by Michael and tools. No student data is ever in a generation prompt. The proposed layout separates authoring from what the app reads:
 
 - **`content/prompts/`** holds the authoring prompts. They are never loaded at runtime, and they aren't runtime prompts.
-- **`src/primer/content/items/`** holds published item JSON as packaged data, read with `importlib.resources` the same way as the skill graph. Because item text is fixed child-facing text, this path would be added to the `[pedagogy]` trigger so the pedagogy eval covers it, as `CLAUDE.md` requires for `src/primer/prompts/`. `scripts/triggers.toml` is a gate file, so Connor or Michael makes that change.
+- **`src/platy/content/items/`** holds published item JSON as packaged data, read with `importlib.resources` the same way as the skill graph. Because item text is fixed child-facing text, this path would be added to the `[pedagogy]` trigger so the pedagogy eval covers it, as `CLAUDE.md` requires for `src/platy/prompts/`. `scripts/triggers.toml` is a gate file, so Connor or Michael makes that change.
 - **Media files** (video, audio, images) are served by the app itself from a folder next to it, not embedded from a third party.
 - **`tools/content/`** holds authoring scripts (rendering, voiceover, music, any automated prompt runs). It would be its own uv project with its own lockfile, never part of the deployed app:
   - Manim's recent releases need NumPy 2, which can't share a lockfile with pyBKT's `numpy<2` pin.
   - The runtime stack is closed.
   - Its SDKs (`elevenlabs` and so on) are on the runtime's forbidden-egress list.
-  - It may not import `primer` (an import-linter contract of its own), so it can't touch session, store or gateway code.
+  - It may not import `platy` (an import-linter contract of its own), so it can't touch session, store or gateway code.
   - A-2 requires egress to be enforced structurally, so the decision that author-time tooling sits outside A-2's scope needs to be written down by Connor or Michael (§11).
 
 Pipeline for one item:
 
 1. **Brief.** From the skill map: the node's id, name, description, prerequisites (and `prerequisite_chain`), its probes (to avoid), and its misconception list. One brief per (skill, role, angle).
 2. **Script.** Claude drafts the script, story, lyrics, puzzle spec or whiteboard scene from the brief, using the prompts in [`content/prompts/`](../content/prompts/README.md) (versioned, cited in `provenance.script_prompt`). There is one prompt per format, plus a brief prompt that plans 4–6 angles per skill, an interest-variant prompt and a critic prompt that reviews each draft in a fresh conversation. Grounded in open sources where useful (OpenStax and Illustrative Mathematics are CC BY). If prompt runs are automated later, they use strict tool output from a pydantic model, like runtime calls, rather than parsing JSON out of text.
-3. **Math check (automatic, required).** Every prompt returns the item's math as a structured block (the contract is in `content/prompts/_shared-v1.md`). It's checked with **`primer.mathcheck`**, the one module allowed to import sympy, so no second checker gets built:
+3. **Math check (automatic, required).** Every prompt returns the item's math as a structured block (the contract is in `content/prompts/_shared-v1.md`). It's checked with **`platy.mathcheck`**, the one module allowed to import sympy, so no second checker gets built:
    - each line's solution set must be exactly {answer} (`solution_set_is`);
    - for spot-the-error items, lines before the intentional error must pass and lines from it on must not;
    - expression problems use `expressions_equal`.
@@ -353,10 +353,10 @@ Pipeline for one item:
    - *Proposed services (2026-10-18), author time only.* No student data ever reaches them. Live speech-to-text (R-19) is a separate path that goes through the gateway.
      - **Voice: ElevenLabs.** It plugs into Manim through the `manim-voiceover` plugin and has a free tier for prototyping. Alternatives are Azure or OpenAI TTS, which the same plugin also supports, or Kokoro (Apache 2.0, self-hostable) if we later want no vendor at all.
      - **Music: ElevenLabs' Eleven Music.** ElevenLabs says it was trained on licensed catalogues (Merlin, Kobalt), and it blocks prompts that name real artists. The alternative is Suno's v6 models, licensed after its Warner settlement and launched in September 2026; free users can't download songs. Confirm commercial-use terms on the plan we buy.
-   - *Puzzles and games:* not generated media. A template in the UI plus a problem generator that produces valid problems for a skill and difficulty, each checked with `primer.mathcheck`.
+   - *Puzzles and games:* not generated media. A template in the UI plus a problem generator that produces valid problems for a skill and difficulty, each checked with `platy.mathcheck`.
    - *Stories:* text from step 2, with an optional generated illustration.
 5. **Human review.** Michael reviews each base item. For pedagogy, a second reviewer with tutoring experience (Michael's mom, the vision doc's built-in advisor) spot-checks a sample. Interest variants get a lighter pass.
-6. **Publish.** The descriptor goes to `src/primer/content/items/` and the media to the media folder. The validator (descriptor model, skills against the `SkillMap`, no probe reuse, `math_check` passed, media within budget) runs in `scripts/check`, since there's no separate CI. It copies the pattern of `validate_skill_map.py`.
+6. **Publish.** The descriptor goes to `src/platy/content/items/` and the media to the media folder. The validator (descriptor model, skills against the `SkillMap`, no probe reuse, `math_check` passed, media within budget) runs in `scripts/check`, since there's no separate CI. It copies the pattern of `validate_skill_map.py`.
 
 Rough throughput target, inferred rather than measured: once the templates exist, a base item should take under an hour of human time and a variant a few minutes. The first slice will tell us the real number.
 
@@ -382,7 +382,7 @@ Interest tags for the slice: `soccer`, `gaming`, `music`.
 
 1. **Decisions first** (Connor and Michael): is content in the demo or after it, and where items live (§11). The frontend is settled: `web/`.
 2. **Descriptor model and validator,** in the gate, against the `SkillMap` (Michael).
-3. **The content math check** using `primer.mathcheck` (Michael), plus a child-input normaliser if Connor wants one shared (§11).
+3. **The content math check** using `platy.mathcheck` (Michael), plus a child-input normaliser if Connor wants one shared (§11).
 4. **Author the items above** with the prompts.
 5. **Players in `web/`** for video and reels, audio, story text and the three puzzle templates, against the mock server first; then the whiteboard.
 6. **`select_item` and the `show_item` action** inside policy and `checks.py` (Connor), with session-only format affinity.
@@ -395,7 +395,7 @@ Interest tags for the slice: `soccer`, `gaming`, `music`.
 The age gate (PR #1) is R-36. This doc's R-ids were renumbered at merge to R-37, R-38 and R-43 to R-47. R-28 to R-30 and P-14 are Connor's pending specs (usage log and prompt caching, sympy decides correctness, metacognition), and PR #1's age gate holds P-15, so any new P-id from this doc would start at P-16.
 
 - **R-37 Content library.** Items with validated descriptors (§5), stored as packaged data and keyed to skill-map node ids; a descriptor naming a missing node, or reusing a probe's equation, fails validation.
-- **R-43 Content math checks.** R-29 applied to the library: no item goes live unless its math block passes `primer.mathcheck` and a human reviewed it, and every interactive check is decided by mathcheck or exact UI state.
+- **R-43 Content math checks.** R-29 applied to the library: no item goes live unless its math block passes `platy.mathcheck` and a human reviewed it, and every interactive check is decided by mathcheck or exact UI state.
 - **R-44 Content selection.** A pure `select_item` that policy calls; showing an item is a tutor move that passes `checks.py` (including reveal rules, R-02). With no match, the tutor falls back to chat. R-05 retries prefer a different angle and format.
 - **R-38 Interest variants, skins and slots.** Template skins and pre-made variants per interest tag from a fixed vocabulary, made per tag and never per student, plus per-student slot choices (colors, names) from fixed lists (§7.3); no real logos, team or player names; the library never sees free-text profile data.
 - **R-45 Content events and format affinity.** Structured engagement events and per-format counts; session-only in the demo, distilled state (P-8) once there's a store.
@@ -407,10 +407,10 @@ The age gate (PR #1) is R-36. This doc's R-ids were renumbered at merge to R-37,
 **For Connor** (either cofounder can approve the answers)
 1. **Whiteboard.** Do you accept structured checks only as V1's answer to the Open "whiteboard-to-BKT" item? Is the whiteboard part of the demo or after it?
 2. **Content in the demo?** `REQUIREMENTS.md` sequences the content layer after the core loop is validated. Does any content go in the demo (stories, video, puzzles in `web/`), or does it all wait?
-3. **Where items live.** Is `src/primer/content/items/` as packaged data, added to the `[pedagogy]` trigger, the right home? Does the R-06 length cap apply to fixed item text like a 300-word story?
+3. **Where items live.** Is `src/platy/content/items/` as packaged data, added to the `[pedagogy]` trigger, the right home? Does the R-06 length cap apply to fixed item text like a 300-word story?
 4. **Misconceptions.** Add a `misconceptions` field to `SkillNode`, or keep a sibling file keyed by node id?
 5. **Selection in policy.** OK for `select_item` to be a pure function policy calls, with `show_item` as a `TutorMove` action that `checks.py` gates?
-6. **Authoring tools.** OK for `tools/content/` to be a separate uv project (Manim, voiceover, music SDKs) that can't import `primer`? If so, A-2 needs a line saying author-time tooling with no child data is outside its scope.
+6. **Authoring tools.** OK for `tools/content/` to be a separate uv project (Manim, voiceover, music SDKs) that can't import `platy`? If so, A-2 needs a line saying author-time tooling with no child data is outside its scope.
 7. **Child math input.** mathcheck refuses `2x`, `X` and `−`. Should there be one shared normaliser before mathcheck, for typed answers, handwriting and item checks alike?
 8. **Vision and voice.** Pinned, ZDR-verified roles for whiteboard "check my work" (vision) and voice (R-19), and any new gateway host they need (P-4).
 9. **R-37, R-38 and R-43 to R-47:** accept, merge or cut.

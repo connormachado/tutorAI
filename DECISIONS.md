@@ -26,7 +26,7 @@
 
 **A-10. Efficacy metric.** Learning-gain (pretest/posttest on related-but-not-identical material) is the external validity metric — not raw BKT prediction accuracy, which is an internal engineering diagnostic only.
 
-**A-11. V1 demo stack.** The demo UI is the React + Vite app in `web/`. Behind it is a Python server (FastAPI, HTTP + WebSocket) in front of `primer`. Streamlit is dropped. All LLM calls still go through `primer.gateway` only (A-2): neither the server nor `web/` calls a model provider directly. A diff that brings back Streamlit, or adds a second demo UI beside `web/`, contradicts this.
+**A-11. V1 demo stack.** The demo UI is the React + Vite app in `web/`. Behind it is a Python server (FastAPI, HTTP + WebSocket) in front of `platy`. Streamlit is dropped. All LLM calls still go through `platy.gateway` only (A-2): neither the server nor `web/` calls a model provider directly. A diff that brings back Streamlit, or adds a second demo UI beside `web/`, contradicts this.
 *Added 2026-10-18 (Connor and Michael). It replaces Streamlit, which `CLAUDE.md`'s closed stack had named as the demo UI.*
 
 ---

@@ -1,13 +1,13 @@
 # Gate config (protected). A-2: structural, never by convention.
 [importlinter]
-root_package = primer
+root_package = platy
 include_external_packages = True
 
 [importlinter:contract:a2-egress]
-name = A-2: only primer.gateway may import network, LLM, speech or telemetry clients
+name = A-2: only platy.gateway may import network, LLM, speech or telemetry clients
 type = forbidden
 source_modules =
-    primer
+    platy
 forbidden_modules =
     socket
     ssl
@@ -38,17 +38,17 @@ forbidden_modules =
     mixpanel
 # Forbidden modules not yet imported anywhere are skipped, so the list can name future clients.
 ignore_imports =
-    primer.gateway -> *
-    primer.gateway.** -> *
+    platy.gateway -> *
+    platy.gateway.** -> *
 unmatched_ignore_imports_alerting = none
-# primer.session -> primer.gateway -> anthropic is the intended path, so only direct imports count.
+# platy.session -> platy.gateway -> anthropic is the intended path, so only direct imports count.
 allow_indirect_imports = True
 
 [importlinter:contract:pii-store]
-name = Q5: only primer.store may import a database driver
+name = Q5: only platy.store may import a database driver
 type = forbidden
 source_modules =
-    primer
+    platy
 forbidden_modules =
     sqlite3
     sqlcipher3
@@ -59,7 +59,7 @@ forbidden_modules =
     shelve
     dbm
 ignore_imports =
-    primer.store -> *
-    primer.store.** -> *
+    platy.store -> *
+    platy.store.** -> *
 unmatched_ignore_imports_alerting = none
 allow_indirect_imports = True

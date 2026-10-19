@@ -4,8 +4,8 @@ every probe answer verified by sympy (via mathcheck). Each check names every off
 from collections import Counter
 from dataclasses import dataclass
 
-from primer.mathcheck import MathParseError, expressions_equal, solution_set_is
-from primer.skills.skill_map import ProbeProblem, SkillMap, SkillNode
+from platy.mathcheck import MathParseError, expressions_equal, solution_set_is
+from platy.skills.skill_map import ProbeProblem, SkillMap, SkillNode
 
 
 class SkillMapError(ValueError):

@@ -2,7 +2,7 @@
 
 Adaptive, privacy-first algebra tutor. V1 is for students 13 and up, with no parent onboarding or account features (A-9 note); the safety parent notice stays. Parents come in V2/V3 (`REQUIREMENTS.md` § Audience). Python 3.12 + uv. Source of truth: `REQUIREMENTS.md` (R-ids), `PRIVACY.md` (P-ids), `DECISIONS.md` (A-ids, Connor's and Michael's; never edit). Harness design: `02-harness-proposal.md`.
 
-IMPORTANT: never persist raw conversation. Child messages, model replies, transcripts, audio and photos never reach a DB, file, temp file, cache or log (P-1, P-10). Only `primer.gateway` talks to third-party networks (P-2).
+IMPORTANT: never persist raw conversation. Child messages, model replies, transcripts, audio and photos never reach a DB, file, temp file, cache or log (P-1, P-10). Only `platy.gateway` talks to third-party networks (P-2).
 
 ## Commands
 - `scripts/check`: the gate (ruff, pyright strict, pytest `-m "not llm"`, import-linter). It must be green before a turn ends; the Stop hook enforces it.
@@ -28,10 +28,10 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 **Stack (closed list, A-11).** Runtime: `anthropic`, `pydantic` v2, `sympy`, `fastapi` (the demo server, HTTP + WebSocket), `pyBKT` (A-5). Dev: what pyproject already has. Everything else is stdlib (`tomllib`, `json`, `string.Template`, `unittest.mock`). The demo UI is the React + Vite app in `web/`, its npm dependencies pinned in `web/package.json` and `web/package-lock.json`. No DB, no auth, no web framework beyond FastAPI, no async outside the server's request and WebSocket handlers. Any new dependency needs Connor's or Michael's OK.
 
 **Boundaries**
-- `src/primer/gateway/llm.py` is the single client wrapper and the only importer of `anthropic` (A-2; import-linter enforces it). It is the gateway now, not a placeholder: one allowlisted host, fail-closed (P-3), no server-side `fallbacks`, no fallback model. Provider specifics stay behind it.
+- `src/platy/gateway/llm.py` is the single client wrapper and the only importer of `anthropic` (A-2; import-linter enforces it). It is the gateway now, not a placeholder: one allowlisted host, fail-closed (P-3), no server-side `fallbacks`, no fallback model. Provider specifics stay behind it.
 - Pure functions with no I/O: `skills`, `mathcheck`, `mastery`, `policy`, prompt rendering, cost estimates. I/O lives only in `config`, `gateway`, `fsio`, `session`, `server` and `evaluation`. Reading packaged data via `importlib.resources` (skill graph, BKT params, prompts, demo profile) is allowed anywhere; writes, network and env reads are not.
-- Prompt text and fixed child-facing text live only in `src/primer/prompts/*.md` (`[pedagogy]`, so the eval gate runs). Never inline them in Python.
-- Config: `src/primer/config.toml` + `config.py` (both `[privacy]`). The only env var is `ANTHROPIC_API_KEY`: read once, held as `SecretStr`, passed explicitly to the client, and never in a file, log or repr. Model ids can't be overridden from env.
+- Prompt text and fixed child-facing text live only in `src/platy/prompts/*.md` (`[pedagogy]`, so the eval gate runs). Never inline them in Python.
+- Config: `src/platy/config.toml` + `config.py` (both `[privacy]`). The only env var is `ANTHROPIC_API_KEY`: read once, held as `SecretStr`, passed explicitly to the client, and never in a file, log or repr. Model ids can't be overridden from env.
 - The FastAPI server runs with `debug=False`, sends no telemetry, and answers errors with codes only, never exception text or payloads (P-10, P-11), asserted by a fast test when it lands. `web/` never holds `ANTHROPIC_API_KEY` or any other secret (Vite ships every `VITE_` variable to the browser), and `web/src/privacy.test.ts` keeps it off browser storage, the console, analytics and remote assets (P-1, P-10, P-11).
 - `pyBKT` and `sympy` are each imported in exactly one module (`mastery/bkt.py`, `mathcheck.py`), behind typed functions. Pyright suppressions name the rule.
 
@@ -51,7 +51,7 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 **Child content and files**
 - Child state lives in memory only: the server's per-session state and React state in `web/`, never browser storage. The live conversation is cleared at problem boundaries and rebuilt from the skill map and profile (A-4). No cache (`functools.cache`, `lru_cache`, HTTP caching) on anything holding child content.
 - Transcripts: only simulated-student eval runs write `var/transcripts/`. They're synthetic (simulated student, seeded fake profile, P-13) and are the one exception to the IMPORTANT rule above; a real child's session never reaches them. Session and server code never write files, and the canary test enforces it.
-- All file writes go through `primer.fsio`: a temp file in the same dir, fsync, then `os.replace`. The single exception is the usage JSONL: one `O_APPEND` line, then fsync. Every persisted JSON has `schema_version`. Runtime output goes in `var/` (gitignored).
+- All file writes go through `platy.fsio`: a temp file in the same dir, fsync, then `os.replace`. The single exception is the usage JSONL: one `O_APPEND` line, then fsync. Every persisted JSON has `schema_version`. Runtime output goes in `var/` (gitignored).
 - Correctness is decided by sympy, never by a model. Child input is whitelisted before sympy sees it, because `sympify` calls `eval`.
 
 **Tests**: every module gets unit tests, with LLM calls faked. Live tests use `@pytest.mark.llm` (the registered marker the gate excludes; never `live`) and are skipped unless `PRIMER_RUN_LLM=1`. The canary test lands with the first session code. Done means `scripts/check` is green, and pyright strict is the type gate.
@@ -83,4 +83,4 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 - pyBKT 1.4.3 needs `numpy<2`, `pandas<3`, `scikit-learn<1.8`. It runs as pure Python, and its multiprocessing needs an `if __name__ == "__main__":` guard.
 - Scratch files go in the session scratchpad, never the repo root.
 - Opus 5.5 and Sonnet 5.5 return 400 on a forced `tool_choice` and on non-default `temperature`. Opus 5.5 always thinks, so `max_tokens` caps thinking plus the reply. It's a runaway ceiling, not the R-06 brevity control (that's the prompt plus the eval).
-- Nothing under `src/primer/prompts/`, `src/primer/policy/` or `evals/pedagogy/` can be committed until `scripts/eval` + ≥1 case exist and pass, because the gate fails closed.
+- Nothing under `src/platy/prompts/`, `src/platy/policy/` or `evals/pedagogy/` can be committed until `scripts/eval` + ≥1 case exist and pass, because the gate fails closed.
