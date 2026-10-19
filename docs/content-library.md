@@ -38,9 +38,9 @@ One correction to the framing in the kickoff conversation: the primer should **n
 
 ### 2.1 The demo contract on main
 
-Connor's "Demo contract" in `CLAUDE.md` is binding for all work. It sets: one unit (solving linear equations), one path, 14–18 skill nodes; a closed stack (`anthropic`, `pydantic`, `sympy`, `streamlit`, `pyBKT`; no DB; any new dependency needs approval); policy deciding every turn, with `policy/checks.py` gating every tutor move; sympy as the only judge of correctness; kid state in memory only; and fixed kid-facing text living only in `src/primer/prompts/*.md`, so the pedagogy eval gate covers it.
+Connor's "Demo contract" in `CLAUDE.md` is binding for all work. It sets: one unit (solving linear equations), one path, 14–18 skill nodes; a closed stack (`anthropic`, `pydantic`, `sympy`, `fastapi`, `pyBKT`; no DB; any new dependency needs approval); policy deciding every turn, with `policy/checks.py` gating every tutor move; sympy as the only judge of correctness; kid state in memory only; and fixed kid-facing text living only in `src/primer/prompts/*.md`, so the pedagogy eval gate covers it.
 
-**The frontend is the React app in `web/`** (Michael's decision, 2026-10-18). As first written, the contract made the demo Streamlit only; PR #1 amends it so the kid-facing app is `web/`, with Connor's Python primer behind it and Streamlit kept as Connor's internal testing tool. So in this doc:
+**The frontend is the React app in `web/`** (A-11, 2026-10-18). As first written, the contract made the demo Streamlit only; A-11 replaces Streamlit with `web/` and a FastAPI server in front of Connor's Python primer. So in this doc:
 
 - **Content players live in `web/`.** Each format gets a player component there, built and tested against PR #1's mock server first. The Python side chooses, checks and grades; the browser only shows items and reports what the student did (§6.4, §6.5).
 - **Everything else in the contract still holds:** items are chosen by policy and gated by `checks.py`, every check is graded by `primer.mathcheck` on the server, kid state lives in memory only (server memory and React state, never browser storage), and nothing is persisted in the demo.

@@ -8,7 +8,7 @@ IMPORTANT: never persist raw conversation. Kid messages, model replies, transcri
 - `scripts/check`: the gate (ruff, pyright strict, pytest `-m "not llm"`, import-linter). It must be green before a turn ends; the Stop hook enforces it.
 - `uv run pytest -q path::test`: one test. `uv add <pkg>` / `uv add --dev <pkg>`: dependencies (never pip).
 - `scripts/diagram`: regenerate `diagrams/AS-BUILT.md` (pre-commit does this; never hand-edit it).
-- `uv run streamlit run src/primer/ui/app.py`: the demo (once built).
+- `npm --prefix web run dev`: the demo UI (`web/`, on the mock tutor until the server exists). `npm --prefix web run check`: its typecheck and tests (not part of `scripts/check`). The FastAPI server's command lands with it.
 - `scripts/eval`: the pedagogy eval (once built). It's live, costs money, and runs only via `/ship` and pre-commit when `[pedagogy]` changes.
 
 ## Handoffs
@@ -25,14 +25,14 @@ Scope: one unit ("solving linear equations"), one path, 14–18 skill nodes. Dia
 
 Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctness), R-30 (metacognition), P-14 (only pinned, ZDR-verified models and features, caching included) and the R-22 (988 + parent notice) demo note are drafts until Connor or Michael approves them (build step 1). No code that depends on them lands before that.
 
-**Stack (closed list).** Runtime: `anthropic`, `pydantic` v2, `sympy`, `streamlit`, `pyBKT` (A-5). Dev: what pyproject already has. Everything else is stdlib (`tomllib`, `json`, `string.Template`, `unittest.mock`). No DB, no auth, no web framework beyond Streamlit, no async. Any new dependency needs Connor's or Michael's OK.
+**Stack (closed list, A-11).** Runtime: `anthropic`, `pydantic` v2, `sympy`, `fastapi` (the demo server, HTTP + WebSocket), `pyBKT` (A-5). Dev: what pyproject already has. Everything else is stdlib (`tomllib`, `json`, `string.Template`, `unittest.mock`). The demo UI is the React + Vite app in `web/`, its npm dependencies pinned in `web/package.json` and `web/package-lock.json`. No DB, no auth, no web framework beyond FastAPI, no async outside the server's request and WebSocket handlers. Any new dependency needs Connor's or Michael's OK.
 
 **Boundaries**
 - `src/primer/gateway/llm.py` is the single client wrapper and the only importer of `anthropic` (A-2; import-linter enforces it). It is the gateway now, not a placeholder: one allowlisted host, fail-closed (P-3), no server-side `fallbacks`, no fallback model. Provider specifics stay behind it.
-- Pure functions with no I/O: `skills`, `mathcheck`, `mastery`, `policy`, prompt rendering, cost estimates. I/O lives only in `config`, `gateway`, `fsio`, `session`, `ui` and `evaluation`. Reading packaged data via `importlib.resources` (skill graph, BKT params, prompts, demo profile) is allowed anywhere; writes, network and env reads are not.
+- Pure functions with no I/O: `skills`, `mathcheck`, `mastery`, `policy`, prompt rendering, cost estimates. I/O lives only in `config`, `gateway`, `fsio`, `session`, `server` and `evaluation`. Reading packaged data via `importlib.resources` (skill graph, BKT params, prompts, demo profile) is allowed anywhere; writes, network and env reads are not.
 - Prompt text and fixed kid-facing text live only in `src/primer/prompts/*.md` (`[pedagogy]`, so the eval gate runs). Never inline them in Python.
 - Config: `src/primer/config.toml` + `config.py` (both `[privacy]`). The only env var is `ANTHROPIC_API_KEY`: read once, held as `SecretStr`, passed explicitly to the client, and never in a file, log or repr. Model ids can't be overridden from env.
-- `.streamlit/config.toml` (`[privacy]`) lands with the UI: `browser.gatherUsageStats = false` and error details hidden (P-10, P-11), asserted by a fast `tomllib` test. Never a `.streamlit/secrets.toml`.
+- The FastAPI server runs with `debug=False`, sends no telemetry, and answers errors with codes only, never exception text or payloads (P-10, P-11), asserted by a fast test when it lands. `web/` never holds `ANTHROPIC_API_KEY` or any other secret (Vite ships every `VITE_` variable to the browser), and `web/src/privacy.test.ts` keeps it off browser storage, the console, analytics and remote assets (P-1, P-10, P-11).
 - `pyBKT` and `sympy` are each imported in exactly one module (`mastery/bkt.py`, `mathcheck.py`), behind typed functions. Pyright suppressions name the rule.
 
 **LLM calls**
@@ -49,8 +49,8 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 - Policy (pure) decides each turn's allowed and required actions and its probe candidates. The tutor returns a `TutorMove` (action, probe_id, message). Every move passes `policy/checks.py` before the kid sees it: answer leak (via `mathcheck`, unless policy allows a reveal), length cap (R-06), a real probe id from policy's candidates (R-01), and the allowed or required action (R-02, R-30). On a violation, regenerate once with the violation codes. If it fails again, show the fixed recovery line from `prompts/`.
 
 **Kid content and files**
-- Kid state lives in memory only (`st.session_state`). The live conversation is cleared at problem boundaries and rebuilt from the skill map and profile (A-4). No `st.cache_*` on anything holding kid content.
-- Transcripts: only simulated-student eval runs write `var/transcripts/`. They're synthetic (simulated student, seeded fake profile, P-13) and are the one exception to the IMPORTANT rule above; a real kid's session never reaches them. Session and UI code never write files, and the canary test enforces it.
+- Kid state lives in memory only: the server's per-session state and React state in `web/`, never browser storage. The live conversation is cleared at problem boundaries and rebuilt from the skill map and profile (A-4). No cache (`functools.cache`, `lru_cache`, HTTP caching) on anything holding kid content.
+- Transcripts: only simulated-student eval runs write `var/transcripts/`. They're synthetic (simulated student, seeded fake profile, P-13) and are the one exception to the IMPORTANT rule above; a real kid's session never reaches them. Session and server code never write files, and the canary test enforces it.
 - All file writes go through `primer.fsio`: a temp file in the same dir, fsync, then `os.replace`. The single exception is the usage JSONL: one `O_APPEND` line, then fsync. Every persisted JSON has `schema_version`. Runtime output goes in `var/` (gitignored).
 - Correctness is decided by sympy, never by a model. Kid input is whitelisted before sympy sees it, because `sympify` calls `eval`.
 
