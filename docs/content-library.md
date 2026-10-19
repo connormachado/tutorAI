@@ -1,6 +1,6 @@
 # The Content Library: Design
 
-*DRAFT proposal from Michael's side (content and learning experience), 2026-10-18. Nothing here is approved until Connor or Michael approves it. It proposes new R-ids (§10) and needs one locked decision, A-8, updated so the whiteboard can be in V1 (§4.1). It does not edit `REQUIREMENTS.md`, `PRIVACY.md` or `DECISIONS.md`.*
+*DRAFT proposal from Michael's side (content and learning experience), 2026-10-18. Nothing here is approved until Connor or Michael approves it. It proposes new R-ids (§10) A-8 was amended on 2026-10-18 so the whiteboard is in V1 (§4.1). It does not edit `REQUIREMENTS.md`, `PRIVACY.md` or `DECISIONS.md`.*
 
 *Revised later on 2026-10-18 to fit the binding "Demo contract" Connor added to `CLAUDE.md` on main, together with his skill-map models (`src/primer/skills/`) and `primer.mathcheck`. §2.1 summarises what changed. Updated again the same day after Michael chose the React app in `web/` as the demo frontend: content players live there.*
 
@@ -27,7 +27,7 @@ The existing specs are primer-first. Content touches them in these places:
 | R-30 (pending) Metacognition | A confidence check and a reflection | Interactive items carry a reflection prompt, and policy runs the confidence check before an item's checks (§6.1). |
 | REQUIREMENTS "Not V1" | "The RAG ground-truth content layer. The vision doc sequences it after the core loop is validated, so it needs its own R-id when that happens." | This doc is that layer, broadened from text explanations to all formats, and proposes building part of it earlier. Whether any of it goes in the demo is a decision for Connor and Michael (§2.1, §11). |
 | Vision §2 "Ground-truth content" | Core math must be anchored to something verified, not improvised | Every item's math is machine-checked before it ships. The tutor talks *about* a verified item instead of inventing math. |
-| A-8 Whiteboard (locked) | Deferred to V1.5 | **Michael and Connor agreed it's V1** (2026-10-18). This doc proposes a small V1 whiteboard (§4.1). Connor or Michael still has to update A-8's text before it's built. |
+| A-8 Whiteboard (locked) | In V1 (amended 2026-10-18; was V1.5) | This doc proposes a small V1 whiteboard (§4.1). |
 | P-1 Kid content | "Anything the kid or the tutor said or showed" is never persisted | Library items are made ahead of time and contain no student data, so storing them is fine. Anything generated *for one student during a session* is kid content and is never stored or cached (§7). |
 | P-2 / P-11 Egress | Only `primer.gateway` reaches third parties; nothing new phones home | No third-party players or embeds (YouTube, Spotify, game SDKs, analytics in game engines). Media is served by Platy itself. Authoring tools are a separate case (§8). |
 | P-8 Distilled state | Only skill ids, outcome codes, counts, timestamps | Content engagement is item ids and outcome codes (§6.4). In the demo nothing persists at all ("No DB", memory only); P-8 storage applies once there is a store. |
@@ -86,7 +86,7 @@ Status: **V1** = in the first V1 build; **V1.x** = soon after, no spec conflict;
 | Puzzle | Short interactive problem with a twist (balance scale, missing-step, spot-the-error) | practice, repair, retrieval | Yes | Puzzle templates in the UI + a problem generator | **V1** | Yes |
 | Short story | 150–400 words, a narrative that sets up a problem the student solves | hook, apply | Yes (the closing problem) | Claude-written, human-edited, math-checked | **V1** | Yes |
 | Song / jingle | 30–60 s mnemonic for a rule or procedure | hook, retrieval | No | Lyrics written and checked, then AI music generation (§8) | **V1** (one or two) | Yes |
-| Whiteboard | Shared canvas where tutor and student both work (§4.1) | introduce, practice, repair | Yes, structured actions only | Scenes authored with `whiteboard-v1`; the board is a UI component | **V1** (agreed; A-8 text pending) | Once A-8's text is updated |
+| Whiteboard | Shared canvas where tutor and student both work (§4.1) | introduce, practice, repair | Yes, structured actions only | Scenes authored with `whiteboard-v1`; the board is a UI component | **V1** (A-8) | Once R-47 is approved |
 | Interactive graph | Drag a slider, watch a line or parabola move | introduce, practice | Yes, if it asks a question | A coordinate-grid whiteboard scene, built in-house (no Desmos embed, P-11) | V1, when content reaches graphing | No (outside the demo unit) |
 | Mini-game | A few minutes of play where moves are skill checks | practice, easy_win, retrieval | Yes | Small game templates, parameterised by problem generators | V1.x | No |
 | Explainer video | 3–6 min deeper explanation of one concept | introduce | No | Same pipeline as clips, longer script | V1.x | No (V1.x) |
@@ -98,7 +98,7 @@ A format is added by writing a **player** (a component in `web/`) and a **templa
 
 ### 4.1 The whiteboard in V1
 
-**Michael and Connor agreed on 2026-10-18 that the whiteboard is in V1.** The text hasn't caught up yet: A-8 in `DECISIONS.md` still defers it to V1.5, and `REQUIREMENTS.md` still lists it under "Not V1". Connor or Michael updates both; AI sessions never edit `DECISIONS.md`. Until that edit lands, `architect-reviewer` will flag whiteboard code as drift, so building waits for it. Designing and authoring scenes don't have to wait. The board itself is a component in `web/`, like the other players.
+**The whiteboard is in V1** (A-8, amended 2026-10-18; `REQUIREMENTS.md` no longer lists it under "Not V1"). The board itself is a component in `web/`, like the other players.
 
 V1's whiteboard is deliberately small: a canvas beside the chat with three layers.
 
@@ -384,7 +384,7 @@ Interest tags for the slice: `soccer`, `gaming`, `music`.
 2. **Descriptor model and validator,** in the gate, against the `SkillMap` (Michael).
 3. **The content math check** using `primer.mathcheck` (Michael), plus a kid-input normaliser if Connor wants one shared (§11).
 4. **Author the items above** with the prompts.
-5. **Players in `web/`** for video and reels, audio, story text and the three puzzle templates, against the mock server first; the whiteboard once A-8's text is updated.
+5. **Players in `web/`** for video and reels, audio, story text and the three puzzle templates, against the mock server first; then the whiteboard.
 6. **`select_item` and the `show_item` action** inside policy and `checks.py` (Connor), with session-only format affinity.
 7. **Real students, only once main's preconditions hold:** the pedagogy eval (R-08) passing, including content; the R-22 safety evals; the canary test; ZDR-verified pinned models (P-14); and the age gate (R-36). Until then, items can be shown to a few teens in person, with nothing collected.
 
@@ -400,12 +400,12 @@ The age gate (PR #1) is R-36. This doc's R-ids were renumbered at merge to R-37,
 - **R-38 Interest variants, skins and slots.** Template skins and pre-made variants per interest tag from a fixed vocabulary, made per tag and never per student, plus per-student slot choices (colors, names) from fixed lists (§7.3); no real logos, team or player names; the library never sees free-text profile data.
 - **R-45 Content events and format affinity.** Structured engagement events and per-format counts; session-only in the demo, distilled state (P-8) once there's a store.
 - **R-46 Self-hosted media.** All content media and players are served by Platy itself; no third-party embeds or SDKs at runtime. *(Could instead be P-16 in `PRIVACY.md`, since it is really P-11 applied to content.)*
-- **R-47 Whiteboard.** A canvas with library scenes, snapping student tools, freehand scratch ink and a fixed set of tutor marks that pass policy checks (§4.1). Only structured actions count as evidence. "Check my work" goes through the gateway with a pinned ZDR vision role, safety first, with correctness decided by mathcheck. Student ink is kid content and is never stored. *Agreed for V1; needs A-8's text updated first.*
+- **R-47 Whiteboard.** A canvas with library scenes, snapping student tools, freehand scratch ink and a fixed set of tutor marks that pass policy checks (§4.1). Only structured actions count as evidence. "Check my work" goes through the gateway with a pinned ZDR vision role, safety first, with correctness decided by mathcheck. Student ink is kid content and is never stored. *In V1 per A-8 (amended 2026-10-18).*
 
 ## 11. Open questions
 
 **For Connor** (either cofounder can approve the answers)
-1. **Whiteboard.** A-8 in `DECISIONS.md` and the "Not V1" list in `REQUIREMENTS.md` still need updating, by you or Michael. Do you accept structured checks only as V1's answer to the Open "whiteboard-to-BKT" item? Is the whiteboard part of the demo or after it?
+1. **Whiteboard.** Do you accept structured checks only as V1's answer to the Open "whiteboard-to-BKT" item? Is the whiteboard part of the demo or after it?
 2. **Content in the demo?** `REQUIREMENTS.md` sequences the content layer after the core loop is validated. Does any content go in the demo (stories, video, puzzles in `web/`), or does it all wait?
 3. **Where items live.** Is `src/primer/content/items/` as packaged data, added to the `[pedagogy]` trigger, the right home? Does the R-06 length cap apply to fixed item text like a 300-word story?
 4. **Misconceptions.** Add a `misconceptions` field to `SkillNode`, or keep a sibling file keyed by node id?

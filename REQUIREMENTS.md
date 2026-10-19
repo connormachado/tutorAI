@@ -65,9 +65,10 @@ These are written as testable rules because the pedagogy eval (`scripts/eval`, n
 
 ## Not V1: code for these gets a CUT verdict
 
-- Whiteboard or drawing surface (A-8, V1.5); real-world grounding; teacher sync; hardware or wearables; audiences beyond K-12 kids.
+- Real-world grounding; teacher sync; hardware or wearables; audiences beyond K-12 kids.
 - Students under 13, and anything parent-facing: parent accounts, consent flows, the questionnaire, summaries, notes or a dashboard (V2/V3, see below).
 - Subjects other than algebra, and abstractions for multiple subjects.
+- The RAG ground-truth content layer. The vision doc sequences it after the core loop is validated, so it needs its own R-id when that happens.
 - School or district integration and deployment (A-1, A-9).
 - Tone or acoustic emotion detection (A-7).
 

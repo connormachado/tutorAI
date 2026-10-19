@@ -18,7 +18,8 @@
 
 **A-7. Emotional/frustration detection.** Scoped out of V1 entirely. Only behavioral proxies — wrong attempts, response latency, explicit verbal self-report — drive de-escalation. No acoustic or tone-based emotion inference. A diff that adds voice-tone or acoustic-affect detection contradicts this.
 
-**A-8. Whiteboard.** Deferred to V1.5. V1 is chat/voice only, algebra only, no shared visual canvas. A diff that adds a drawing/whiteboard surface contradicts this.
+**A-8. Whiteboard.** In V1. V1 is chat/voice plus a shared whiteboard, algebra only. Whatever the student draws or writes on the board is live session content under A-2 and A-3.
+*Amended 2026-10-18 (Connor and Michael): moved from V1.5 to V1. It read: "Deferred to V1.5. V1 is chat/voice only, algebra only, no shared visual canvas. A diff that adds a drawing/whiteboard surface contradicts this."*
 
 **A-9. Onboarding.** Two tracks: (1) kid-facing warm chat with embedded low-stakes diagnostic problems, generating real BKT signal — not self-report; (2) parent-facing questionnaire (interests, motivational hooks, sensitive topics — the personality file) plus an optional one-time grade/transcript share, used only as a rough bootstrap prior and then discarded. No school-record integration (parent-shared data about their own child is not FERPA-covered).
 
@@ -29,7 +30,7 @@
 ## Open / not locked — do not flag as violations
 
 - **BKT cold-start calibration method.** Currently: start from published parameter estimates (same skills as public datasets like ASSISTments), refine with real data over time. This is an active research area and Connor wants to review the source literature before it's fully locked. Diffs implementing *some* cold-start approach are fine; don't treat a specific method choice here as a fixed target.
-- **Whiteboard-to-BKT-signal translation** (V1.5, not being built yet).
+- **Whiteboard-to-BKT-signal translation** (the whiteboard is V1 per A-8; how board actions become BKT evidence isn't decided yet).
 - **Exact diagnostic problem count/difficulty spread** for the first onboarding session.
 - **Parent questionnaire exact wording/fields.**
 - **Pretest/posttest item design, control basis, sample size.**

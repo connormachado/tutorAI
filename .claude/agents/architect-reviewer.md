@@ -16,7 +16,6 @@ The caller gives you the diff command, the task's `arch:` declaration (`none` or
   - a full DBN; skills modeled with no scheduling layer; contextual guess/slip done with continuous covariates or outside pyBKT's `multigs` buckets (A-5)
   - a hand-kept skill list next to the graph, or a hand-maintained rendered view (A-6)
   - acoustic or tone-based affect features (A-7)
-  - a drawing or whiteboard surface (A-8)
   - school-record integration, or keeping the parent-shared transcript after bootstrap (A-9)
   - BKT prediction accuracy reported as the efficacy metric (A-10)
 - **Not yours:** A-2 and A-3 go to privacy-boundary-reviewer. Scope and bugs go to others.
