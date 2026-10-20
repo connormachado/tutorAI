@@ -29,6 +29,10 @@ Other commands:
 
 ## The demo path
 
+First, the age question (R-36): pick any birth date more than 13 years ago (a month exactly 13
+years ago counts as not yet, since there's no day). A later date shows the "Thanks for stopping
+by" screen, which holds until you reload the page.
+
 1. **Problem 1, `3x + 5 = 20`.** Try `15` first: Platy names the slip ("$3x = 15$ is right, one
    more step"). Any other wrong answer gets "what did you do first?" instead of the answer
    (R-02, R-03). Type a reply in the chat and Platy nudges. `x = 5` solves it.
@@ -119,6 +123,7 @@ grading.
 ## Not done yet
 
 Players for the other content formats (videos, songs, stories, the whiteboard), voice and
-photo input, onboarding mode (which also fills the personality file in V1), the
-13+ age gate (R-36) and a landing page. There's no parent side in V1 beyond the safety parent notice on the
+photo input, onboarding mode (which also fills the personality file in V1), the age gate's
+mid-session half (R-36: ending the session when a student turns out to be under 13 needs a server
+event) and a landing page. There's no parent side in V1 beyond the safety parent notice on the
 demo panel (R-22): V1 is for students 13 and up, and parent features come in V2/V3 (`REQUIREMENTS.md` § Audience).

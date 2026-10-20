@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from "react";
+import { AgeCheck } from "./components/AgeCheck";
 import { Chat } from "./components/Chat";
 import { Mascot } from "./components/Mascot";
 import { OverlayPanel } from "./components/Overlays";
@@ -13,6 +14,9 @@ export function App() {
   const chatInput = useRef<HTMLInputElement>(null);
   // A solved puzzle's reflection question arrives in the chat, so that's where focus goes next.
   const focusChat = useCallback(() => chatInput.current?.focus(), []);
+  // The age check comes first (R-36), and only its yes/no is kept, in memory (P-15). A "no" holds
+  // for the rest of the visit, so a different answer can't be tried straight away.
+  const [age, setAge] = useState<"ask" | "ok" | "under">("ask");
 
   return (
     <div className="app">
@@ -28,65 +32,83 @@ export function App() {
         )}
       </header>
 
-      {phase === "welcome" && (
-        <Screen title="Ready to practice?" mascot="calm">
-          <p>Today: solving equations. Three problems, one at a time, and you can ask for hints whenever you want.</p>
-          <button type="button" className="btn btn--primary btn--big" onClick={s.start} autoFocus>
-            Start practice
-          </button>
+      {age === "ask" && (
+        <Screen title="When were you born?" mascot="calm">
+          <p>Platy only keeps whether it's for you, not your birthday.</p>
+          <AgeCheck onAnswer={(ok) => setAge(ok ? "ok" : "under")} />
         </Screen>
       )}
 
-      {phase === "live" && (
-        <main className="session">
-          {s.state.puzzle ? (
-            <PuzzlePlayer
-              key={s.state.puzzle.puzzle.instance_id}
-              state={s.state.puzzle}
-              moving={s.state.moving}
-              onSolved={focusChat}
-              onMove={s.puzzleMove}
-              onHint={s.puzzleHint}
-              onNext={s.puzzleNext}
-              onColors={s.pickColors}
-            />
-          ) : (
-            <ProblemCard problem={s.state.problem} feedback={s.state.feedback} onAnswer={s.answer} onHint={s.hint} />
+      {age === "under" && (
+        <Screen title="Thanks for stopping by" mascot="calm">
+          <p>Platy is made for students 13 and older, so it can't start a session for you. Nothing you entered was saved.</p>
+        </Screen>
+      )}
+
+      {/* Every session screen sits behind the age check, not just the welcome screen. */}
+      {age === "ok" && (
+        <>
+          {phase === "welcome" && (
+            <Screen title="Ready to practice?" mascot="calm">
+              <p>Today: solving equations. Three problems, one at a time, and you can ask for hints whenever you want.</p>
+              <button type="button" className="btn btn--primary btn--big" onClick={s.start} autoFocus>
+                Start practice
+              </button>
+            </Screen>
           )}
-          <Chat
-            messages={s.state.messages}
-            resetNote={s.state.resetNote}
-            disabled={s.state.overlay !== null}
-            hold={s.state.moving || (s.state.puzzle !== null && s.state.puzzle.pending !== null)}
-            inputRef={chatInput}
-            onSay={s.say}
-          />
-          {s.state.overlay && (
-            <OverlayPanel overlay={s.state.overlay} onResume={s.resume} onBreak={s.takeBreak} onClose={s.closeOverlay} />
+
+          {phase === "live" && (
+            <main className="session">
+              {s.state.puzzle ? (
+                <PuzzlePlayer
+                  key={s.state.puzzle.puzzle.instance_id}
+                  state={s.state.puzzle}
+                  moving={s.state.moving}
+                  onSolved={focusChat}
+                  onMove={s.puzzleMove}
+                  onHint={s.puzzleHint}
+                  onNext={s.puzzleNext}
+                  onColors={s.pickColors}
+                />
+              ) : (
+                <ProblemCard problem={s.state.problem} feedback={s.state.feedback} onAnswer={s.answer} onHint={s.hint} />
+              )}
+              <Chat
+                messages={s.state.messages}
+                resetNote={s.state.resetNote}
+                disabled={s.state.overlay !== null}
+                hold={s.state.moving || (s.state.puzzle !== null && s.state.puzzle.pending !== null)}
+                inputRef={chatInput}
+                onSay={s.say}
+              />
+              {s.state.overlay && (
+                <OverlayPanel overlay={s.state.overlay} onResume={s.resume} onBreak={s.takeBreak} onClose={s.closeOverlay} />
+              )}
+              {s.isMock && <DemoControls onTrigger={s.demo} />}
+            </main>
           )}
-          {s.isMock && <DemoControls onTrigger={s.demo} />}
-        </main>
-      )}
 
-      {phase === "ended" && (
-        <Screen title="Nice session!" mascot="happy">
-          <p>
-            You solved {s.state.solved} {s.state.solved === 1 ? "problem" : "problems"} today.
-          </p>
-          <button type="button" className="btn btn--primary btn--big" onClick={s.start} autoFocus>
-            Practice again
-          </button>
-        </Screen>
-      )}
+          {phase === "ended" && (
+            <Screen title="Nice session!" mascot="happy">
+              <p>
+                You solved {s.state.solved} {s.state.solved === 1 ? "problem" : "problems"} today.
+              </p>
+              <button type="button" className="btn btn--primary btn--big" onClick={s.start} autoFocus>
+                Practice again
+              </button>
+            </Screen>
+          )}
 
-      {phase === "error" && (
-        <Screen title="Platy lost the connection" mascot="calm">
-          <p>Nothing from this session was saved, so you'll start on a fresh page.</p>
-          <button type="button" className="btn btn--primary btn--big" onClick={s.restart} autoFocus>
-            Start again
-          </button>
-          <p className="screen__code">Code: {s.state.errorCode}</p>
-        </Screen>
+          {phase === "error" && (
+            <Screen title="Platy lost the connection" mascot="calm">
+              <p>Nothing from this session was saved, so you'll start on a fresh page.</p>
+              <button type="button" className="btn btn--primary btn--big" onClick={s.restart} autoFocus>
+                Start again
+              </button>
+              <p className="screen__code">Code: {s.state.errorCode}</p>
+            </Screen>
+          )}
+        </>
       )}
     </div>
   );
