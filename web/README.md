@@ -53,8 +53,14 @@ by" screen, which holds until you reload the page.
    Tap the wrong line, rewrite it, then finish it; Platy asks before it corrects (R-03), gives
    no hint before a first try (R-02), and asks a reflection question at the end (R-30).
 
+8. **Worked examples (R-37).** Open **Demo → Worked example**. Platy shows a solved two-step
+   equation a step at a time, each line with the move that made it, then asks why the first step
+   works (R-03). **Keep going** brings a new problem with the last step left for you, then one
+   where you write both. In the real app the primer would pick how many steps to leave from the
+   student's mastery; the mock just goes through all three in order, then back to the lesson.
+
 The dashed **Demo** button (mock only) jumps to any screen on cue: skip a problem, each of the
-three puzzles (spot the error, missing step, balance scale), the pause screen, the
+three puzzles (spot the error, missing step, balance scale), the worked example, the pause screen, the
 safety-resources panel (R-22) and the dropped-connection screen (P-3). **Switch interest**
 re-skins the puzzle on screen (soccer, football, gaming, plain) without changing its numbers,
 and **Colors** on a puzzle picks your own team colors (R-38).

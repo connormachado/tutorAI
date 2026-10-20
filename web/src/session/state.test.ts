@@ -85,6 +85,20 @@ describe("session reducer", () => {
       expect(s.puzzle?.pans).toEqual(scale.start);
     });
 
+    it("finishes a worked example on its last faded step", () => {
+      const solo: Puzzle = {
+        template: "worked_example", item_id: "lin2-worked-example", instance_id: "worked-1", skill_id: "two_step_equations",
+        instructions: "Solve it one step at a time.", equation: "3x + 5 = 20", skin: SKINS.soccer, steps: [null, null], why: null,
+      };
+      const step = (check: "first_step" | "final_answer") => ({
+        type: "server" as const, event: { type: "puzzle_result" as const, instance_id: "worked-1", check, outcome: "correct" as const },
+      });
+      let s = reducer(show(live(), solo), step("first_step"));
+      expect(s.puzzle?.done).toBe(false);
+      s = reducer(s, step("final_answer"));
+      expect(s.puzzle?.done).toBe(true);
+    });
+
     it("is done once solved, and gone after puzzle_done or a reset", () => {
       let s = verdict(show(live(), scale), "solved", "correct");
       expect(s.puzzle?.done).toBe(true);

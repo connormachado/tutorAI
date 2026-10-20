@@ -134,6 +134,7 @@ function DemoControls({ onTrigger }: { onTrigger: (t: DemoTrigger) => void }) {
     ["spot_the_error", "Puzzle: spot the error"],
     ["missing_step", "Puzzle: missing step"],
     ["balance", "Puzzle: balance scale"],
+    ["worked_example", "Worked example (fades step by step)"],
     ["interest", "Switch interest (soccer, football, gaming)"],
     ["pause", "Suggest a pause"],
     ["safety", "Show safety resources"],

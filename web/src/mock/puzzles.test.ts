@@ -3,14 +3,16 @@ import { PALETTE } from "../content/palette";
 import type { PuzzleMove, PuzzleTemplate, Skin } from "../content/types";
 import { seeded } from "./generate";
 import {
-  gradeMove, INTERESTS, ITEMS, line, type LivePuzzle, newPuzzle, nextHint, SKINS, skinFor, toWire,
+  type Fade, gradeMove, INTERESTS, ITEMS, line, type LivePuzzle, newPuzzle, nextHint, SKINS, skinFor, toWire, WALKTHROUGH,
+  WORKED_FADES,
 } from "./puzzles";
 
-const TEMPLATES: PuzzleTemplate[] = ["spot_the_error", "missing_step", "balance"];
+const TEMPLATES: PuzzleTemplate[] = ["spot_the_error", "missing_step", "balance", "worked_example"];
+const FADES: Fade[] = [0, 1, 2];
 const skin = SKINS.soccer;
 
-function live<T extends PuzzleTemplate>(template: T, seed = 1) {
-  return newPuzzle(template, seeded(seed), `${template}-1`) as Extract<LivePuzzle, { template: T }>;
+function live<T extends PuzzleTemplate>(template: T, seed = 1, fade: Fade = 0) {
+  return newPuzzle(template, seeded(seed), `${template}-1`, fade) as Extract<LivePuzzle, { template: T }>;
 }
 
 /** Grades a move and records its outcome, the way the mock server does. */
@@ -66,11 +68,13 @@ describe("interest skins", () => {
 
 describe("puzzle items", () => {
   it("fills every line of text for every skin, with no slot left over", () => {
-    for (const template of TEMPLATES) {
-      const item = ITEMS[template];
+    const walkthrough = [...WALKTHROUGH.reasons, WALKTHROUGH.why, ...WALKTHROUGH.choices.map((c) => c.text)];
+    for (const item of [...TEMPLATES.map((t) => ITEMS[t]), ...WORKED_FADES]) {
+      const template = item.template;
       const texts = [
         item.intro, item.instructions, item.reflection, item.thanks, ...item.hints,
         ...Object.values(item.replies), ...Object.values(item.asks).flatMap((a) => [a.ask, a.nudge]),
+        ...(template === "worked_example" ? walkthrough : []),
       ];
       for (const interest of INTERESTS) {
         const p = live(template);
@@ -100,10 +104,12 @@ describe("puzzle items", () => {
 
   it("has three hints, none of which gives the answer (R-02)", () => {
     for (const template of TEMPLATES) {
-      for (let seed = 1; seed <= 50; seed++) {
-        const p = live(template, seed);
-        for (let i = 0; i < 3; i++, p.hints++) expect(nextHint(p, skin)).not.toContain(`x = ${p.n.answer}`);
-        expect(nextHint(p, skin)).toBeNull();
+      for (const fade of template === "worked_example" ? FADES : [0 as const]) {
+        for (let seed = 1; seed <= 50; seed++) {
+          const p = live(template, seed, fade);
+          for (let i = 0; i < 3; i++, p.hints++) expect(nextHint(p, skin)).not.toContain(`x = ${p.n.answer}`);
+          expect(nextHint(p, skin)).toBeNull();
+        }
       }
     }
   });
@@ -232,6 +238,7 @@ describe("missing step grading", () => {
     const { a, b, c, answer } = p.n;
     expect(play(p, { check: "missing_line", text: `${a}x = ${c + b}` })?.ask?.ask).toContain(`adds $${b}$`);
     expect(play(p, { check: "missing_line", text: `x = ${answer}` })?.ask?.ask).toContain("where the solution ends up");
+    expect(play(p, { check: "missing_line", text: String(answer) })?.ask?.ask).toContain("where the solution ends up");
     expect(play(p, { check: "missing_line", text: `${a}x = 1` })?.ask?.ask).toContain("from the problem");
   });
 });
@@ -261,5 +268,75 @@ describe("balance grading", () => {
     expect(done?.reply).toContain(`$x = ${p.n.answer}$`);
     p.outcomes.solved = "correct";
     expect(gradeMove(p, { check: "move", move: { op: "start_over" } }, skin)).toBeNull();
+  });
+});
+
+describe("worked example", () => {
+  const wire = (p: LivePuzzle) => {
+    const w = toWire(p, skin);
+    if (w.template !== "worked_example") throw new Error("expected a worked example");
+    return w;
+  };
+
+  it("hands the student one more step at each fade, and never sends a step they have to write", () => {
+    for (let seed = 1; seed <= 50; seed++) {
+      const [watch, finish, solo] = FADES.map((fade) => wire(live("worked_example", seed, fade)));
+      const { a, b, c, answer } = live("worked_example", seed).n;
+      expect(watch!.steps).toEqual([
+        { latex: `${a}x = ${c - b}`, reason: `Subtract $${b}$ from both sides.` },
+        { latex: `x = ${answer}`, reason: `Divide both sides by $${a}$.` },
+      ]);
+      expect(watch!.why?.choices).toHaveLength(3);
+      // Backward fading: the last step goes to the student first, then the first one too.
+      expect(finish!.steps).toEqual([watch!.steps[0], null]);
+      expect(solo!.steps).toEqual([null, null]);
+      expect(finish!.why).toBeNull();
+      expect(solo!.why).toBeNull();
+      // A step the student writes isn't on the wire, and nor is the answer (R-02).
+      expect(JSON.stringify(finish)).not.toContain(`x = ${answer}`);
+      expect(JSON.stringify(solo)).not.toContain(`${a}x = ${c - b}`);
+      expect(JSON.stringify(solo)).not.toContain(`x = ${answer}`);
+    }
+  });
+
+  it("asks why the first step works, and asks back about a wrong reason (R-03)", () => {
+    const p = live("worked_example");
+    const { a, b } = p.n;
+    const at = (k: number) => p.n.order.indexOf(k);
+    expect(wire(p).why?.choices[at(0)]).toBe(`It undoes the $+ ${b}$, so $${a}x$ is left on its own.`);
+    expect(play(p, { check: "why", choice: at(1) })?.ask?.ask).toContain(`$${a}x - ${b}$`);
+    expect(play(p, { check: "why", choice: at(2) })).toMatchObject({ outcome: "incorrect", ask: { ask: expect.stringContaining("still there") } });
+    // The browser's moves aren't trusted: a choice that isn't on screen isn't graded.
+    for (const choice of [3, -1, 0.5]) expect(play(p, { check: "why", choice })).toBeNull();
+    expect(play(p, { check: "why", choice: at(0) })).toMatchObject({ outcome: "correct", solved: true });
+  });
+
+  it("takes the first step either way round, and asks about adding or skipping ahead", () => {
+    const p = live("worked_example", 1, 2);
+    const { a, b, c, answer } = p.n;
+    expect(play(p, { check: "final_answer", text: `x = ${answer}` })).toBeNull();
+    expect(play(p, { check: "why", choice: 0 })).toBeNull();
+    expect(play(p, { check: "first_step", text: `${a}x = ${c + b}` })?.ask?.ask).toContain(`adds $${b}$`);
+    expect(play(p, { check: "first_step", text: `x = ${answer}` })?.ask?.ask).toContain("right after the first move");
+    expect(play(p, { check: "first_step", text: String(answer) })?.ask?.ask).toContain("right after the first move");
+    expect(play(p, { check: "first_step", text: `${a}x = 1` })?.ask?.ask).toContain("from the problem");
+    expect(play(p, { check: "first_step", text: "x +" })?.outcome).toBe("unreadable");
+    // Dividing first is a fine path, just a harder one.
+    expect(play(live("worked_example", 1, 2), { check: "first_step", text: `x + ${b}/${a} = ${c}/${a}` })?.outcome).toBe("correct");
+    expect(play(p, { check: "first_step", text: `${c - b} = ${a}x` })).toMatchObject({ outcome: "correct", solved: false });
+    expect(play(p, { check: "final_answer", text: String(answer) })).toMatchObject({ outcome: "correct", solved: true });
+  });
+
+  it("asks about subtracting the number in front of x, and about a line that isn't finished", () => {
+    const p = live("worked_example", 1, 1);
+    const { a, b, c, answer } = p.n;
+    // The first step is shown, so it's not the student's to write.
+    expect(play(p, { check: "first_step", text: `${a}x = ${c - b}` })).toBeNull();
+    expect(play(p, { check: "final_answer", text: `x = ${c - b - a}` })?.ask?.ask).toContain("get rid of the");
+    expect(play(p, { check: "final_answer", text: String(c - b - a) })?.ask?.ask).toContain("get rid of the");
+    expect(play(p, { check: "final_answer", text: `${a}x = ${c - b}` })?.ask?.ask).toBe("That line's true. What's x on its own?");
+    const done = play(p, { check: "final_answer", text: `x = ${answer}` });
+    expect(done).toMatchObject({ outcome: "correct", solved: true });
+    expect(done?.reply).toContain(`$x = ${answer}$`);
   });
 });

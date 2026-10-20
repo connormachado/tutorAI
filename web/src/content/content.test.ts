@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { applyMove, isSolved, pansLatex } from "./balance";
 import { contrast, PALETTE } from "./palette";
-import { balanceStage, missingStage, spotStage } from "./progress";
-import type { Pans } from "./types";
+import { balanceStage, missingStage, spotStage, workedStage } from "./progress";
+import type { Pans, WorkedExamplePuzzle } from "./types";
+
+type Shape = Pick<WorkedExamplePuzzle, "steps" | "why">;
 
 const start: Pans = { left: { x: 3, units: 5 }, right: { x: 0, units: 20 } };
 
@@ -85,5 +87,20 @@ describe("puzzle progress", () => {
     expect(missingStage({ missing_line: "correct" })).toBe("done");
     expect(balanceStage({ move: "correct" })).toBe("play");
     expect(balanceStage({ solved: "correct" })).toBe("done");
+  });
+
+  it("asks a worked example's faded steps in order, and why only when nothing is faded", () => {
+    const step = { latex: "3x = 15", reason: "Subtract $5$ from both sides." };
+    const why = { question: "Why?", choices: ["a", "b", "c"] };
+    const watch: Shape = { steps: [step, step], why };
+    const solo: Shape = { steps: [null, null], why: null };
+    const finish: Shape = { steps: [step, null], why: null };
+    expect(workedStage(watch, {})).toBe("why");
+    expect(workedStage(watch, { why: "correct" })).toBe("done");
+    expect(workedStage(finish, {})).toBe("final_answer");
+    expect(workedStage(solo, {})).toBe("first_step");
+    expect(workedStage(solo, { first_step: "incorrect" })).toBe("first_step");
+    expect(workedStage(solo, { first_step: "correct" })).toBe("final_answer");
+    expect(workedStage(solo, { first_step: "correct", final_answer: "correct" })).toBe("done");
   });
 });

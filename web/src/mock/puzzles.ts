@@ -1,8 +1,11 @@
 import { applyMove, isSolved } from "../content/balance";
-import { balanceStage, missingStage, type Outcomes, spotStage } from "../content/progress";
-import type { CheckId, CheckOutcome, PaletteId, Pans, Puzzle, PuzzleMove, PuzzleTemplate, Skin } from "../content/types";
+import { balanceStage, missingStage, type Outcomes, spotStage, workedStage } from "../content/progress";
+import type {
+  CheckId, CheckOutcome, PaletteId, Pans, Puzzle, PuzzleMove, PuzzleTemplate, Skin, WorkedExamplePuzzle,
+} from "../content/types";
 import {
   balance, type BalanceInstance, type MissingInstance, missingStep, type Rng, type SpotInstance, spotTheError,
+  type WorkedInstance, workedExample,
 } from "./generate";
 import { bareNumber, hasSolution, readable, sameLine } from "./grade";
 
@@ -68,6 +71,63 @@ export interface Item {
   reflection: string;
   thanks: string;
 }
+
+// A worked example (R-37) teaches a new step. The primer fades it as mastery grows, handing the
+// student one more step each time, last step first (backward fading). Each fade is the same
+// item with its own lines; this first one is all watching, then a "why" (R-03).
+const watch: Item = {
+  item_id: "lin2-worked-example",
+  template: "worked_example",
+  skill_id: "two_step_equations",
+  intro: "Here's how {player} from the {team} solves a two-step equation. Read it a step at a time.",
+  instructions: "Read each step, then say why the first one works.",
+  hints: [
+    "What does the problem do to x? First it's multiplied by ${a}$, then ${b}$ is added.",
+    "Undoing goes in reverse, like taking off your shoes before your socks. What gets undone first?",
+    "Line 1 has no $+ {b}$ left in it. What took it away, and why?",
+  ],
+  replies: {
+    why: "Right. Subtracting ${b}$ undoes the $+ {b}$, then dividing by ${a}$ undoes the times ${a}$.",
+    first_step: "Yes. Now the last line.",
+    final_answer: "That's it, $x = {answer}$. Check: ${a} \\cdot {answer} + {b} = {c}$.",
+  },
+  asks: {
+    always_subtract: {
+      ask: "What if it were ${a}x - {b}$ instead? Would you still subtract ${b}$ first?",
+      nudge: "Each step undoes something the problem does to x. What does the $+ {b}$ do, and what undoes it?",
+    },
+    wrong_part: {
+      ask: "Look at line 1. Is the ${a}$ still there after subtracting?",
+      nudge: "Subtracting changed the $+ {b}$, not the ${a}$. What happened to the ${b}$?",
+    },
+    same_op: {
+      ask: "The equation adds ${b}$ to ${a}x$. What did your line do to the ${b}$?",
+      nudge: "Adding ${b}$ again doesn't undo it. What does?",
+    },
+    skipped: {
+      ask: "That's true, but it's where the solution ends up. What does the line look like right after the first move?",
+      nudge: "The first line still has ${a}x$ in it.",
+    },
+    other: {
+      ask: "How did you get that from the problem?",
+      nudge: "What has to happen to the ${b}$ before you can divide?",
+    },
+    not_alone: {
+      ask: "That line's true. What's x on its own?",
+      nudge: "What's still being done to $x$ in that line?",
+    },
+    subtracted_a: {
+      ask: "How did you get rid of the ${a}$ in ${a}x$?",
+      nudge: "${a}x$ means ${a}$ times x. What undoes times?",
+    },
+    final_other: {
+      ask: "How did you get that from line 1?",
+      nudge: "What's still being done to $x$ in line 1?",
+    },
+  },
+  reflection: "In your own words: in a problem like this, what do you undo first, and why?",
+  thanks: "Thanks. Next, {player} starts one and you write the last line.",
+};
 
 // Text fills from {name} slots: the skin's words and the instance's numbers. LaTeX in here
 // avoids braces so it can't be mistaken for a slot.
@@ -187,6 +247,50 @@ export const ITEMS: Record<PuzzleTemplate, Item> = {
     reflection: "Why did you take the {units} off before splitting? Would the other order have worked?",
     thanks: "Thanks. Undo the adding first, then the multiplying: it works the same way on paper.",
   },
+  worked_example: watch,
+};
+
+export type Fade = 0 | 1 | 2;
+
+/** The worked example at each fade: everything shown, then the last step theirs, then both. */
+export const WORKED_FADES: [Item, Item, Item] = [
+  watch,
+  {
+    ...watch,
+    intro: "{player} started this one. You finish it.",
+    instructions: "{player} did the first step. Write the last line.",
+    hints: [
+      "What's still being done to x in line 1?",
+      "${a}x$ means ${a}$ times x. What undoes times?",
+      "Divide both sides of line 1 by ${a}$. What's left?",
+    ],
+    reflection: "How did you know to divide by ${a}$ for the last line?",
+    thanks: "Thanks. Next one's all yours, every step.",
+  },
+  {
+    ...watch,
+    intro: "This one's all yours. Write it a step at a time, the way {player} did.",
+    instructions: "Solve it one step at a time.",
+    hints: [
+      "What does the problem do to x, and in what order?",
+      "Undo the adding first. What takes away the $+ {b}$?",
+      "Subtract ${b}$ from both sides, then divide by ${a}$.",
+    ],
+    reflection: "Which step was easiest to write yourself, and which one do you want more practice on?",
+    thanks: "Thanks. Knowing which step to practice is how you get faster.",
+  },
+];
+
+/** What a worked example says about its own lines: the move each makes, and why the first works. */
+export const WALKTHROUGH: { reasons: string[]; why: string; choices: { text: string; ask: string | null }[] } = {
+  reasons: ["Subtract ${b}$ from both sides.", "Divide both sides by ${a}$."],
+  why: "Why does {player} subtract ${b}$ first?",
+  // The right reason, then two wrong ones the tutor asks back about. The instance shuffles them.
+  choices: [
+    { text: "It undoes the $+ {b}$, so ${a}x$ is left on its own.", ask: null },
+    { text: "You always subtract before you divide.", ask: "always_subtract" },
+    { text: "It gets rid of the ${a}$ in front of $x$.", ask: "wrong_part" },
+  ],
 };
 
 interface LiveBase {
@@ -204,9 +308,11 @@ interface LiveBase {
 export type LivePuzzle =
   | (LiveBase & { template: "spot_the_error"; n: SpotInstance })
   | (LiveBase & { template: "missing_step"; n: MissingInstance })
-  | (LiveBase & { template: "balance"; n: BalanceInstance; pans: Pans });
+  | (LiveBase & { template: "balance"; n: BalanceInstance; pans: Pans })
+  | (LiveBase & { template: "worked_example"; n: WorkedInstance; fade: Fade });
 
-export function newPuzzle(template: PuzzleTemplate, rng: Rng, instance_id: string): LivePuzzle {
+/** The fade only applies to a worked example; the primer would set it from mastery. */
+export function newPuzzle(template: PuzzleTemplate, rng: Rng, instance_id: string, fade: Fade = 0): LivePuzzle {
   const base = { item: ITEMS[template], instance_id, outcomes: {}, tried: false, hints: 0, misses: 0 };
   switch (template) {
     case "spot_the_error":
@@ -217,6 +323,8 @@ export function newPuzzle(template: PuzzleTemplate, rng: Rng, instance_id: strin
       const n = balance(rng);
       return { ...base, template, n, pans: n.start };
     }
+    case "worked_example":
+      return { ...base, item: WORKED_FADES[fade], template, n: workedExample(rng), fade };
   }
 }
 
@@ -256,7 +364,23 @@ export function toWire(live: LivePuzzle, skin: Skin): Puzzle {
       return { ...base, template: live.template, lines: live.n.linesLatex };
     case "balance":
       return { ...base, template: live.template, start: live.n.start };
+    case "worked_example":
+      return { ...base, template: live.template, ...walkthrough(live, skin) };
   }
+}
+
+/** A worked example's lines and "why" at its fade. Steps the student writes are left out entirely. */
+function walkthrough(live: Extract<LivePuzzle, { template: "worked_example" }>, skin: Skin): Pick<WorkedExamplePuzzle, "steps" | "why"> {
+  const say = (text: string) => line(live, skin, () => text);
+  const [first, last] = live.n.linesLatex;
+  const step = (latex: string, i: number, shown: boolean) => (shown ? { latex, reason: say(WALKTHROUGH.reasons[i]!) } : null);
+  return {
+    // Backward fading: the last step goes to the student first.
+    steps: [step(first, 0, live.fade < 2), step(last, 1, live.fade < 1)],
+    why: live.fade === 0
+      ? { question: say(WALKTHROUGH.why), choices: live.n.order.map((k) => say(WALKTHROUGH.choices[k]!.text)) }
+      : null,
+  };
 }
 
 export interface Verdict {
@@ -303,33 +427,18 @@ export function gradeMove(live: LivePuzzle, move: PuzzleMove, skin: Skin): Verdi
         return miss("fixed_step", "fix_other");
       }
       if (move.check === "final_answer" && stage === "finish") {
-        // The item's check is equivalent_to x = {answer}: "x = 12", "12 = x" and "1x = 12" are
-        // x on its own, and a bare number counts too. Another true line isn't finished yet.
-        const t = move.text;
         const wrong = Number(n.lines[1]!.split("=")[1]);
-        if (readable(t)) {
-          if (sameLine(t, `x = ${n.answer}`)) return pass("final_answer", true);
-          if (hasSolution(t, n.answer)) return miss("final_answer", "not_alone");
-          return miss("final_answer", hasSolution(t, wrong) ? "old_answer" : "final_other");
-        }
-        const value = bareNumber(t);
-        if (value === null) return unreadable("final_answer");
-        const is = (k: number) => Math.abs(value - k) < 1e-9;
-        if (is(n.answer)) return pass("final_answer", true);
-        return miss("final_answer", is(wrong) ? "old_answer" : "final_other");
+        const key = finalAnswer(move.text, n.answer, { value: wrong, key: "old_answer" });
+        return key === "correct" ? pass("final_answer", true) : key === "unreadable" ? unreadable("final_answer") : miss("final_answer", key);
       }
       return null;
     }
     case "missing_step": {
       const n = live.n;
       if (move.check !== "missing_line" || missingStage(live.outcomes) !== "fill") return null;
-      const t = move.text;
-      if (!readable(t)) return unreadable("missing_line");
-      if (sameLine(t, n.expected)) return pass("missing_line", true);
-      // Adding b again, simplified or written out as "+ b + b".
-      if (sameLine(t, n.slip) || sameLine(t, `${n.a}*x + ${2 * n.b} = ${n.c + n.b}`)) return miss("missing_line", "same_op");
-      if (sameLine(t, `x = ${n.answer}`)) return miss("missing_line", "skipped");
-      return miss("missing_line", "other");
+      const key = firstMove(move.text, n);
+      if (key === "correct") return pass("missing_line", true);
+      return key === "unreadable" ? unreadable("missing_line") : miss("missing_line", key);
     }
     case "balance": {
       if (move.check !== "move" || balanceStage(live.outcomes) !== "play") return null;
@@ -338,7 +447,63 @@ export function gradeMove(live: LivePuzzle, move: PuzzleMove, skin: Skin): Verdi
       if (isSolved(r.pans)) return { ...pass("solved", true), check: "move", pans: r.pans };
       return { check: "move", outcome: "correct", pans: r.pans, solved: false };
     }
+    case "worked_example": {
+      const n = live.n;
+      const shown = walkthrough(live, skin);
+      const stage = workedStage(shown, live.outcomes);
+      // Solved when this check passing leaves nothing else to do.
+      const finishes = (check: CheckId) => workedStage(shown, { ...live.outcomes, [check]: "correct" }) === "done";
+      if (move.check === "why" && stage === "why") {
+        const k = n.order[move.choice];
+        const choice = k === undefined ? undefined : WALKTHROUGH.choices[k];
+        if (!choice) return null;
+        return choice.ask ? miss("why", choice.ask) : pass("why", finishes("why"));
+      }
+      if (move.check === "first_step" && stage === "first_step") {
+        // Dividing first is a fine path too, just a harder one.
+        const key = sameLine(move.text, n.divideFirst) ? "correct" : firstMove(move.text, n);
+        if (key === "correct") return pass("first_step", finishes("first_step"));
+        return key === "unreadable" ? unreadable("first_step") : miss("first_step", key);
+      }
+      if (move.check === "final_answer" && stage === "final_answer") {
+        // Taking the a away instead of dividing by it: 3x = 15 gives x = 12.
+        const key = finalAnswer(move.text, n.answer, { value: n.c - n.b - n.a, key: "subtracted_a" });
+        if (key === "correct") return pass("final_answer", finishes("final_answer"));
+        return key === "unreadable" ? unreadable("final_answer") : miss("final_answer", key);
+      }
+      return null;
+    }
   }
+}
+
+/** The first move on a*x + b = c, which takes the b off both sides. */
+function firstMove(text: string, n: MissingInstance): string {
+  const value = bareNumber(text);
+  // The answer straight away, as a line or a bare number, skips the step being asked for.
+  if (sameLine(text, `x = ${n.answer}`) || (value !== null && Math.abs(value - n.answer) < 1e-9)) return "skipped";
+  if (!readable(text)) return "unreadable";
+  if (sameLine(text, n.expected)) return "correct";
+  // Adding b again, simplified or written out as "+ b + b".
+  if (sameLine(text, n.slip) || sameLine(text, `${n.a}*x + ${2 * n.b} = ${n.c + n.b}`)) return "same_op";
+  return "other";
+}
+
+/**
+ * A final answer, per the items' equivalent_to x = {answer} check: "x = 12", "12 = x" and
+ * "1x = 12" are x on its own, and a bare number counts too. Another true line isn't finished
+ * yet ("not_alone"), and a known wrong value names its slip.
+ */
+function finalAnswer(text: string, answer: number, slip: { value: number; key: string }): string {
+  if (readable(text)) {
+    if (sameLine(text, `x = ${answer}`)) return "correct";
+    if (hasSolution(text, answer)) return "not_alone";
+    return hasSolution(text, slip.value) ? slip.key : "final_other";
+  }
+  const value = bareNumber(text);
+  if (value === null) return "unreadable";
+  const is = (k: number) => Math.abs(value - k) < 1e-9;
+  if (is(answer)) return "correct";
+  return is(slip.value) ? slip.key : "final_other";
 }
 
 /** The next hint, or null when they're used up. */

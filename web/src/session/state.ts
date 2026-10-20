@@ -1,5 +1,5 @@
 import { applyMove } from "../content/balance";
-import { balanceStage, missingStage, type Outcomes, spotStage } from "../content/progress";
+import { balanceStage, missingStage, type Outcomes, spotStage, workedStage } from "../content/progress";
 import type { CheckId, CheckOutcome, Pans, Puzzle, PuzzleMove } from "../content/types";
 import type { Problem, SafetyResource, ServerEvent } from "../protocol";
 
@@ -197,6 +197,7 @@ function onVerdict(p: PuzzleState, check: CheckId, outcome: CheckOutcome): Puzzl
   const stage =
     p.puzzle.template === "spot_the_error" ? spotStage(outcomes)
     : p.puzzle.template === "missing_step" ? missingStage(outcomes)
+    : p.puzzle.template === "worked_example" ? workedStage(p.puzzle, outcomes)
     : balanceStage(outcomes);
   return { ...p, outcomes, pans, pending: null, last: { check, outcome }, done: stage === "done" };
 }

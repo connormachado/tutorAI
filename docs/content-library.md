@@ -82,6 +82,7 @@ Status: **V1** = in the first V1 build; **V1.x** = soon after, no spec conflict;
 | Chat / Socratic dialogue | The primer itself talking through a problem | introduce, practice, repair | Yes | The tutor, anchored to an item's tutor notes | V1 (exists) | Yes |
 | Voice | The same dialogue spoken (R-19) | Same as chat | Yes | Speech-to-text; needs a pinned, ZDR-verified speech path (P-14) and, if not Anthropic, a new gateway host (P-4) | V1 (R-19) | Not yet |
 | Worked-example clip | 45–120 s video solving one problem step by step | worked_example, repair | No | Programmatic animation + TTS (§8) | **V1** | Yes |
+| Worked-example step-through | A solved problem shown a step at a time, then faded: the student writes more of the steps as mastery grows | worked_example, practice | Yes (a "why" choice, then each step they write) | A template in the UI + a problem generator | **V1** (built in `web/`, against the mock) | Yes |
 | Reel | Vertical, under 45 s, one hook or one misconception | hook, repair | No | An animated template in `web/`, filled per student (§7.2) | **V1** | Yes |
 | Puzzle | Short interactive problem with a twist (balance scale, missing-step, spot-the-error) | practice, repair, retrieval | Yes | Puzzle templates in the UI + a problem generator | **V1** | Yes |
 | Short story | 150–400 words, a narrative that sets up a problem the student solves | hook, apply | Yes (the closing problem) | Claude-written, human-edited, math-checked | **V1** | Yes |
@@ -257,6 +258,8 @@ Later, item quality is the aggregate across students: completion rate, skip poin
 | { type: "puzzle_next"; instance_id: string }  // finished, ready to move on
 | { type: "slot_pick"; colors: PaletteId }  // R-38, from a fixed palette
 ```
+
+The worked example (`worked_example`) uses the same events. Its steps arrive in order, each with the move that made it; a step the student has to write arrives as `null`, so the browser never has it. The server sets how many steps to leave from the student's mastery (fully shown, then the last step left, then both, which is backward fading). When every step is shown it adds a "why this step?" question with three choices (`why`, graded by the tapped position). Otherwise the student writes the missing steps (`first_step`, then `final_answer`).
 
 A second `puzzle` event with the same `instance_id` only changes the skin, so the student keeps their progress. The browser draws a balance-scale move only after the server's `puzzle_result` accepts it. `child_message` carries no problem or puzzle id, so the server reads it against whatever is current when it's handled. The browser therefore holds the chat while a move waits for its verdict and from `puzzle_next` (or a solved problem) until the next `problem` or `puzzle` arrives, and the server must always answer `puzzle_next` with `puzzle_done`. Adding the on-screen id to `child_message` would let the server drop a stale message instead; that's a contract question for the backend. Hints used and response times for R-11 stay on the server, which already sees every move and hint request.
 

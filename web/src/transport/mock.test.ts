@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { PuzzleMove } from "../content/types";
 import type { ClientEvent, ServerEvent } from "../protocol";
 import { EXPLAIN_FIRST } from "../mock/script";
 import { MockTransport } from "./mock";
@@ -303,6 +304,42 @@ describe("MockTransport", () => {
       const mark = h.events.length;
       await h.send({ type: "puzzle_hint", instance_id: p.instance_id });
       expect(h.said(mark)).toEqual([]);
+    });
+
+    it("fades a worked example from watching to writing every step, then goes back (R-37)", async () => {
+      const h = harness();
+      await h.settle();
+      h.t.demo("worked_example");
+      await h.settle();
+      expect(h.events).toContainEqual({ type: "topic_switch", label: "Worked example" });
+      const latest = () => {
+        const p = puzzlesIn(h).at(-1);
+        if (p?.template !== "worked_example") throw new Error("expected a worked example");
+        const [a, b, c] = (p.equation.match(/^(\d+)x \+ (\d+) = (\d+)$/) ?? []).slice(1).map(Number) as [number, number, number];
+        return { p, a, b, c, answer: (c - b) / a };
+      };
+      const move = (id: string, m: PuzzleMove) => h.send({ type: "puzzle_move", instance_id: id, move: m });
+
+      const watch = latest().p;
+      expect(watch.steps.every((s) => s !== null)).toBe(true);
+      await move(watch.instance_id, { check: "why", choice: watch.why!.choices.findIndex((t) => t.startsWith("It undoes")) });
+      await h.send({ type: "puzzle_next", instance_id: watch.instance_id });
+      expect(h.events).toContainEqual({ type: "puzzle_done", instance_id: watch.instance_id });
+
+      const finish = latest();
+      expect(finish.p.steps.map((s) => s !== null)).toEqual([true, false]);
+      await move(finish.p.instance_id, { check: "final_answer", text: `x = ${finish.answer}` });
+      await h.send({ type: "child_message", text: "ready" });
+
+      const solo = latest();
+      expect(solo.p.steps).toEqual([null, null]);
+      await move(solo.p.instance_id, { check: "first_step", text: `${solo.a}x = ${solo.c - solo.b}` });
+      const mark = h.events.length;
+      await move(solo.p.instance_id, { check: "final_answer", text: String(solo.answer) });
+      expect(h.said(mark).join(" ")).toContain("Which step");
+      await h.send({ type: "puzzle_next", instance_id: solo.p.instance_id });
+      expect(new Set(puzzlesIn(h).map((p) => p.instance_id)).size).toBe(3);
+      expect(h.problems()).toEqual(["p1", "p1"]);
     });
 
     it("moves on from a finished puzzle when the child taps keep going", async () => {

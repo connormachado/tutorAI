@@ -138,6 +138,7 @@ export const TAKE_A_BREATH = "This one's being stubborn. Let's take a breath.";
 export const REPAIR_LEAD =
   "I have a hunch about what happened there. Let's look at someone else's work first, then come back to this one.";
 export const DEMO_LEAD = "Let's try a quick puzzle.";
+export const SHOW_ONE = "Let me show you one first. Then you'll take it over, a step at a time.";
 export const TRY_FIRST = "Give it one try first, even a guess. Then I'll help.";
 export const EXPLAIN_FIRST = "Tell me what you were thinking first, then I'll help.";
 export const NO_ANSWERS_TRY_FIRST =

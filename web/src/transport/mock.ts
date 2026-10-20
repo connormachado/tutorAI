@@ -1,10 +1,12 @@
 import type { PaletteId, PuzzleMove, PuzzleTemplate } from "../content/types";
 import { checkAnswer, matchesValue, readAnswer } from "../mock/answers";
 import { seeded } from "../mock/generate";
-import { gradeMove, INTERESTS, type Interest, type LivePuzzle, line, newPuzzle, nextHint, skinFor, toWire } from "../mock/puzzles";
+import {
+  type Fade, gradeMove, INTERESTS, type Interest, type LivePuzzle, line, newPuzzle, nextHint, skinFor, toWire,
+} from "../mock/puzzles";
 import {
   BACK_TO_IT, CLOSING, CONFIDENCE_BUILDER, DEMO_LEAD, EXPLAIN_FIRST, LESSON, NO_ANSWERS, NO_ANSWERS_TRY_FIRST, NUDGES, OPENING,
-  OUT_OF_HINTS, PUZZLE_NUDGE, PUZZLE_UNREADABLE, REPAIR_LEAD, SAFETY_RESOURCES, type ScriptedProblem, TAKE_A_BREATH, TRY_FIRST,
+  OUT_OF_HINTS, PUZZLE_NUDGE, PUZZLE_UNREADABLE, REPAIR_LEAD, SAFETY_RESOURCES, type ScriptedProblem, SHOW_ONE, TAKE_A_BREATH, TRY_FIRST,
   UNREADABLE,
 } from "../mock/script";
 import type { ClientEvent, ServerEvent, SessionMode } from "../protocol";
@@ -101,7 +103,7 @@ export class MockTransport implements TutorTransport {
           this.reskin();
           return;
         default:
-          await this.startPuzzle(trigger, DEMO_LEAD);
+          await this.startPuzzle(trigger, trigger === "worked_example" ? SHOW_ONE : DEMO_LEAD);
       }
     });
   }
@@ -287,11 +289,15 @@ export class MockTransport implements TutorTransport {
     this.puzzleNudge = null;
     this.reflecting = false;
     await this.say(lead);
-    this.out({ type: "topic_switch", label: "Quick puzzle" });
+    this.out({ type: "topic_switch", label: template === "worked_example" ? "Worked example" : "Quick puzzle" });
     this.out({ type: "reset", reason: "topic_switch" });
     await this.sleep(this.timing.resetMs);
+    await this.showPuzzle(template);
+  }
+
+  private async showPuzzle(template: PuzzleTemplate, fade: Fade = 0): Promise<void> {
     this.puzzles++;
-    const live = newPuzzle(template, seeded(this.seed + this.puzzles), `${template}-${this.puzzles}`);
+    const live = newPuzzle(template, seeded(this.seed + this.puzzles), `${template}-${this.puzzles}`, fade);
     this.puzzle = live;
     await this.say(line(live, this.skin(), (i) => i.intro));
     this.out({ type: "puzzle", puzzle: toWire(live, this.skin()) });
@@ -384,6 +390,11 @@ export class MockTransport implements TutorTransport {
     await this.sleep(this.timing.resetMs);
     this.out({ type: "reset", reason: "problem_end" });
     await this.sleep(this.timing.resetMs);
+    // A worked example fades one step at a time before the lesson picks up again (R-37).
+    if (live.template === "worked_example" && live.fade < 2) {
+      await this.showPuzzle("worked_example", (live.fade + 1) as Fade);
+      return;
+    }
     const back = this.returnTo;
     this.returnTo = null;
     const next = back ?? this.order[this.index];
