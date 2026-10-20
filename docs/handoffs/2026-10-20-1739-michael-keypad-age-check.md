@@ -22,14 +22,13 @@
 - **x², y and comma also show in puzzles.** The mock puzzle grader calls those lines unreadable, which is the same reply as any typed junk. Hiding three keys per context wasn't worth a prop.
 
 - **Only the age yes/no is kept, in memory** (P-15). The month and year never leave `AgeCheck`. A birthday in the current month 13 years ago counts as not yet 13, since there's no day.
-- **The under-13 block clears on reload.** P-15 allows a device-local flag to block a quick retry, but `web/src/privacy.test.ts` bans browser storage; the privacy reviewer called memory-only acceptable (P-15 allows the flag, doesn't require it). Whether to add a one-key `sessionStorage` exception is Michael's and Connor's call.
+- **The under-13 block clears on reload.** P-15 allows a device-local flag to block a quick retry, but `web/src/privacy.test.ts` bans browser storage; the privacy reviewer called memory-only acceptable (P-15 allows the flag, doesn't require it). **Michael decided (2026-10-20): memory only for now**; revisit with the lawyer before public launch, since FTC guidance suggests blocking quick retries.
 
 ## Contract changes
 - Answers can now contain `×` and `÷` more often (the tokenizer always accepted them). The server's child-math normaliser (R-29, pending) has to read `×`, `÷`, `−` and `^2`, the same as `web/src/math/parse.ts` does.
 
 ## Open questions for Connor
 - R-36's mid-session half: when the tutor learns a student is under 13, the server needs an event that ends the session (for example `session_ended` with a reason code). `web/` would then show the same stop screen. What shape do you want?
-- Should the under-13 block survive a reload (one `sessionStorage` key, with a narrow exception in `web/src/privacy.test.ts`)?
 - Still open from 0443: a problem id on `child_message`, and an exact-step check in `platy.mathcheck`.
 
 ## Next steps
