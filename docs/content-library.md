@@ -362,7 +362,7 @@ Rough throughput target, inferred rather than measured: once the templates exist
 
 ## 9. The first slice
 
-**Scope: three skills inside the demo unit (solving linear equations).** The R-10 demo note sets 14–18 nodes with one top-level node; the slice targets three of them. Their ids here are placeholders until Connor's map lands: `one_step_equations`, `two_step_equations`, `distributive_equations`.
+**Scope: three skills inside the demo unit (solving linear equations).** The R-10 demo note sets 14–18 nodes with one top-level node; the slice targets three of them. They are nodes in Connor's skill map (`src/platy/skills/data/skill_map.json`): `one_step_equations`, `two_step_equations` and `multi_step_equations` (expand brackets or combine like terms, then solve).
 
 **Items (about 27):**
 

@@ -3,7 +3,7 @@ import type { Pans } from "../content/types";
 // Mock-only problem generators for the three puzzle templates. They follow each item's
 // generator rules (content/prompts/puzzle-v1.md), so every instance has whole-number answers
 // and no answer that a guess at a number already on screen could hit. The real server would
-// generate these and check them with primer.mathcheck before sending them.
+// generate these and check them with platy.mathcheck before sending them.
 
 export type Rng = () => number;
 
