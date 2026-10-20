@@ -38,8 +38,13 @@ Other commands:
    `7, -7` or `x = 7 or x = -7` solves it.
 5. **Three misses on one problem** brings up the pause screen, then an easier warm-up, then
    back to the problem (R-21).
+6. **The math keypad (R-18)** sits under every math box. On a phone (try it at 390×844 with touch)
+   it docks at the bottom like a keyboard while the box has focus, and the phone's own keyboard
+   stays down. **abc** brings that keyboard back for letters and words, and **↵** checks the
+   answer. On a laptop the keypad stays under the box; its keys are out of the Tab order because
+   a keyboard types everything directly.
 
-6. **Puzzles (R-37).** On problem 1, answer `25/3` (adding the 5 instead of subtracting it).
+7. **Puzzles (R-37).** On problem 1, answer `25/3` (adding the 5 instead of subtracting it).
    Platy sends you to a spot-the-error puzzle about the same slip, then back to problem 1.
    Tap the wrong line, rewrite it, then finish it; Platy asks before it corrects (R-03), gives
    no hint before a first try (R-02), and asks a reflection question at the end (R-30).
@@ -64,7 +69,7 @@ src/
   mock/                  scripted lesson, answer checking, and puzzle items, skins, problem
                          generators and grading (all go away with the real backend)
   content/               puzzle types, balance-scale moves, team-color palette
-  math/                  child-math parser, LaTeX output, KaTeX rendering
+  math/                  child-math parser, LaTeX output, KaTeX rendering, keypad keys
   session/               reducer + hook holding all session state in memory
   components/            ProblemCard, PuzzlePlayer (+ puzzles/), MathInput, Chat, Overlays, Mascot
 ```
@@ -98,7 +103,8 @@ problem or puzzle and the next.
 
 `answer_result`, `instruction`/`position`/`total` on `problem`, and `resume` are additions to the
 plan's first draft; they let the problem card give feedback and show progress. Answers are sent
-as the child typed them (`x^2 = 49`, `±7`); the server does the grading.
+as the child typed them (`x^2 = 49`, `±7`, and `×` and `÷` from the keypad); the server does the
+grading.
 
 ## Privacy rules this code follows
 

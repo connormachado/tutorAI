@@ -107,15 +107,42 @@ button, input { font: inherit; color: inherit; }
   border: 2px solid var(--line); background: #fff; font-size: 1.1rem;
 }
 .math-input__field:focus, .chat__field:focus { border-color: var(--river); box-shadow: none; outline: none; }
-.math-keys { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
-.math-key {
-  min-height: 44px; border-radius: 10px; border: 0; cursor: pointer;
-  background: var(--paper); font-size: 1.05rem;
-}
-.math-key:not(:disabled):hover { background: var(--river-wash); }
-.math-key:disabled { opacity: 0.45; cursor: not-allowed; }
 .math-preview { min-height: 2em; font-size: 1.05rem; }
 .math-preview__label { color: var(--ink-soft); font-size: 0.85rem; }
+
+/* Keypad (R-18): letters and brackets on the left, a calculator pad on the right. */
+.keypad { display: grid; grid-template-columns: 3fr 5fr; gap: 12px; max-width: 500px; }
+.keypad__block { display: grid; gap: 6px; }
+.keypad__block--symbols { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.keypad__block--numbers { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.keypad__key {
+  min-height: 44px; border: 0; border-radius: 10px; cursor: pointer;
+  background: var(--paper); font-size: 1.1rem;
+  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+}
+.keypad__key--op { background: var(--river-wash); color: var(--river-deep); font-weight: 700; }
+/* Letters and operators in KaTeX's faces, so the keys match the math on the card. */
+.keypad__key--var { font: italic 1.3rem KaTeX_Math, serif; color: var(--river-deep); }
+.keypad__block--numbers .keypad__key--op { font-family: KaTeX_Main, serif; font-size: 1.35rem; font-weight: 400; }
+.keypad__key--edit { background: transparent; color: var(--ink-soft); box-shadow: inset 0 0 0 2px var(--line); }
+/* The send key runs down the pad's right edge, like Enter on a number pad. */
+.keypad__key--submit {
+  grid-column: 5; grid-row: 1 / span 4;
+  background: var(--river); color: #fff; font-size: 1.5rem; font-weight: 700;
+}
+@media (hover: hover) {
+  .keypad__key:not(:disabled):hover { box-shadow: inset 0 0 0 2px var(--river); }
+  .keypad__key--submit:not(:disabled):hover { background: var(--river-deep); }
+}
+.keypad__key:not(:disabled):active { box-shadow: inset 0 0 0 2px var(--river); transform: translateY(1px); }
+.keypad__key:disabled { opacity: 0.45; cursor: not-allowed; }
+/* "abc" brings back a touch screen's own keyboard; without touch there's a real one, so it hides. */
+.keypad__key--keyboard { display: none; }
+.keypad__key--backspace { grid-column: span 3; }
+@media (any-pointer: coarse) {
+  .keypad__key--keyboard { display: block; }
+  .keypad__key--backspace { grid-column: span 2; }
+}
 
 /* Chat */
 .chat { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
@@ -194,8 +221,15 @@ button, input { font: inherit; color: inherit; }
   .problem__prompt { font-size: 1.4rem; padding: 8px 6px; }
   .math-input { gap: 8px; }
   .math-input__field { min-height: 48px; }
-  .math-keys { gap: 4px; }
-  .math-key { min-height: 40px; font-size: 0.95rem; }
+  /* Docked like a keyboard while the box has focus (MathInput). Below overlays, above the chat. */
+  .keypad { display: none; }
+  .math-input--focused .keypad {
+    display: grid; position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+    max-width: none; gap: 8px; padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+    background: var(--card); box-shadow: 0 -6px 20px rgb(23 49 58 / 10%);
+  }
+  .keypad__block { gap: 4px; }
+  .keypad__key { min-height: 42px; }
   .math-preview { min-height: 1.6em; }
   .problem__actions { flex-wrap: nowrap; }
   .problem__actions .btn { flex: 1; padding: 10px 12px; font-size: 0.95rem; }

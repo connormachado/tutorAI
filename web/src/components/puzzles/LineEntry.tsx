@@ -32,7 +32,6 @@ export function LineEntry({ id, prompt, placeholder, button, onSubmit, busy, aut
         label={prompt}
         value={draft}
         placeholder={placeholder}
-        keys={false}
         autoFocus={autoFocus}
         onChange={setDraft}
         onSubmit={submit}

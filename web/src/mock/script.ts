@@ -88,7 +88,7 @@ export const LESSON: ScriptedProblem[] = [
     hints: [
       "What number times itself makes $49$?",
       "$7 \\cdot 7 = 49$. Is there a negative number that works too?",
-      "Both $7$ and $-7$ square to $49$. You can type ±7, or 7, -7.",
+      "Both $7$ and $-7$ square to $49$. You can type 7, -7.",
     ],
     askWhy: "Not quite. What does $x^2$ mean to you?",
     afterWhy: "Right idea to think about it. $x^2$ means $x \\cdot x$. Which number times itself is $49$?",
