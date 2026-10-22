@@ -33,27 +33,36 @@ First, the age question (R-36): pick any birth date more than 13 years ago (a mo
 years ago counts as not yet, since there's no day). A later date shows the "Thanks for stopping
 by" screen, which holds until you reload the page.
 
-1. **Problem 1, `3x + 5 = 20`.** Try `15` first: Platy names the slip ("$3x = 15$ is right, one
+1. **Problems 1 and 2, `2x + 5 = 17` and `3x - 4 = 11`, line by line (R-39).** Write one step
+   under the equation and press Enter (or the keypad's **↵**). A good line gets a check, and the
+   algebra moves: a term that crosses the equals sign flies over and flips its sign
+   (`2x = 12`), a divisor goes across as `÷ 2` (`x = 6`), a move written out on both sides drops in
+   (`3x - 4 + 4 = 11 + 4`), and worked-out terms fade together (`3x = 15`). A wrong line
+   (`2x = 22`) stays on screen, marked, with your text left in the box to fix, and Platy asks what
+   you did to each side instead of giving the line (R-02, R-03). Skipping ahead (`x = 6` straight
+   away) is fine; a line that isn't an equation gets a nudge.
+   With reduced motion on, lines just fade in.
+2. **Problem 3, `3x + 5 = 20`** (answer box). Try `15` first: Platy names the slip ("$3x = 15$ is right, one
    more step"). Any other wrong answer gets "what did you do first?" instead of the answer
    (R-02, R-03). Type a reply in the chat and Platy nudges. `x = 5` solves it.
-2. **The reset.** After a correct answer the chat clears with a "fresh page" moment (R-17).
-3. **Problem 2, `2(x - 3) = 10`.** `6.5` shows the "the 2 multiplies the −3 too" catch. `8` solves it.
-4. **Problem 3, `x² = 49`.** Use the **x²** key. `7` alone is "part of the way there"; `±7`,
+3. **The reset.** After a correct answer the chat clears with a "fresh page" moment (R-17).
+4. **Problem 4, `2(x - 3) = 10`.** `6.5` shows the "the 2 multiplies the −3 too" catch. `8` solves it.
+5. **Problem 5, `x² = 49`.** Use the **x²** key. `7` alone is "part of the way there"; `±7`,
    `7, -7` or `x = 7 or x = -7` solves it.
-5. **Three misses on one problem** brings up the pause screen, then an easier warm-up, then
+6. **Three misses on one problem** (or three wrong lines) brings up the pause screen, then an easier warm-up, then
    back to the problem (R-21).
-6. **The math keypad (R-18)** sits under every math box. On a phone (try it at 390×844 with touch)
+7. **The math keypad (R-18)** sits under every math box. On a phone (try it at 390×844 with touch)
    it docks at the bottom like a keyboard while the box has focus, and the phone's own keyboard
    stays down. **abc** brings that keyboard back for letters and words, and **↵** checks the
    answer. On a laptop the keypad stays under the box; its keys are out of the Tab order because
    a keyboard types everything directly.
 
-7. **Puzzles (R-37).** On problem 1, answer `25/3` (adding the 5 instead of subtracting it).
-   Platy sends you to a spot-the-error puzzle about the same slip, then back to problem 1.
+8. **Puzzles (R-37).** On problem 3, answer `25/3` (adding the 5 instead of subtracting it).
+   Platy sends you to a spot-the-error puzzle about the same slip, then back to problem 3.
    Tap the wrong line, rewrite it, then finish it; Platy asks before it corrects (R-03), gives
    no hint before a first try (R-02), and asks a reflection question at the end (R-30).
 
-8. **Worked examples (R-37).** Open **Demo → Worked example**. Platy shows a solved two-step
+9. **Worked examples (R-37).** Open **Demo → Worked example**. Platy shows a solved two-step
    equation a step at a time, each line with the move that made it, then asks why the first step
    works (R-03). **Keep going** brings a new problem with the last step left for you, then one
    where you write both. In the real app the primer would pick how many steps to leave from the
@@ -76,12 +85,14 @@ src/
     mock.ts              in-browser stand-in for Platy's server, replays mock/script.ts
     websocket.ts         the real transport: POST /sessions, then a WebSocket
     index.ts             picks mock unless VITE_PLATY_SERVER_URL is set
-  mock/                  scripted lesson, answer checking, and puzzle items, skins, problem
-                         generators and grading (all go away with the real backend)
+  mock/                  scripted lesson, answer and step checking, and puzzle items, skins,
+                         problem generators and grading (all go away with the real backend)
   content/               puzzle types, balance-scale moves, team-color palette
-  math/                  child-math parser, LaTeX output, KaTeX rendering, keypad keys
+  math/                  child-math parser, LaTeX output, KaTeX rendering, keypad keys, and the
+                         terms of each line for the step solver's motion
   session/               reducer + hook holding all session state in memory
-  components/            ProblemCard, PuzzlePlayer (+ puzzles/), MathInput, Chat, Overlays, Mascot
+  components/            ProblemCard, StepSolver, PuzzlePlayer (+ puzzles/), MathInput, Chat,
+                         Overlays, Mascot
 ```
 
 ### Pointing it at a real server
@@ -110,6 +121,16 @@ Puzzles (R-37, R-38) add `puzzle {puzzle}`, `puzzle_result {instance_id, check, 
 `puzzle_hint {instance_id}`, `puzzle_next {instance_id}` and `slot_pick {colors}` from the
 client. `docs/content-library.md` §6.5 explains them, including why the chat waits between one
 problem or puzzle and the next.
+
+Step-by-step solving (R-39, proposed for Connor to accept) adds `format: "answer" | "steps"` to
+`problem`, `step {problem_id, line, text}` from the client (`line` counts from 1, one line at a
+time) and `step_result {problem_id, line, result}` from the server, where `result` is
+`valid`, `solved`, `invalid` or `unreadable`. The server holds the accepted lines in that
+session's memory only: they're dropped at the problem's end and on any reset, and never logged or
+put in error text (P-1, P-10, A-4). It checks each new line against the last with
+`platy.mathcheck`. On a
+`steps` problem the server ignores a bare `answer`, so the final answer alone never counts. The
+motion is drawn in the browser from the two lines (`src/math/terms.ts`) and never grades.
 
 `answer_result`, `instruction`/`position`/`total` on `problem`, and `resume` are additions to the
 plan's first draft; they let the problem card give feedback and show progress. Answers are sent

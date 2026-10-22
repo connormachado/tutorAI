@@ -6,6 +6,12 @@ import type { CheckId, CheckOutcome, PaletteId, Puzzle, PuzzleMove } from "./con
 
 export type SessionMode = "onboarding" | "tutoring";
 
+/**
+ * A step-by-step line's verdict (R-39). "solved" is a valid line with x alone on one side and a
+ * finished number on the other.
+ */
+export type StepResult = "valid" | "solved" | "invalid" | "unreadable";
+
 export interface Problem {
   problem_id: string;
   skill_id: string;
@@ -13,6 +19,11 @@ export interface Problem {
   prompt: string;
   /** Short plain-language instruction, e.g. "Solve for x". */
   instruction: string;
+  /**
+   * "answer": one answer box. "steps": the student writes one line at a time, and each line
+   * is checked before the next opens (R-39). The final answer alone never counts.
+   */
+  format: "answer" | "steps";
   /** 1-based position in this session, for "Problem 2 of 3". */
   position: number;
   total: number;
@@ -29,6 +40,8 @@ export type ServerEvent =
   | { type: "tutor_message"; message_id: string; delta: string; done: boolean }
   | ({ type: "problem" } & Problem)
   | { type: "answer_result"; problem_id: string; result: "correct" | "partial" | "incorrect" | "unreadable" }
+  /** The verdict on step line `line` (1 is the first line under the problem, R-39). */
+  | { type: "step_result"; problem_id: string; line: number; result: StepResult }
   /** Hard reset at a natural breakpoint (R-17, A-4): the UI clears the visible chat. */
   | { type: "reset"; reason: "problem_end" | "topic_switch" }
   /** De-escalation ladder, first rung (R-21). */
@@ -51,6 +64,8 @@ export type ServerEvent =
 export type ClientEvent =
   | { type: "child_message"; text: string }
   | { type: "answer"; problem_id: string; text: string }
+  /** One line of a step-by-step solution. `line` counts from 1; the server checks it (R-39). */
+  | { type: "step"; problem_id: string; line: number; text: string }
   | { type: "hint_requested"; problem_id: string }
   /** The child chose "keep going" on the pause screen. */
   | { type: "resume" }

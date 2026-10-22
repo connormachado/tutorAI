@@ -5,6 +5,7 @@ import { Mascot } from "./components/Mascot";
 import { OverlayPanel } from "./components/Overlays";
 import { ProblemCard } from "./components/ProblemCard";
 import { PuzzlePlayer } from "./components/PuzzlePlayer";
+import { StepSolver } from "./components/StepSolver";
 import { useTutorSession } from "./session/useTutorSession";
 import type { DemoTrigger } from "./transport/types";
 
@@ -50,7 +51,7 @@ export function App() {
         <>
           {phase === "welcome" && (
             <Screen title="Ready to practice?" mascot="calm">
-              <p>Today: solving equations. Three problems, one at a time, and you can ask for hints whenever you want.</p>
+              <p>Today: solving equations, one line at a time, and you can ask for hints whenever you want.</p>
               <button type="button" className="btn btn--primary btn--big" onClick={s.start} autoFocus>
                 Start practice
               </button>
@@ -70,6 +71,14 @@ export function App() {
                   onNext={s.puzzleNext}
                   onColors={s.pickColors}
                 />
+              ) : s.state.problem && s.state.steps?.problem_id === s.state.problem.problem_id ? (
+                <StepSolver
+                  key={s.state.problem.problem_id}
+                  problem={s.state.problem}
+                  steps={s.state.steps}
+                  onStep={s.step}
+                  onHint={s.hint}
+                />
               ) : (
                 <ProblemCard problem={s.state.problem} feedback={s.state.feedback} onAnswer={s.answer} onHint={s.hint} />
               )}
@@ -77,7 +86,11 @@ export function App() {
                 messages={s.state.messages}
                 resetNote={s.state.resetNote}
                 disabled={s.state.overlay !== null}
-                hold={s.state.moving || (s.state.puzzle !== null && s.state.puzzle.pending !== null)}
+                hold={
+                  s.state.moving ||
+                  (s.state.puzzle !== null && s.state.puzzle.pending !== null) ||
+                  (s.state.steps !== null && s.state.steps.pending !== null)
+                }
                 inputRef={chatInput}
                 onSay={s.say}
               />

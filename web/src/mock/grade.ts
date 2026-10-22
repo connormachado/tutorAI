@@ -1,4 +1,4 @@
-import { evaluate } from "../math/evaluate";
+import { evaluate, linearOf } from "../math/evaluate";
 import { type Node, parseMathStrict } from "../math/parse";
 
 // Mock-only grading for puzzle lines. In the real app the server grades every check with
@@ -8,34 +8,12 @@ import { type Node, parseMathStrict } from "../math/parse";
 const EPS = 1e-9;
 const near = (a: number, b: number) => Math.abs(a - b) < EPS;
 
-interface Side {
-  slope: number;
-  constant: number;
-}
-
-// Where each side is sampled. A curve can meet a straight line at a few points (x^3 - 3x^2
-// + 4x meets 2x at 0, 1 and 2), so these include negatives and fractions too.
-const SAMPLES = [0, 1, 2, -3, 0.5, 7.25];
-
-/** One side of an equation as slope*x + constant, or null if it isn't linear in x. */
-function side(node: Node): Side | null {
-  const values: number[] = [];
-  for (const x of SAMPLES) {
-    const r = evaluate(substitute(node, x));
-    if (r?.length !== 1) return null;
-    values.push(r[0]!);
-  }
-  const [f0, f1] = values as [number, number];
-  const slope = f1 - f0;
-  // x^2, 1/x, sqrt(x^2) and friends aren't linear.
-  if (!SAMPLES.every((x, i) => near(values[i]!, f0 + slope * x))) return null;
-  return { slope, constant: f0 };
-}
+type Side = NonNullable<ReturnType<typeof linearOf>>;
 
 function sides(text: string): [Side, Side] | null {
   const node = parseMathStrict(text);
   if (node?.kind !== "rel" || node.ops.length !== 1 || node.ops[0] !== "=") return null;
-  const [l, r] = (node.parts as [Node, Node]).map(side);
+  const [l, r] = (node.parts as [Node, Node]).map(linearOf);
   return l && r ? [l, r] : null;
 }
 
@@ -75,33 +53,4 @@ export function bareNumber(text: string): number | null {
   if (!node || node.kind === "rel" || node.kind === "list") return null;
   const r = evaluate(node);
   return r?.length === 1 ? r[0]! : null;
-}
-
-// Puzzles use x only; a capital X is still x.
-function substitute(node: Node, value: number): Node {
-  const s = (n: Node) => substitute(n, value);
-  switch (node.kind) {
-    case "var":
-      return node.name.toLowerCase() === "x" ? { kind: "num", value: String(value) } : node;
-    case "num":
-    case "pi":
-    case "missing":
-      return node;
-    case "group":
-      return { ...node, body: s(node.body) };
-    case "neg":
-      return { ...node, arg: s(node.arg) };
-    case "bin":
-      return { ...node, left: s(node.left), right: s(node.right) };
-    case "frac":
-      return { ...node, num: s(node.num), den: s(node.den) };
-    case "pow":
-      return { ...node, base: s(node.base), exp: s(node.exp) };
-    case "sqrt":
-      return { ...node, arg: s(node.arg) };
-    case "rel":
-      return { ...node, parts: node.parts.map(s) };
-    case "list":
-      return { ...node, items: node.items.map(s) };
-  }
 }
