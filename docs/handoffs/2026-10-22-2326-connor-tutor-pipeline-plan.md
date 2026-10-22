@@ -1,8 +1,8 @@
-# Planned the tutor turn pipeline (Step 3 spec) and approved R-30 and R-39 in the docs
+# Planned the tutor turn pipeline (Step 3 spec), approved R-30 and R-39, and built the answer-leak detector (R-02)
 
-- **Who:** connor   **Area:** docs
-- **Branch / PR:** main / the commit with this note
-- **R-ids:** R-30, R-39   **gate:** green (`scripts/check`; diagram fresh, unchanged)
+- **Who:** connor   **Area:** docs + backend
+- **Branch / PR:** main / `cf54f19` (Task 0) and the commit with this update (Task 1)
+- **R-ids:** R-30, R-39, R-02   **gate:** green (`scripts/check`, 308 passed; diagram fresh, unchanged)
 
 ## What changed
 - `REQUIREMENTS.md` gains two requirements:
@@ -15,7 +15,13 @@
   - The demo-contract scope line matches the new R-30.
   - The tutor's structured output is now **`TutorTurn`** (message, action, active_node_id, active_problem_id, rationale), no longer `TutorMove`.
   - The caching note names `active_problem_id`.
-- The plan for the whole pipeline was approved this session: Tasks 0–2 now, and Tasks 3–6 once the gateway and the eval exist. This commit is Task 0.
+- The plan for the whole pipeline was approved this session: Tasks 0–2 now, and Tasks 3–6 once the gateway and the eval exist. Tasks 0 and 1 are done.
+- **Task 1: `platy.mathcheck.states_answer(text, answer, problem)`.** It's pure and deterministic, and `policy/checks.py` will call it.
+  - It reads numbers as digits, decimals (".5" too), fractions, mixed numbers and number words.
+  - Signs: "subtract 9" states -9.
+  - Reveal phrases count, and so do restatements of the problem's own numbers.
+  - Expression answers count only in final form.
+  - Tests: `tests/test_mathcheck.py::test_states_answer`, `::test_reveal_phrase_is_a_leak_even_when_the_problem_holds_the_answer`, and two tests over all 48 shipped probes.
 
 ## Decisions and why
 - **Approving R-30 doesn't approve R-28, R-29, P-14 or the R-22 note** (Connor). They're still pending.
@@ -29,6 +35,16 @@
   - The demo profile is Step 2's (now on main).
   - `policy/checks.py`, `prompts/` and the turn loop wait for the gateway plus a passing eval case. They're `[pedagogy]`, and while untracked in `src/` they'd block every commit.
 - **`build_system_prompt` will return two blocks** (static rules + skill map; per-child profile + session state), per the CLAUDE.md caching rule. The fallback line goes in `prompts/recovery.md`, not config.
+- **Review fixes kept in Task 1:**
+  - A fraction not in lowest terms (24/4) still exposes 24 and 4.
+  - "5 - 2" counts as referring to the coefficients in 5x - 2x.
+  - A span copied from the problem is never a leak, even for a one-term answer.
+  - Child text and canonical answers share one guarded sympy parse (`_parse(as_written=True)`).
+- **Known gaps (fail-safe false positives or rare misses):**
+  - "What's 5 - 2?" on `variables_both_sides.1` is flagged, because 5x - 2x isn't written in that problem.
+  - "2n + 6" for "twice the sum of n and 3" isn't flagged.
+  - "one" and "a quarter" read as 1 and 1/4.
+  - There are no numbers of 100 or more.
 
 ## Contract changes
 - `TutorMove` → `TutorTurn` in CLAUDE.md. No code exists yet, and nothing changes for `web/`.
@@ -37,10 +53,7 @@
 - None new. R-43–R-47 from the 0420 note are still open.
 
 ## Next steps
-1. **Task 1 (R-02):** `mathcheck.states_answer(text, answer, problem)`.
-   - Acceptance test: `tests/test_mathcheck.py::test_states_answer`.
-   - Also two tests over all 48 shipped probes: restating any probe isn't a leak, and stating its answer is.
-2. **Task 2 (R-02):** `session/tutor.py` (`TutorAction`, `TutorTurn`) and `session/state.py` (`SessionState`, per-problem attempts counted by the session, turn cap 40).
+1. **Task 2 (R-02):** `session/tutor.py` (`TutorAction`, `TutorTurn`) and `session/state.py` (`SessionState`, per-problem attempts counted by the session, turn cap 40).
    - Acceptance test: `tests/test_session_state.py::test_attempts_count_student_messages_on_active_problem`.
    - It's `[privacy]`, so Codex runs.
-3. **Later:** config, gateway and eval runner, then Tasks 3–6 (prompt builder + rules, checks, the turn loop with the canary test, R-17 resets).
+2. **Later:** config, gateway and eval runner, then Tasks 3–6 (prompt builder + rules, checks, the turn loop with the canary test, R-17 resets).
