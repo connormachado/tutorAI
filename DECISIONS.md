@@ -29,6 +29,9 @@
 **A-11. V1 demo stack.** The demo UI is the React + Vite app in `web/`. Behind it is a Python server (FastAPI, HTTP + WebSocket) in front of `platy`. Streamlit is dropped. All LLM calls still go through `platy.gateway` only (A-2): neither the server nor `web/` calls a model provider directly. A diff that brings back Streamlit, or adds a second demo UI beside `web/`, contradicts this.
 *Added 2026-10-18 (Connor and Michael). It replaces Streamlit, which `CLAUDE.md`'s closed stack had named as the demo UI.*
 
+**A-12. V1 development store for student state.** `platy.fsio` is the V1 development store for R-14 student state: plaintext JSON files, one per student, written outside `platy.store`. Routing persistence through `platy.store` (P-6) and encryption at rest (P-7, A-3) are deferred. Both are hard prerequisites before any real student profile is persisted. V1 is single-session and the demo flow persists nothing: nothing in `src/` or `web/` calls `save_state`. The R-14 free-text profile fields (interests, motivational hooks, sensitive topics to avoid, notes, communication preferences) stay, per Connor's Step 2 ruling (b). A diff that persists a real student's profile before P-6 and P-7 are met contradicts this.
+*Added 2026-10-22 (Connor), after the Codex adversarial review of the Step 2 student-state branch flagged the `platy.store` bypass and plaintext free text as high. An MVP call: the deviation is recorded, not rebuilt around.*
+
 ---
 
 ## Open / not locked — do not flag as violations
