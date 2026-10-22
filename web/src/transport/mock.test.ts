@@ -424,6 +424,18 @@ describe("MockTransport", () => {
       expect(h.said(mark).join(" ")).toBe(STEP_LESSON[0]!.hints[0]);
     });
 
+    it("names the slip a wrong line matches, and none for a correct or unknown one (R-40)", async () => {
+      const h = steps();
+      await h.settle();
+      await h.send({ type: "step", problem_id: "s1", line: 1, text: "2x = 22" });
+      await h.send({ type: "step", problem_id: "s1", line: 1, text: "2x = 99" });
+      await h.send({ type: "step", problem_id: "s1", line: 1, text: "2x = 12" });
+      // Line 2: a one-step slip on a two-step problem, the gap one level down.
+      await h.send({ type: "step", problem_id: "s1", line: 2, text: "x = 10" });
+      const slips = h.events.filter((e) => e.type === "step_result").map((e) => (e.type === "step_result" ? (e.slip ?? null) : null));
+      expect(slips).toEqual(["constant_moved_without_undoing", null, null, "coefficient_subtracted"]);
+    });
+
     it("ignores a line out of order or for another problem", async () => {
       const h = steps();
       await h.settle();

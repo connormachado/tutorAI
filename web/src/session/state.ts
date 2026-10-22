@@ -46,7 +46,7 @@ export interface StepsState {
   /** The line waiting for its verdict. */
   pending: string | null;
   /** The latest line the server didn't accept, kept on screen with its mark until the next try. */
-  marked: { text: string; result: Exclude<StepResult, "valid" | "solved"> } | null;
+  marked: { text: string; result: Exclude<StepResult, "valid" | "solved">; slip?: string } | null;
   solved: boolean;
 }
 
@@ -179,7 +179,7 @@ function onServer(state: SessionState, event: ServerEvent): SessionState {
         moving: state.moving || event.result === "correct",
       };
     case "step_result":
-      return onStep(state, event.problem_id, event.line, event.result);
+      return onStep(state, event.problem_id, event.line, event.result, event.slip);
     case "reset":
       // A hard reset (R-17): the visible conversation is gone, not hidden.
       return {
@@ -206,7 +206,7 @@ function onServer(state: SessionState, event: ServerEvent): SessionState {
   }
 }
 
-function onStep(state: SessionState, problemId: string, line: number, result: StepResult): SessionState {
+function onStep(state: SessionState, problemId: string, line: number, result: StepResult, slip?: string): SessionState {
   const s = state.steps;
   // Only the verdict on the line that's waiting counts.
   if (!s || s.problem_id !== problemId || s.pending === null || line !== s.lines.length + 1) return state;
@@ -219,7 +219,8 @@ function onStep(state: SessionState, problemId: string, line: number, result: St
       moving: state.moving || solved,
     };
   }
-  return { ...state, steps: { ...s, pending: null, marked: { text: s.pending, result } } };
+  const marked = { text: s.pending, result, ...(slip ? { slip } : {}) };
+  return { ...state, steps: { ...s, pending: null, marked } };
 }
 
 function onPuzzle(current: PuzzleState | null, puzzle: Puzzle): PuzzleState {

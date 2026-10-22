@@ -40,8 +40,11 @@ export type ServerEvent =
   | { type: "tutor_message"; message_id: string; delta: string; done: boolean }
   | ({ type: "problem" } & Problem)
   | { type: "answer_result"; problem_id: string; result: "correct" | "partial" | "incorrect" | "unreadable" }
-  /** The verdict on step line `line` (1 is the first line under the problem, R-39). */
-  | { type: "step_result"; problem_id: string; line: number; result: StepResult }
+  /**
+   * The verdict on step line `line` (1 is the first line under the problem, R-39). `slip` is the
+   * slip-map id (R-40, web/src/content/slips.json) a wrong line matches; the browser shows its hint.
+   */
+  | { type: "step_result"; problem_id: string; line: number; result: StepResult; slip?: string }
   /** Hard reset at a natural breakpoint (R-17, A-4): the UI clears the visible chat. */
   | { type: "reset"; reason: "problem_end" | "topic_switch" }
   /** De-escalation ladder, first rung (R-21). */

@@ -293,3 +293,7 @@ button, input { font: inherit; color: inherit; }
   .ladder__ghost { font-size: 1.2rem; }
 }
 .ladder__op { margin-right: 0.3em; }
+.ladder__slip {
+  margin-top: 6px; padding: 8px 12px; border-radius: 10px;
+  background: var(--warm-wash); color: var(--ink); font-weight: 400;
+}

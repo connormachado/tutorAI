@@ -39,7 +39,10 @@ by" screen, which holds until you reload the page.
    (`2x = 12`), a divisor goes across as `÷ 2` (`x = 6`), a move written out on both sides drops in
    (`3x - 4 + 4 = 11 + 4`), and worked-out terms fade together (`3x = 15`). A wrong line
    (`2x = 22`) stays on screen, marked, with your text left in the box to fix, and Platy asks what
-   you did to each side instead of giving the line (R-02, R-03). Skipping ahead (`x = 6` straight
+   you did to each side instead of giving the line (R-02, R-03). When the wrong line is a known
+   slip (R-40, `src/content/slips.json`), a short hint names the mistake under it: `2x = 22`
+   says the number was moved without being undone. On line 2, `x = 10` (from `2x = 12`) is caught
+   as a one-step slip, the skill one level down. Skipping ahead (`x = 6` straight
    away) is fine; a line that isn't an equation gets a nudge.
    With reduced motion on, lines just fade in.
 2. **Problem 3, `3x + 5 = 20`** (answer box). Try `15` first: Platy names the slip ("$3x = 15$ is right, one
@@ -85,9 +88,9 @@ src/
     mock.ts              in-browser stand-in for Platy's server, replays mock/script.ts
     websocket.ts         the real transport: POST /sessions, then a WebSocket
     index.ts             picks mock unless VITE_PLATY_SERVER_URL is set
-  mock/                  scripted lesson, answer and step checking, and puzzle items, skins,
+  mock/                  scripted lesson, answer, step and slip checking, and puzzle items, skins,
                          problem generators and grading (all go away with the real backend)
-  content/               puzzle types, balance-scale moves, team-color palette
+  content/               puzzle types, balance-scale moves, team-color palette, slip map
   math/                  child-math parser, LaTeX output, KaTeX rendering, keypad keys, and the
                          terms of each line for the step solver's motion
   session/               reducer + hook holding all session state in memory
@@ -124,8 +127,11 @@ problem or puzzle and the next.
 
 Step-by-step solving (R-39, proposed for Connor to accept) adds `format: "answer" | "steps"` to
 `problem`, `step {problem_id, line, text}` from the client (`line` counts from 1, one line at a
-time) and `step_result {problem_id, line, result}` from the server, where `result` is
-`valid`, `solved`, `invalid` or `unreadable`. The server holds the accepted lines in that
+time) and `step_result {problem_id, line, result, slip?}` from the server, where `result` is
+`valid`, `solved`, `invalid` or `unreadable`, and `slip` is the slip-map id an `invalid` line
+matches (R-40). The browser looks up that slip's hint in `src/content/slips.json`, the same
+file the server can load; the server looks for slips in the problem's skill first, then its
+prerequisites. The server holds the accepted lines in that
 session's memory only: they're dropped at the problem's end and on any reset, and never logged or
 put in error text (P-1, P-10, A-4). It checks each new line against the last with
 `platy.mathcheck`. On a

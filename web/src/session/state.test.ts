@@ -142,8 +142,8 @@ describe("session reducer", () => {
       instruction: "Solve it one line at a time", format: "steps" as const, position: 1, total: 2,
     };
     const at = () => reducer(reducer(initialState, { type: "started" }), { type: "server", event: stepProblem });
-    const result = (s: SessionState, line: number, r: StepResult) =>
-      reducer(s, { type: "server", event: { type: "step_result", problem_id: "s1", line, result: r } });
+    const result = (s: SessionState, line: number, r: StepResult, slip?: string) =>
+      reducer(s, { type: "server", event: { type: "step_result", problem_id: "s1", line, result: r, ...(slip ? { slip } : {}) } });
 
     it("opens with no lines, and none for an answer-box problem", () => {
       expect(at().steps).toEqual({ problem_id: "s1", lines: [], pending: null, marked: null, solved: false });
@@ -164,6 +164,11 @@ describe("session reducer", () => {
       expect(s.steps?.marked).toEqual({ text: "2x = 22", result: "invalid" });
       s = reducer(s, { type: "step_sent", text: "2x = 12" });
       expect(s.steps?.marked).toBeNull();
+    });
+
+    it("keeps the slip a wrong line matched, for its hint (R-40)", () => {
+      const s = result(reducer(at(), { type: "step_sent", text: "2x = 22" }), 1, "invalid", "constant_moved_without_undoing");
+      expect(s.steps?.marked).toEqual({ text: "2x = 22", result: "invalid", slip: "constant_moved_without_undoing" });
     });
 
     it("counts a solved line, and holds the chat for the next problem", () => {

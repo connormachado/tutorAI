@@ -6,11 +6,12 @@ import { type Node, parseMathStrict } from "../math/parse";
 // what a child types ("2x = 16", "16 = 2x") with the same parser as the answer box.
 
 const EPS = 1e-9;
-const near = (a: number, b: number) => Math.abs(a - b) < EPS;
+export const near = (a: number, b: number) => Math.abs(a - b) < EPS;
 
 type Side = NonNullable<ReturnType<typeof linearOf>>;
 
-function sides(text: string): [Side, Side] | null {
+/** Each side of "lhs = rhs" as slope*x + constant, or null if unreadable or not linear in x. */
+export function sides(text: string): [Side, Side] | null {
   const node = parseMathStrict(text);
   if (node?.kind !== "rel" || node.ops.length !== 1 || node.ops[0] !== "=") return null;
   const [l, r] = (node.parts as [Node, Node]).map(linearOf);

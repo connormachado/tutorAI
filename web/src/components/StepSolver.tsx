@@ -1,5 +1,6 @@
 import katex from "katex";
 import { useLayoutEffect, useMemo, useRef } from "react";
+import { slipHint } from "../content/slips";
 import { Tex } from "../math/MathText";
 import { childMathToLatex } from "../math/latex";
 import { type Equation, equationTerms, planStep, type Side, type TermRef, termLatex } from "../math/terms";
@@ -48,6 +49,7 @@ export function StepSolver({ problem, steps, onStep, onHint }: Props) {
   const busy = steps.pending !== null;
   const next = steps.lines.length + 1;
   const marked = steps.marked;
+  const hint = marked?.slip ? slipHint(marked.slip) : null;
 
   return (
     <section
@@ -78,8 +80,8 @@ export function StepSolver({ problem, steps, onStep, onHint }: Props) {
 
       {/* The mark's words sit with the line, and are announced when they appear. */}
       <div className="ladder__why" role="status">
-        {marked && !busy && <p>{MARKS[marked.result]}</p>}
-        {/* R-40 (slip map) adds the slip's own hint here. */}
+        {/* A known slip names the mistake on its line, never the fix (R-40, R-02). */}
+        {marked && !busy && (hint ? <p className="ladder__slip">{hint}</p> : <p>{MARKS[marked.result]}</p>)}
       </div>
 
       {solved ? (

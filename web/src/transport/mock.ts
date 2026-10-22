@@ -1,6 +1,7 @@
 import type { PaletteId, PuzzleMove, PuzzleTemplate } from "../content/types";
 import { checkAnswer, matchesValue, readAnswer } from "../mock/answers";
 import { seeded } from "../mock/generate";
+import { detectSlip } from "../mock/slips";
 import { checkStep } from "../mock/steps";
 import {
   type Fade, gradeMove, INTERESTS, type Interest, type LivePuzzle, line, newPuzzle, nextHint, skinFor, toWire,
@@ -235,8 +236,11 @@ export class MockTransport implements TutorTransport {
 
   private async step(p: ScriptedProblem, line: number, text: string): Promise<void> {
     if (line !== this.stepLines.length + 1) return;
-    const result = checkStep(this.stepLines.at(-1) ?? p.prompt, text);
-    this.out({ type: "step_result", problem_id: p.problem_id, line, result });
+    const prev = this.stepLines.at(-1) ?? p.prompt;
+    const result = checkStep(prev, text);
+    // A wrong line that matches a known slip names it, so its hint shows on the line (R-40).
+    const slip = result === "invalid" ? detectSlip(p.skill_id, { prev, next: text }) : null;
+    this.out({ type: "step_result", problem_id: p.problem_id, line, result, ...(slip ? { slip } : {}) });
     switch (result) {
       case "valid":
         // The line's motion is the feedback; the tutor stays quiet so the student keeps going.

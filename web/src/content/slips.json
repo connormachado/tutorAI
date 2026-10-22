@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "about": "Slip map (R-40). Common wrong steps for each skill-map node, keyed by node id. 'rule' says in words what the detector looks for; the mock detector is web/src/mock/slips.ts and the real one runs on sympy in platy.mathcheck. 'prev' is the line above (or the problem), 'next' is what the student wrote, 'answer' is the correct value where the problem has one. Hints name the move and never give a number or the next line (R-02).",
+  "repairs_to_build": [
+    "repair-integer-signs",
+    "repair-integer-subtraction",
+    "repair-order-precedence",
+    "repair-order-brackets",
+    "repair-inverse-undo",
+    "repair-inverse-divide",
+    "repair-one-step-direction",
+    "repair-one-step-coefficient",
+    "repair-two-step-coefficient"
+  ],
+  "slips": [
+    {
+      "id": "negative_times_negative_negative",
+      "node": "integer_arithmetic",
+      "name": "Two negatives multiplied or divided made a negative",
+      "rule": "The expression is a product or quotient of two negative numbers, and the answer is the right size with a minus sign.",
+      "hint": "What do two negative numbers make when you multiply or divide them?",
+      "repair": "repair-integer-signs",
+      "examples": [
+        { "prev": "(-6)*(-4)", "next": "-24" },
+        { "prev": "(-42)/(-6)", "next": "-7" },
+        { "prev": "(-3) × (-5)", "next": "-15" },
+        { "prev": "-6 * (-4)", "next": "-24" },
+        { "prev": "-12/(-3)", "next": "-4" }
+      ],
+      "correct": [{ "prev": "(-6)*(-4)", "next": "24" }]
+    },
+    {
+      "id": "subtraction_treated_as_addition",
+      "node": "integer_arithmetic",
+      "name": "A minus sign between numbers was read as a plus",
+      "rule": "The answer equals the expression worked out with every subtraction between numbers turned into an addition.",
+      "hint": "Look at each minus sign between the numbers. Does the number after it get taken away or added on?",
+      "repair": "repair-integer-subtraction",
+      "examples": [
+        { "prev": "-9 + 4 - 3", "next": "-2" },
+        { "prev": "-7 + 2 - 5", "next": "0" },
+        { "prev": "8 - 3 - 2", "next": "13" }
+      ],
+      "correct": [{ "prev": "-9 + 4 - 3", "next": "-8" }]
+    },
+    {
+      "id": "integer_sign_dropped",
+      "node": "integer_arithmetic",
+      "name": "The answer lost its minus sign",
+      "rule": "The correct answer is negative, and the student gave the same size without the minus sign.",
+      "hint": "Go back through it one step at a time, and keep track of the sign as you go.",
+      "repair": "repair-integer-signs",
+      "examples": [
+        { "prev": "-9 + 4 - 3", "next": "8" },
+        { "prev": "-7 + 2 - 5", "next": "10" }
+      ],
+      "correct": [{ "prev": "-7 + 2 - 5", "next": "-10" }]
+    },
+    {
+      "id": "left_to_right_ignoring_precedence",
+      "node": "order_of_operations",
+      "name": "Worked left to right instead of multiplying or dividing first",
+      "rule": "The answer equals the expression worked out strictly left to right (brackets still first), and that differs from the right order.",
+      "hint": "Which comes first: the operation on the left, or multiplying and dividing before adding and subtracting?",
+      "repair": "repair-order-precedence",
+      "examples": [
+        { "prev": "20 - 3*(4 + 2)", "next": "102" },
+        { "prev": "6 - 2*(5 + 4)", "next": "36" },
+        { "prev": "10 + 6 ÷ 2", "next": "8" }
+      ],
+      "correct": [{ "prev": "20 - 3*(4 + 2)", "next": "2" }]
+    },
+    {
+      "id": "brackets_ignored",
+      "node": "order_of_operations",
+      "name": "Brackets weren't worked out first",
+      "rule": "The answer equals the expression worked out in the usual order with its brackets removed (a bracket that multiplied stays a multiply).",
+      "hint": "Brackets come first. What should you work out inside them before anything else?",
+      "repair": "repair-order-brackets",
+      "examples": [
+        { "prev": "24/(2 + 6) + 5", "next": "23" },
+        { "prev": "20 - 3*(4 + 2)", "next": "10" },
+        { "prev": "6 - 2*(5 + 4)", "next": "0" },
+        { "prev": "2(3 + 4)", "next": "10" }
+      ],
+      "correct": [
+        { "prev": "24/(2 + 6) + 5", "next": "8" },
+        { "prev": "2(3 + 4)", "next": "14" }
+      ]
+    },
+    {
+      "id": "order_sign_dropped",
+      "node": "order_of_operations",
+      "name": "A negative result lost its minus sign",
+      "rule": "The correct answer is negative, and the student gave the same size without the minus sign.",
+      "hint": "Go back through your working one step at a time. Is the result above zero or below it?",
+      "repair": "repair-integer-signs",
+      "examples": [
+        { "prev": "6 - 2*(5 + 4)", "next": "12" },
+        { "prev": "20 - 5*(2 + 4)", "next": "10" }
+      ],
+      "correct": [{ "prev": "6 - 2*(5 + 4)", "next": "-12" }]
+    },
+    {
+      "id": "undo_with_same_operation",
+      "node": "inverse_operations",
+      "name": "Undid adding or subtracting by doing it again",
+      "rule": "An undo question where b is added (x - 4 + b = x), and the answer is the right number with the wrong sign.",
+      "hint": "Doing the same thing to x again won't bring it back. What is the opposite of what was done to x?",
+      "repair": "repair-inverse-undo",
+      "examples": [
+        { "prev": "x - 4 + b = x", "next": "-4", "answer": "4" },
+        { "prev": "x + 9 + b = x", "next": "9", "answer": "-9" }
+      ],
+      "correct": [{ "prev": "x - 4 + b = x", "next": "4", "answer": "4" }]
+    },
+    {
+      "id": "undo_scale_by_repeating",
+      "node": "inverse_operations",
+      "name": "Undid multiplying or dividing by doing it again",
+      "rule": "An undo question where x is multiplied by b ((x/5)*b = x), and the answer is one over the right number.",
+      "hint": "Doing the same thing to x again won't bring it back. Is x being multiplied or divided, and what undoes that?",
+      "repair": "repair-inverse-divide",
+      "examples": [
+        { "prev": "(x/5)*b = x", "next": "1/5", "answer": "5" },
+        { "prev": "(x/3)*b = x", "next": "1/3", "answer": "3" },
+        { "prev": "x*4*b = x", "next": "4", "answer": "1/4" }
+      ],
+      "correct": [{ "prev": "(x/5)*b = x", "next": "5", "answer": "5" }]
+    },
+    {
+      "id": "undo_scale_with_negative",
+      "node": "inverse_operations",
+      "name": "Undid multiplying or dividing with a negative",
+      "rule": "An undo question where x is multiplied by b ((x/5)*b = x), and the answer is the right number with the wrong sign.",
+      "hint": "Undoing multiplying or dividing doesn't change the sign of x. Does your number need a minus sign?",
+      "repair": "repair-inverse-divide",
+      "examples": [
+        { "prev": "(x/5)*b = x", "next": "-5", "answer": "5" },
+        { "prev": "(x/3)*b = x", "next": "-3", "answer": "3" },
+        { "prev": "3x*b = x", "next": "-1/3", "answer": "1/3" }
+      ],
+      "correct": [{ "prev": "(x/3)*b = x", "next": "3", "answer": "3" }]
+    },
+    {
+      "id": "add_subtract_wrong_direction",
+      "node": "one_step_equations",
+      "name": "Moved a number across without undoing it",
+      "rule": "x plus or minus a number equals a number, and the student wrote x alone equal to the right side with the number applied again instead of undone.",
+      "hint": "To get x alone, undo what's happening to it. Did your line undo it, or do it again?",
+      "repair": "repair-one-step-direction",
+      "examples": [
+        { "prev": "x - 8 = -3", "next": "x = -11" },
+        { "prev": "x + 5 = 9", "next": "x = 14" }
+      ],
+      "correct": [{ "prev": "x - 8 = -3", "next": "x = 5" }]
+    },
+    {
+      "id": "divided_instead_of_multiplied",
+      "node": "one_step_equations",
+      "name": "Divided when x was already divided",
+      "rule": "x divided by a whole number equals a number, and the student wrote x alone equal to the right side divided by it again.",
+      "hint": "Here x is being divided. Is dividing again the way to undo that?",
+      "repair": "repair-one-step-coefficient",
+      "examples": [
+        { "prev": "x/4 = 6", "next": "x = 1.5" },
+        { "prev": "x/3 = 5", "next": "x = 5/3" }
+      ],
+      "correct": [{ "prev": "x/4 = 6", "next": "x = 24" }]
+    },
+    {
+      "id": "multiplied_instead_of_divided",
+      "node": "one_step_equations",
+      "name": "Multiplied when x was already multiplied",
+      "rule": "A whole number times x equals a number, and the student wrote x alone equal to the right side times that number.",
+      "hint": "Here x is being multiplied. What undoes multiplying?",
+      "repair": "repair-one-step-coefficient",
+      "examples": [
+        { "prev": "3x = 12", "next": "x = 36" },
+        { "prev": "-5x = 35", "next": "x = -175" }
+      ],
+      "correct": [{ "prev": "3x = 12", "next": "x = 4" }]
+    },
+    {
+      "id": "coefficient_subtracted",
+      "node": "one_step_equations",
+      "name": "Subtracted the number in front of x instead of dividing",
+      "rule": "A whole number times x equals a number, and the student wrote x alone equal to the right side minus that number.",
+      "hint": "The number next to x multiplies it. Does subtracting undo multiplying?",
+      "repair": "repair-one-step-coefficient",
+      "examples": [
+        { "prev": "3x = 12", "next": "x = 9" },
+        { "prev": "4x = 20", "next": "x = 16" },
+        { "prev": "2x = 12", "next": "x = 10" }
+      ],
+      "correct": [{ "prev": "2x = 12", "next": "x = 6" }]
+    },
+    {
+      "id": "coefficient_sign_dropped",
+      "node": "one_step_equations",
+      "name": "Lost the minus sign on the number in front of x",
+      "rule": "A negative number times x (plus or minus a number) equals a number, and the student wrote x alone equal to the answer for a positive number in front of x.",
+      "hint": "Look at the number next to x, sign and all. Did all of it make it into your line?",
+      "repair": "repair-one-step-coefficient",
+      "examples": [
+        { "prev": "-5x = 35", "next": "x = 7" },
+        { "prev": "-2x = 8", "next": "x = 4" },
+        { "prev": "-2x + 5 = 17", "next": "x = 6" }
+      ],
+      "correct": [{ "prev": "-5x = 35", "next": "x = -7" }]
+    },
+    {
+      "id": "constant_moved_without_undoing",
+      "node": "two_step_equations",
+      "name": "Moved the added or subtracted number without undoing it",
+      "rule": "a times x plus b equals c, and the student wrote a times x, or x alone, equal to what b applied to c again (c + b) gives instead of undoing it.",
+      "hint": "Moving a number to the other side means undoing it. Check whether your line adds or takes away the way it should.",
+      "repair": "lin2-undo-sign-spot-error",
+      "examples": [
+        { "prev": "2x + 5 = 17", "next": "2x = 22" },
+        { "prev": "3x - 4 = 11", "next": "3x = 7" },
+        { "prev": "2x + 5 = 17", "next": "x = 11" }
+      ],
+      "correct": [{ "prev": "2x + 5 = 17", "next": "2x = 12" }]
+    },
+    {
+      "id": "divided_one_term",
+      "node": "two_step_equations",
+      "name": "Divided some terms but not all of them",
+      "rule": "a times x plus b equals c, and the student wrote x plus a number equal to a number, with only some of the terms divided by a: x and c, the left side only, or x only.",
+      "hint": "Whatever you do to one side, do to every term on both sides. Did every term get divided?",
+      "repair": "lin2-balance",
+      "examples": [
+        { "prev": "2x + 6 = 10", "next": "x + 6 = 5" },
+        { "prev": "3x + 6 = 21", "next": "x + 6 = 7" },
+        { "prev": "2x + 6 = 10", "next": "x + 3 = 10" }
+      ],
+      "correct": [{ "prev": "2x + 6 = 10", "next": "x + 3 = 5" }]
+    },
+    {
+      "id": "constant_ignored",
+      "node": "two_step_equations",
+      "name": "Left out the added or subtracted number",
+      "rule": "a times x plus b equals c, and the student wrote x alone equal to c over a, as if b weren't there.",
+      "hint": "There's a number being added to or taken from the x part. Where did it go in your line?",
+      "repair": "lin2-missing-step",
+      "examples": [
+        { "prev": "2x + 5 = 17", "next": "x = 17/2" },
+        { "prev": "3x + 4 = 19", "next": "x = 19/3" }
+      ],
+      "correct": [{ "prev": "3x + 4 = 19", "next": "3x = 15" }]
+    },
+    {
+      "id": "coefficient_subtracted_after_constant",
+      "node": "two_step_equations",
+      "name": "Undid the number correctly, then subtracted the number in front of x",
+      "rule": "a times x plus b equals c, and the student wrote x alone equal to (c minus b) minus a.",
+      "hint": "The first move was right. Now look at the number next to x: does subtracting undo multiplying?",
+      "repair": "repair-two-step-coefficient",
+      "examples": [
+        { "prev": "2x + 5 = 17", "next": "x = 10" },
+        { "prev": "3x + 4 = 19", "next": "x = 12" }
+      ],
+      "correct": [{ "prev": "3x + 4 = 19", "next": "x = 5" }]
+    }
+  ]
+}
