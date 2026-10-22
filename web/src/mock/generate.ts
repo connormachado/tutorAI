@@ -1,9 +1,9 @@
 import type { Pans } from "../content/types";
 
-// Mock-only problem generators for the three puzzle templates. They follow each item's
+// Mock-only problem generators for the puzzle templates. They follow each item's
 // generator rules (content/prompts/puzzle-v1.md), so every instance has whole-number answers
 // and no answer that a guess at a number already on screen could hit. The real server would
-// generate these and check them with primer.mathcheck before sending them.
+// generate these and check them with platy.mathcheck before sending them.
 
 export type Rng = () => number;
 
@@ -122,4 +122,34 @@ export function balance(rng: Rng): BalanceInstance {
       start: { left: { x: a, units: b }, right: { x: 0, units: c } },
     };
   });
+}
+
+export interface WorkedInstance extends Numbers {
+  /** a*x + b = c. */
+  equation: string;
+  latex: string;
+  /** The two lines of the solution: take b off, then divide by a. */
+  linesLatex: [string, string];
+  /** The first step; the slip of adding b; and dividing first, a fine path, just a harder one. */
+  expected: string;
+  slip: string;
+  divideFirst: string;
+  /** The order the "why" choices are shown in, so the right one isn't always first. */
+  order: number[];
+}
+
+// The same numbers as a missing-step problem: a and b share no factor, so taking b off first
+// is the clean path and dividing first gives fractions.
+export function workedExample(rng: Rng): WorkedInstance {
+  const { a, b, c, answer, equation, latex, expected, slip } = missingStep(rng);
+  const order = [0, 1, 2];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = int(rng, 0, i);
+    [order[i], order[j]] = [order[j]!, order[i]!];
+  }
+  return {
+    a, b, c, answer, equation, latex, expected, slip, order,
+    linesLatex: [`${a}x = ${c - b}`, `x = ${answer}`],
+    divideFirst: `x + ${b}/${a} = ${c}/${a}`,
+  };
 }

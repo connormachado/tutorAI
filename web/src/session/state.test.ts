@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { BalancePuzzle, Puzzle } from "../content/types";
 import { SKINS } from "../mock/puzzles";
+import type { StepResult } from "../protocol";
 import { initialState, reducer, type SessionState } from "./state";
 
 const live = (): SessionState => reducer(initialState, { type: "started" });
@@ -85,6 +86,20 @@ describe("session reducer", () => {
       expect(s.puzzle?.pans).toEqual(scale.start);
     });
 
+    it("finishes a worked example on its last faded step", () => {
+      const solo: Puzzle = {
+        template: "worked_example", item_id: "lin2-worked-example", instance_id: "worked-1", skill_id: "two_step_equations",
+        instructions: "Solve it one step at a time.", equation: "3x + 5 = 20", skin: SKINS.soccer, steps: [null, null], why: null,
+      };
+      const step = (check: "first_step" | "final_answer") => ({
+        type: "server" as const, event: { type: "puzzle_result" as const, instance_id: "worked-1", check, outcome: "correct" as const },
+      });
+      let s = reducer(show(live(), solo), step("first_step"));
+      expect(s.puzzle?.done).toBe(false);
+      s = reducer(s, step("final_answer"));
+      expect(s.puzzle?.done).toBe(true);
+    });
+
     it("is done once solved, and gone after puzzle_done or a reset", () => {
       let s = verdict(show(live(), scale), "solved", "correct");
       expect(s.puzzle?.done).toBe(true);
@@ -94,7 +109,8 @@ describe("session reducer", () => {
 
     it("holds the chat from keep going until the next problem, so nothing lands on the wrong one", () => {
       const problem = {
-        type: "problem" as const, problem_id: "p1", skill_id: "s", prompt: "3x + 5 = 20", instruction: "Solve", position: 1, total: 3,
+        type: "problem" as const, problem_id: "p1", skill_id: "s", prompt: "3x + 5 = 20", instruction: "Solve", format: "answer" as const,
+        position: 1, total: 3,
       };
       let s = verdict(show(live(), scale), "solved", "correct");
       expect(s.moving).toBe(false);
@@ -117,6 +133,63 @@ describe("session reducer", () => {
       const s = show(live(), scale);
       const other = reducer(s, { type: "server", event: { type: "puzzle_result", instance_id: "x", check: "solved", outcome: "correct" } });
       expect(other).toBe(s);
+    });
+  });
+
+  describe("step-by-step problems (R-39)", () => {
+    const stepProblem = {
+      type: "problem" as const, problem_id: "s1", skill_id: "two_step_equations", prompt: "2x + 5 = 17",
+      instruction: "Solve it one line at a time", format: "steps" as const, position: 1, total: 2,
+    };
+    const at = () => reducer(reducer(initialState, { type: "started" }), { type: "server", event: stepProblem });
+    const result = (s: SessionState, line: number, r: StepResult, slip?: string) =>
+      reducer(s, { type: "server", event: { type: "step_result", problem_id: "s1", line, result: r, ...(slip ? { slip } : {}) } });
+
+    it("opens with no lines, and none for an answer-box problem", () => {
+      expect(at().steps).toEqual({ problem_id: "s1", lines: [], pending: null, marked: null, solved: false });
+      expect(reducer(at(), { type: "server", event: { ...stepProblem, format: "answer" } }).steps).toBeNull();
+    });
+
+    it("adds a line only once the server accepts it", () => {
+      let s = reducer(at(), { type: "step_sent", text: "2x = 12" });
+      expect(s.steps?.pending).toBe("2x = 12");
+      expect(s.steps?.lines).toEqual([]);
+      s = result(s, 1, "valid");
+      expect(s.steps).toMatchObject({ lines: ["2x = 12"], pending: null, marked: null, solved: false });
+    });
+
+    it("marks a wrong line and keeps it until the next try, without adding it", () => {
+      let s = result(reducer(at(), { type: "step_sent", text: "2x = 22" }), 1, "invalid");
+      expect(s.steps).toMatchObject({ lines: [], pending: null });
+      expect(s.steps?.marked).toEqual({ text: "2x = 22", result: "invalid" });
+      s = reducer(s, { type: "step_sent", text: "2x = 12" });
+      expect(s.steps?.marked).toBeNull();
+    });
+
+    it("keeps the slip a wrong line matched, for its hint (R-40)", () => {
+      const s = result(reducer(at(), { type: "step_sent", text: "2x = 22" }), 1, "invalid", "constant_moved_without_undoing");
+      expect(s.steps?.marked).toEqual({ text: "2x = 22", result: "invalid", slip: "constant_moved_without_undoing" });
+    });
+
+    it("counts a solved line, and holds the chat for the next problem", () => {
+      const s = result(reducer(at(), { type: "step_sent", text: "x = 6" }), 1, "solved");
+      expect(s.steps).toMatchObject({ lines: ["x = 6"], solved: true });
+      expect(s.solved).toBe(1);
+      expect(s.moving).toBe(true);
+      expect(reducer(s, { type: "step_sent", text: "x = 7" })).toBe(s);
+    });
+
+    it("sends one line at a time and ignores a verdict for any other line", () => {
+      const s = reducer(at(), { type: "step_sent", text: "2x = 12" });
+      expect(reducer(s, { type: "step_sent", text: "x = 6" })).toBe(s);
+      expect(result(s, 2, "valid")).toBe(s);
+      const fresh = at();
+      expect(result(fresh, 1, "valid")).toBe(fresh);
+    });
+
+    it("drops the lines on a reset", () => {
+      const s = result(reducer(at(), { type: "step_sent", text: "2x = 12" }), 1, "valid");
+      expect(reducer(s, { type: "server", event: { type: "reset", reason: "problem_end" } }).steps).toBeNull();
     });
   });
 });

@@ -2,7 +2,7 @@
 // item, generates its problem, resolves the skin and grades every check. The browser only
 // shows the puzzle and reports what the student did; it never decides "correct".
 
-export type PuzzleTemplate = "spot_the_error" | "missing_step" | "balance";
+export type PuzzleTemplate = "spot_the_error" | "missing_step" | "balance" | "worked_example";
 
 export type PaletteId = "red_pewter" | "blue_red" | "green_gold" | "purple_black" | "orange_navy" | "teal_silver";
 
@@ -63,7 +63,25 @@ export interface BalancePuzzle extends PuzzleBase {
   start: Pans;
 }
 
-export type Puzzle = SpotTheErrorPuzzle | MissingStepPuzzle | BalancePuzzle;
+/** One line of a worked example and the move that made it. */
+export interface WorkedStep {
+  latex: string;
+  reason: string;
+}
+
+/**
+ * A solved problem that teaches a new step (R-37). The primer fades it as mastery grows: first
+ * every step is shown, then the last is left for the student, then both.
+ */
+export interface WorkedExamplePuzzle extends PuzzleBase {
+  template: "worked_example";
+  /** The solution's two steps in order. Null is a step the student writes; it's never sent. */
+  steps: [WorkedStep | null, WorkedStep | null];
+  /** "Why this step?" about the first step (R-03), asked only when every step is shown. */
+  why: { question: string; choices: string[] } | null;
+}
+
+export type Puzzle = SpotTheErrorPuzzle | MissingStepPuzzle | BalancePuzzle | WorkedExamplePuzzle;
 
 export type BalanceMove = { op: "remove_units"; n: number } | { op: "split"; groups: number } | { op: "start_over" };
 
@@ -73,6 +91,9 @@ export type PuzzleMove =
   | { check: "fixed_step"; text: string }
   | { check: "final_answer"; text: string }
   | { check: "missing_line"; text: string }
+  | { check: "first_step"; text: string }
+  /** The position of the tapped choice, as shown. */
+  | { check: "why"; choice: number }
   | { check: "move"; move: BalanceMove };
 
 export type CheckId = PuzzleMove["check"] | "solved";

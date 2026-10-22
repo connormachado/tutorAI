@@ -1,11 +1,15 @@
 import type { PaletteId, PuzzleMove, PuzzleTemplate } from "../content/types";
 import { checkAnswer, matchesValue, readAnswer } from "../mock/answers";
 import { seeded } from "../mock/generate";
-import { gradeMove, INTERESTS, type Interest, type LivePuzzle, line, newPuzzle, nextHint, skinFor, toWire } from "../mock/puzzles";
+import { detectSlip } from "../mock/slips";
+import { checkStep } from "../mock/steps";
+import {
+  type Fade, gradeMove, INTERESTS, type Interest, type LivePuzzle, line, newPuzzle, nextHint, skinFor, toWire,
+} from "../mock/puzzles";
 import {
   BACK_TO_IT, CLOSING, CONFIDENCE_BUILDER, DEMO_LEAD, EXPLAIN_FIRST, LESSON, NO_ANSWERS, NO_ANSWERS_TRY_FIRST, NUDGES, OPENING,
-  OUT_OF_HINTS, PUZZLE_NUDGE, PUZZLE_UNREADABLE, REPAIR_LEAD, SAFETY_RESOURCES, type ScriptedProblem, TAKE_A_BREATH, TRY_FIRST,
-  UNREADABLE,
+  OUT_OF_HINTS, PUZZLE_NUDGE, PUZZLE_UNREADABLE, REPAIR_LEAD, SAFETY_RESOURCES, type ScriptedProblem, SHOW_ONE, STEP_IN_LINES,
+  STEP_LESSON, STEP_UNREADABLE, TAKE_A_BREATH, TRY_FIRST, UNREADABLE,
 } from "../mock/script";
 import type { ClientEvent, ServerEvent, SessionMode } from "../protocol";
 import type { DemoTrigger, TutorTransport } from "./types";
@@ -22,7 +26,9 @@ export interface MockTiming {
 export const DEMO_TIMING: MockTiming = { thinkMs: 550, wordMs: 35, resetMs: 1600 };
 
 // Plays the role of Platy's server, in the browser, from a fixed script. Nothing the child
-// types is stored: it is read once to pick the scripted reply and then dropped (P-1).
+// types is stored: it is read once to pick the scripted reply and then dropped (P-1). The one
+// exception is a step-by-step problem's accepted lines, held in memory for the current problem
+// only and dropped at its end or any reset (R-39, A-4).
 export class MockTransport implements TutorTransport {
   readonly kind = "mock";
   private emit: (e: ServerEvent) => void = () => {};
@@ -30,7 +36,7 @@ export class MockTransport implements TutorTransport {
   private closed = false;
   private nextMessage = 1;
 
-  private order: ScriptedProblem[] = [...LESSON];
+  private order: ScriptedProblem[];
   private index = 0;
   private current: ScriptedProblem | null = null;
   private misses = 0;
@@ -40,6 +46,8 @@ export class MockTransport implements TutorTransport {
   private pivoted = false;
   private solved = 0;
   private nudge = 0;
+  /** The accepted lines of a step-by-step problem (R-39), dropped with the problem. */
+  private stepLines: string[] = [];
 
   // Puzzles (R-37). While one runs, `current` is null and `returnTo` holds the problem to go
   // back to. The skin's interest and the child's color pick last for the session (R-38).
@@ -55,7 +63,10 @@ export class MockTransport implements TutorTransport {
   constructor(
     private readonly timing: MockTiming = DEMO_TIMING,
     private readonly seed = 20261018,
-  ) {}
+    lesson: ScriptedProblem[] = [...STEP_LESSON, ...LESSON],
+  ) {
+    this.order = [...lesson];
+  }
 
   async start(_mode: SessionMode, onEvent: (event: ServerEvent) => void): Promise<void> {
     this.emit = onEvent;
@@ -101,7 +112,7 @@ export class MockTransport implements TutorTransport {
           this.reskin();
           return;
         default:
-          await this.startPuzzle(trigger, DEMO_LEAD);
+          await this.startPuzzle(trigger, trigger === "worked_example" ? SHOW_ONE : DEMO_LEAD);
       }
     });
   }
@@ -131,7 +142,11 @@ export class MockTransport implements TutorTransport {
         if (p) await this.hint(p);
         return;
       case "answer":
-        if (p && event.problem_id === p.problem_id) await this.answer(p, event.text);
+        // A step-by-step problem is solved in lines; the answer alone never counts (R-39).
+        if (p && event.problem_id === p.problem_id && p.format !== "steps") await this.answer(p, event.text);
+        return;
+      case "step":
+        if (p?.format === "steps" && event.problem_id === p.problem_id) await this.step(p, event.line, event.text);
         return;
       case "child_message":
         if (this.puzzle) await this.puzzleChat(this.puzzle, event.text);
@@ -163,8 +178,10 @@ export class MockTransport implements TutorTransport {
     } else if (/\b(idk|i don'?t know|stuck|confused|hint|help)\b/i.test(text)) {
       await this.hint(p);
     } else if (readAnswer(text)) {
-      // A child who types the answer into the chat gets it checked, not redirected.
-      await this.answer(p, text);
+      // A child who types the answer into the chat gets it checked, not redirected. On a
+      // step-by-step problem it belongs in the next line instead (R-39).
+      if (p.format === "steps") await this.say(STEP_IN_LINES);
+      else await this.answer(p, text);
     } else {
       await this.say(NUDGES[this.nudge++ % NUDGES.length]!);
     }
@@ -217,6 +234,44 @@ export class MockTransport implements TutorTransport {
     }
   }
 
+  private async step(p: ScriptedProblem, line: number, text: string): Promise<void> {
+    if (line !== this.stepLines.length + 1) return;
+    const prev = this.stepLines.at(-1) ?? p.prompt;
+    const result = checkStep(prev, text);
+    // A wrong line that matches a known slip names it, so its hint shows on the line (R-40).
+    const slip = result === "invalid" ? detectSlip(p.skill_id, { prev, next: text }) : null;
+    this.out({ type: "step_result", problem_id: p.problem_id, line, result, ...(slip ? { slip } : {}) });
+    switch (result) {
+      case "valid":
+        // The line's motion is the feedback; the tutor stays quiet so the student keeps going.
+        // A fixed line answers the question about the wrong one.
+        this.stepLines.push(text);
+        this.awaitingWhy = false;
+        return;
+      case "solved":
+        this.stepLines.push(text);
+        this.awaitingWhy = false;
+        this.solved++;
+        for (const reply of p.correct) await this.say(reply);
+        await this.finishProblem();
+        return;
+      case "unreadable":
+        await this.say(STEP_UNREADABLE);
+        return;
+      case "invalid":
+        this.misses++;
+        if (this.misses >= 3 && !this.pivoted) {
+          await this.suggestPause(); // R-21, as for a problem's answers
+        } else if (this.misses === 1) {
+          // The mark is on the line; the tutor asks first and never writes the line (R-02, R-03).
+          this.awaitingWhy = true;
+          await this.say(p.askWhy);
+        } else {
+          await this.say(p.secondMiss);
+        }
+    }
+  }
+
   private async suggestPause(): Promise<void> {
     this.paused = true;
     await this.say(TAKE_A_BREATH);
@@ -231,6 +286,7 @@ export class MockTransport implements TutorTransport {
     this.returnTo = null;
     this.reflecting = false;
     this.puzzleNudge = null;
+    this.stepLines = [];
     this.out({ type: "topic_switch", label: "Quick confidence builder" });
     this.out({ type: "reset", reason: "topic_switch" });
     await this.sleep(this.timing.resetMs);
@@ -243,6 +299,7 @@ export class MockTransport implements TutorTransport {
   private async finishProblem(): Promise<void> {
     this.index++;
     this.current = null;
+    this.stepLines = [];
     const next = this.order[this.index];
     if (!next) {
       await this.say(CLOSING);
@@ -259,6 +316,7 @@ export class MockTransport implements TutorTransport {
 
   private async present(p: ScriptedProblem, intro = p.intro): Promise<void> {
     this.current = p;
+    this.stepLines = [];
     this.misses = 0;
     this.hintsUsed = 0;
     this.awaitingWhy = false;
@@ -271,6 +329,7 @@ export class MockTransport implements TutorTransport {
       skill_id: p.skill_id,
       prompt: p.prompt,
       instruction: p.instruction,
+      format: p.format ?? "answer",
       position, // 0 for the confidence builder, which isn't one of the lesson's problems
       total: lessonOnly.length,
     });
@@ -283,15 +342,20 @@ export class MockTransport implements TutorTransport {
   private async startPuzzle(template: PuzzleTemplate, lead: string): Promise<void> {
     if (!this.puzzle) this.returnTo = this.current;
     this.current = null;
+    this.stepLines = []; // the reset below clears them from the screen too
     this.awaitingWhy = false;
     this.puzzleNudge = null;
     this.reflecting = false;
     await this.say(lead);
-    this.out({ type: "topic_switch", label: "Quick puzzle" });
+    this.out({ type: "topic_switch", label: template === "worked_example" ? "Worked example" : "Quick puzzle" });
     this.out({ type: "reset", reason: "topic_switch" });
     await this.sleep(this.timing.resetMs);
+    await this.showPuzzle(template);
+  }
+
+  private async showPuzzle(template: PuzzleTemplate, fade: Fade = 0): Promise<void> {
     this.puzzles++;
-    const live = newPuzzle(template, seeded(this.seed + this.puzzles), `${template}-${this.puzzles}`);
+    const live = newPuzzle(template, seeded(this.seed + this.puzzles), `${template}-${this.puzzles}`, fade);
     this.puzzle = live;
     await this.say(line(live, this.skin(), (i) => i.intro));
     this.out({ type: "puzzle", puzzle: toWire(live, this.skin()) });
@@ -384,6 +448,11 @@ export class MockTransport implements TutorTransport {
     await this.sleep(this.timing.resetMs);
     this.out({ type: "reset", reason: "problem_end" });
     await this.sleep(this.timing.resetMs);
+    // A worked example fades one step at a time before the lesson picks up again (R-37).
+    if (live.template === "worked_example" && live.fade < 2) {
+      await this.showPuzzle("worked_example", (live.fade + 1) as Fade);
+      return;
+    }
     const back = this.returnTo;
     this.returnTo = null;
     const next = back ?? this.order[this.index];

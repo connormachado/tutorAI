@@ -9,6 +9,7 @@ import { MissingStep } from "./puzzles/MissingStep";
 import "./puzzles/puzzles.css";
 import { SpotTheError } from "./puzzles/SpotTheError";
 import { chip, Swatches } from "./puzzles/Swatches";
+import { WorkedExample } from "./puzzles/WorkedExample";
 
 interface Props {
   state: PuzzleState;
@@ -95,6 +96,9 @@ export function PuzzlePlayer({ state, moving, onSolved, onMove, onHint, onNext, 
       {state.puzzle.template === "balance" && (
         <BalanceScale state={{ ...state, puzzle: state.puzzle }} onMove={move} actions={actions} />
       )}
+      {state.puzzle.template === "worked_example" && (
+        <WorkedExample state={{ ...state, puzzle: state.puzzle }} onMove={move} actions={actions} />
+      )}
 
       <p className={`problem__feedback${fb ? ` problem__feedback--${fb.tone}` : ""}`} role="status">
         {fb?.text ?? ""}
@@ -104,7 +108,11 @@ export function PuzzlePlayer({ state, moving, onSolved, onMove, onHint, onNext, 
 }
 
 function feedback(p: PuzzleState): { text: string; tone: "good" | "warm" } | null {
-  if (p.done) return { text: "Solved! Answer Platy in the chat, or keep going.", tone: "good" };
+  if (p.done) {
+    // A worked example the student only read isn't something they solved.
+    const well = p.puzzle.template === "worked_example" ? "Nice work!" : "Solved!";
+    return { text: `${well} Answer Platy in the chat, or keep going.`, tone: "good" };
+  }
   const last = p.last;
   if (!last) return null;
   if (last.outcome === "unreadable") return { text: "Platy couldn't read that one.", tone: "warm" };

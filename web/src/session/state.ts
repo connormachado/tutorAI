@@ -1,7 +1,7 @@
 import { applyMove } from "../content/balance";
-import { balanceStage, missingStage, type Outcomes, spotStage } from "../content/progress";
+import { balanceStage, missingStage, type Outcomes, spotStage, workedStage } from "../content/progress";
 import type { CheckId, CheckOutcome, Pans, Puzzle, PuzzleMove } from "../content/types";
-import type { Problem, SafetyResource, ServerEvent } from "../protocol";
+import type { Problem, SafetyResource, ServerEvent, StepResult } from "../protocol";
 
 // Everything here lives in React state only. Child content is never written to browser
 // storage, cookies, the URL or a log (P-1, P-10), and it is dropped on a reset or when
@@ -35,6 +35,21 @@ export interface PuzzleState {
   done: boolean;
 }
 
+/**
+ * A step-by-step problem in progress (R-39). The lines are the child's own, in React state
+ * only, and go with the problem.
+ */
+export interface StepsState {
+  problem_id: string;
+  /** Lines the server accepted, in order. */
+  lines: string[];
+  /** The line waiting for its verdict. */
+  pending: string | null;
+  /** The latest line the server didn't accept, kept on screen with its mark until the next try. */
+  marked: { text: string; result: Exclude<StepResult, "valid" | "solved">; slip?: string } | null;
+  solved: boolean;
+}
+
 export interface SessionState {
   phase: "welcome" | "live" | "ended" | "error";
   messages: ChatMessage[];
@@ -42,6 +57,8 @@ export interface SessionState {
   /** Shown in place of the problem card until puzzle_done. */
   puzzle: PuzzleState | null;
   feedback: AnswerFeedback;
+  /** Set while a step-by-step problem is on screen. */
+  steps: StepsState | null;
   /** Shown briefly when a hard reset clears the page. */
   resetNote: string | null;
   overlay: Overlay;
@@ -60,6 +77,7 @@ export const initialState: SessionState = {
   problem: null,
   puzzle: null,
   feedback: null,
+  steps: null,
   resetNote: null,
   overlay: null,
   moving: false,
@@ -72,6 +90,7 @@ export type Action =
   | { type: "server"; event: ServerEvent }
   | { type: "child_said"; id: string; text: string }
   | { type: "answer_sent" }
+  | { type: "step_sent"; text: string }
   | { type: "puzzle_move_sent"; move: PuzzleMove }
   | { type: "puzzle_next_sent" }
   | { type: "reset_note_done" }
@@ -98,6 +117,9 @@ export function reducer(state: SessionState, action: Action): SessionState {
     case "answer_sent":
       // Clear the last verdict so the next one shows even if it's the same.
       return { ...state, feedback: null };
+    case "step_sent":
+      if (!state.steps || state.steps.pending !== null || state.steps.solved) return state;
+      return { ...state, steps: { ...state.steps, pending: action.text, marked: null } };
     case "puzzle_move_sent": {
       const p = state.puzzle;
       if (!p) return state;
@@ -132,7 +154,10 @@ function onServer(state: SessionState, event: ServerEvent): SessionState {
     }
     case "problem": {
       const { type: _type, ...problem } = event;
-      return { ...state, problem, feedback: null, moving: false };
+      const steps = problem.format === "steps"
+        ? { problem_id: problem.problem_id, lines: [], pending: null, marked: null, solved: false }
+        : null;
+      return { ...state, problem, feedback: null, steps, moving: false };
     }
     case "puzzle": {
       // The same instance again is only a new look; a new one means the move is over.
@@ -153,12 +178,15 @@ function onServer(state: SessionState, event: ServerEvent): SessionState {
         solved: event.result === "correct" ? state.solved + 1 : state.solved,
         moving: state.moving || event.result === "correct",
       };
+    case "step_result":
+      return onStep(state, event.problem_id, event.line, event.result, event.slip);
     case "reset":
       // A hard reset (R-17): the visible conversation is gone, not hidden.
       return {
         ...state,
         messages: [],
         problem: null,
+        steps: null,
         puzzle: null,
         feedback: null,
         moving: true,
@@ -176,6 +204,23 @@ function onServer(state: SessionState, event: ServerEvent): SessionState {
     case "session_end":
       return { ...initialState, phase: "ended", solved: event.solved };
   }
+}
+
+function onStep(state: SessionState, problemId: string, line: number, result: StepResult, slip?: string): SessionState {
+  const s = state.steps;
+  // Only the verdict on the line that's waiting counts.
+  if (!s || s.problem_id !== problemId || s.pending === null || line !== s.lines.length + 1) return state;
+  if (result === "valid" || result === "solved") {
+    const solved = result === "solved";
+    return {
+      ...state,
+      steps: { ...s, lines: [...s.lines, s.pending], pending: null, marked: null, solved },
+      solved: solved ? state.solved + 1 : state.solved,
+      moving: state.moving || solved,
+    };
+  }
+  const marked = { text: s.pending, result, ...(slip ? { slip } : {}) };
+  return { ...state, steps: { ...s, pending: null, marked } };
 }
 
 function onPuzzle(current: PuzzleState | null, puzzle: Puzzle): PuzzleState {
@@ -197,6 +242,7 @@ function onVerdict(p: PuzzleState, check: CheckId, outcome: CheckOutcome): Puzzl
   const stage =
     p.puzzle.template === "spot_the_error" ? spotStage(outcomes)
     : p.puzzle.template === "missing_step" ? missingStage(outcomes)
+    : p.puzzle.template === "worked_example" ? workedStage(p.puzzle, outcomes)
     : balanceStage(outcomes);
   return { ...p, outcomes, pans, pending: null, last: { check, outcome }, done: stage === "done" };
 }

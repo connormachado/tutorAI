@@ -48,6 +48,22 @@ button.step:disabled, button.step[aria-disabled="true"] { cursor: default; }
 .step--gap { border-style: dashed; }
 .step__blank { color: var(--ink-soft); font-size: 1rem; }
 
+/* Worked example: each shown line carries the move that made it, under the math. A line
+   fades in when the student asks for it. */
+.step--worked { display: grid; grid-template-columns: 28px 1fr; gap: 2px 14px; animation: fade-in 250ms ease-out; }
+.step__reason { grid-column: 2; font-size: 0.95rem; color: var(--ink-soft); }
+.choices { display: grid; gap: 8px; }
+.choice {
+  min-height: 48px; padding: 10px 14px; border-radius: 12px; border: 2px solid var(--line);
+  background: var(--card); color: var(--ink); font: inherit; text-align: left; cursor: pointer;
+}
+.choice:disabled { cursor: default; }
+@media (hover: hover) {
+  .choice:not(:disabled, [aria-disabled="true"]):hover { border-color: var(--river); background: var(--river-wash); }
+}
+.choice--picked { border-color: var(--warm); }
+.choice--right, .choice--right:disabled { border-color: var(--good); background: var(--good-wash); }
+
 /* Balance */
 .balance__plank { width: 100%; max-height: 180px; }
 .balance__x { fill: #fff; font: italic 22px KaTeX_Math, serif; }

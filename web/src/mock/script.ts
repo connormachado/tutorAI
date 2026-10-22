@@ -11,6 +11,8 @@ export interface ScriptedProblem {
   skill_id: string;
   prompt: string;
   instruction: string;
+  /** "steps": solved one checked line at a time (R-39). Answer box otherwise. */
+  format?: "steps";
   solutions: number[];
   intro: string[];
   hints: string[];
@@ -29,7 +31,52 @@ export interface ScriptedProblem {
   correct: string[];
 }
 
-export const OPENING = "Hi, I'm Platy! Today we're solving equations. Three problems, one at a time.";
+export const OPENING = "Hi, I'm Platy! Today we're solving equations, one at a time.";
+
+/**
+ * The demo opens with these (R-39): the student writes one line at a time and each line is
+ * checked before the next opens. The hints name the move, never the next line (R-02).
+ */
+export const STEP_LESSON: ScriptedProblem[] = [
+  {
+    problem_id: "s1",
+    skill_id: "two_step_equations",
+    prompt: "2x + 5 = 17",
+    instruction: "Solve it one line at a time",
+    format: "steps",
+    solutions: [6],
+    intro: ["Let's solve this one line by line. Write your first step under the equation, and I'll check each line as you go."],
+    hints: [
+      "What's happening to $x$? It's multiplied by $2$, then $5$ is added. We undo those in reverse order.",
+      "Start with the $+5$. What could you do to both sides to make it disappear?",
+      "Now $x$ is still multiplied by $2$. What undoes that?",
+    ],
+    askWhy: "That line doesn't follow from the one above yet. What did you do to each side?",
+    afterWhy: "Thanks. Whatever you do to one side, do exactly the same to the other. Try that line again.",
+    secondMiss: "Look at the marked line next to the one above it. Which side changed in a different way?",
+    misconceptions: [],
+    correct: ["Yes! $x = 6$, and every line on the way checks out.", "Check it: $2(6) + 5 = 17$. It works."],
+  },
+  {
+    problem_id: "s2",
+    skill_id: "two_step_equations",
+    prompt: "3x - 4 = 11",
+    instruction: "Solve it one line at a time",
+    format: "steps",
+    solutions: [5],
+    intro: ["Fresh page. Same idea, and this one has a minus."],
+    hints: [
+      "$x$ is multiplied by $3$, then $4$ is taken away. Undo the last thing first.",
+      "To undo $-4$, what do you do to both sides?",
+      "Now undo the $\\times 3$ on both sides.",
+    ],
+    askWhy: "Hmm, that line doesn't match the one above. What did you do with the $-4$?",
+    afterWhy: "Got it. Taking away $4$ is undone by adding $4$, to both sides. Try the line again.",
+    secondMiss: "Compare the marked line with the one above it. What happened to the $-4$ on each side?",
+    misconceptions: [],
+    correct: ["That's it, $x = 5$!", "Check: $3(5) - 4 = 11$."],
+  },
+];
 
 export const LESSON: ScriptedProblem[] = [
   {
@@ -88,7 +135,7 @@ export const LESSON: ScriptedProblem[] = [
     hints: [
       "What number times itself makes $49$?",
       "$7 \\cdot 7 = 49$. Is there a negative number that works too?",
-      "Both $7$ and $-7$ square to $49$. You can type ±7, or 7, -7.",
+      "Both $7$ and $-7$ square to $49$. You can type 7, -7.",
     ],
     askWhy: "Not quite. What does $x^2$ mean to you?",
     afterWhy: "Right idea to think about it. $x^2$ means $x \\cdot x$. Which number times itself is $49$?",
@@ -117,7 +164,7 @@ export const CONFIDENCE_BUILDER: ScriptedProblem = {
   correct: ["Nice, $x = 5$. Now let's go back to the one from before. You've got this."],
 };
 
-export const CLOSING = "That's all three. You stuck with it, and that's what counts. See you next time!";
+export const CLOSING = "That's all of them. You stuck with it, and that's what counts. See you next time!";
 
 export const NO_ANSWERS =
   "I won't just hand it over, because working it out is what makes it stick. But I'll help. Want a hint?";
@@ -126,6 +173,10 @@ export const NUDGES = [
   "Good thinking. What would you try first?",
   "I like that you're working through it. Try your idea in the answer box.",
 ];
+
+// Step-by-step lines (R-39).
+export const STEP_UNREADABLE = "I couldn't read that line. Write it as an equation with x, like the line above.";
+export const STEP_IN_LINES = "Write it as the next line in your solution, so I can check each step.";
 
 export const UNREADABLE = "Hmm, I couldn't read that as a number. Try something like x = 4.";
 
@@ -138,6 +189,7 @@ export const TAKE_A_BREATH = "This one's being stubborn. Let's take a breath.";
 export const REPAIR_LEAD =
   "I have a hunch about what happened there. Let's look at someone else's work first, then come back to this one.";
 export const DEMO_LEAD = "Let's try a quick puzzle.";
+export const SHOW_ONE = "Let me show you one first. Then you'll take it over, a step at a time.";
 export const TRY_FIRST = "Give it one try first, even a guess. Then I'll help.";
 export const EXPLAIN_FIRST = "Tell me what you were thinking first, then I'll help.";
 export const NO_ANSWERS_TRY_FIRST =

@@ -1,13 +1,16 @@
 import { describe, expect, it } from "vitest";
+import type { PuzzleMove } from "../content/types";
 import type { ClientEvent, ServerEvent } from "../protocol";
-import { EXPLAIN_FIRST } from "../mock/script";
+import { EXPLAIN_FIRST, LESSON, STEP_LESSON } from "../mock/script";
 import { MockTransport } from "./mock";
 
 const FAST = { thinkMs: 0, wordMs: 0, resetMs: 0 };
 
-function harness() {
+// The answer-box lesson by default, so its problem ids stay p1 to p3; the demo itself opens
+// with STEP_LESSON (R-39).
+function harness(lesson = LESSON) {
   const events: ServerEvent[] = [];
-  const t = new MockTransport(FAST);
+  const t = new MockTransport(FAST, undefined, lesson);
   void t.start("tutoring", (e) => events.push(e));
   const settle = () => t.whenIdle();
   const send = async (e: ClientEvent) => {
@@ -305,6 +308,42 @@ describe("MockTransport", () => {
       expect(h.said(mark)).toEqual([]);
     });
 
+    it("fades a worked example from watching to writing every step, then goes back (R-37)", async () => {
+      const h = harness();
+      await h.settle();
+      h.t.demo("worked_example");
+      await h.settle();
+      expect(h.events).toContainEqual({ type: "topic_switch", label: "Worked example" });
+      const latest = () => {
+        const p = puzzlesIn(h).at(-1);
+        if (p?.template !== "worked_example") throw new Error("expected a worked example");
+        const [a, b, c] = (p.equation.match(/^(\d+)x \+ (\d+) = (\d+)$/) ?? []).slice(1).map(Number) as [number, number, number];
+        return { p, a, b, c, answer: (c - b) / a };
+      };
+      const move = (id: string, m: PuzzleMove) => h.send({ type: "puzzle_move", instance_id: id, move: m });
+
+      const watch = latest().p;
+      expect(watch.steps.every((s) => s !== null)).toBe(true);
+      await move(watch.instance_id, { check: "why", choice: watch.why!.choices.findIndex((t) => t.startsWith("It undoes")) });
+      await h.send({ type: "puzzle_next", instance_id: watch.instance_id });
+      expect(h.events).toContainEqual({ type: "puzzle_done", instance_id: watch.instance_id });
+
+      const finish = latest();
+      expect(finish.p.steps.map((s) => s !== null)).toEqual([true, false]);
+      await move(finish.p.instance_id, { check: "final_answer", text: `x = ${finish.answer}` });
+      await h.send({ type: "child_message", text: "ready" });
+
+      const solo = latest();
+      expect(solo.p.steps).toEqual([null, null]);
+      await move(solo.p.instance_id, { check: "first_step", text: `${solo.a}x = ${solo.c - solo.b}` });
+      const mark = h.events.length;
+      await move(solo.p.instance_id, { check: "final_answer", text: String(solo.answer) });
+      expect(h.said(mark).join(" ")).toContain("Which step");
+      await h.send({ type: "puzzle_next", instance_id: solo.p.instance_id });
+      expect(new Set(puzzlesIn(h).map((p) => p.instance_id)).size).toBe(3);
+      expect(h.problems()).toEqual(["p1", "p1"]);
+    });
+
     it("moves on from a finished puzzle when the child taps keep going", async () => {
       const h = harness();
       await h.settle();
@@ -330,5 +369,103 @@ describe("MockTransport", () => {
     const mark = h.events.length;
     await h.send({ type: "hint_requested", problem_id: "p1" });
     expect(h.events.length).toBe(mark);
+  });
+
+  describe("step-by-step problems (R-39)", () => {
+    const steps = () => harness(STEP_LESSON);
+    const results = (h: ReturnType<typeof harness>) =>
+      h.events.filter((e) => e.type === "step_result").map((e) => (e.type === "step_result" ? e.result : null));
+
+    it("opens the demo with step-by-step problems", async () => {
+      const demo = new MockTransport(FAST);
+      const events: ServerEvent[] = [];
+      void demo.start("tutoring", (e) => events.push(e));
+      await demo.whenIdle();
+      expect(events.find((e) => e.type === "problem")).toMatchObject({ problem_id: "s1", prompt: "2x + 5 = 17", format: "steps" });
+    });
+
+    it("checks each line against the one above, and finishes on a solved line", async () => {
+      const h = steps();
+      await h.settle();
+      await h.send({ type: "step", problem_id: "s1", line: 1, text: "2x = 12" });
+      await h.send({ type: "step", problem_id: "s1", line: 2, text: "x = 6" });
+      expect(results(h)).toEqual(["valid", "solved"]);
+      expect(h.events).toContainEqual({ type: "reset", reason: "problem_end" });
+      expect(h.problems()).toEqual(["s1", "s2"]);
+    });
+
+    it("accepts a skipped-but-valid line", async () => {
+      const h = steps();
+      await h.settle();
+      await h.send({ type: "step", problem_id: "s1", line: 1, text: "x = 6" });
+      expect(results(h)).toEqual(["solved"]);
+    });
+
+    it("marks a wrong line, asks what happened, and never gives the next line (R-02, R-03)", async () => {
+      const h = steps();
+      await h.settle();
+      const mark = h.events.length;
+      await h.send({ type: "step", problem_id: "s1", line: 1, text: "2x = 22" });
+      expect(results(h)).toEqual(["invalid"]);
+      const reply = h.said(mark).join(" ");
+      expect(reply).not.toMatch(/2x = 12|x = 6/);
+      // The wrong line isn't kept: the next try is still line 1, checked against the problem.
+      await h.send({ type: "step", problem_id: "s1", line: 1, text: "2x = 12" });
+      expect(results(h)).toEqual(["invalid", "valid"]);
+    });
+
+    it("forgets its question about a wrong line once the student fixes the line", async () => {
+      const h = steps();
+      await h.settle();
+      await h.send({ type: "step", problem_id: "s1", line: 1, text: "2x = 22" });
+      await h.send({ type: "step", problem_id: "s1", line: 1, text: "2x = 12" });
+      const mark = h.events.length;
+      await h.send({ type: "child_message", text: "help" });
+      expect(h.said(mark).join(" ")).toBe(STEP_LESSON[0]!.hints[0]);
+    });
+
+    it("names the slip a wrong line matches, and none for a correct or unknown one (R-40)", async () => {
+      const h = steps();
+      await h.settle();
+      await h.send({ type: "step", problem_id: "s1", line: 1, text: "2x = 22" });
+      await h.send({ type: "step", problem_id: "s1", line: 1, text: "2x = 99" });
+      await h.send({ type: "step", problem_id: "s1", line: 1, text: "2x = 12" });
+      // Line 2: a one-step slip on a two-step problem, the gap one level down.
+      await h.send({ type: "step", problem_id: "s1", line: 2, text: "x = 10" });
+      const slips = h.events.filter((e) => e.type === "step_result").map((e) => (e.type === "step_result" ? (e.slip ?? null) : null));
+      expect(slips).toEqual(["constant_moved_without_undoing", null, null, "coefficient_subtracted"]);
+    });
+
+    it("ignores a line out of order or for another problem", async () => {
+      const h = steps();
+      await h.settle();
+      await h.send({ type: "step", problem_id: "s1", line: 2, text: "x = 6" });
+      await h.send({ type: "step", problem_id: "p1", line: 1, text: "x = 6" });
+      expect(results(h)).toEqual([]);
+    });
+
+    it("says so for an unreadable line", async () => {
+      const h = steps();
+      await h.settle();
+      const mark = h.events.length;
+      await h.send({ type: "step", problem_id: "s1", line: 1, text: "6" });
+      expect(results(h)).toEqual(["unreadable"]);
+      expect(h.said(mark).join(" ")).toContain("couldn't read that line");
+    });
+
+    it("doesn't take a typed answer in place of the lines", async () => {
+      const h = steps();
+      await h.settle();
+      await h.send({ type: "answer", problem_id: "s1", text: "x = 6" });
+      expect(h.events.some((e) => e.type === "answer_result")).toBe(false);
+      expect(h.problems()).toEqual(["s1"]);
+    });
+
+    it("suggests a pause after three wrong lines (R-21)", async () => {
+      const h = steps();
+      await h.settle();
+      for (const text of ["2x = 22", "2x = 17", "x = 11"]) await h.send({ type: "step", problem_id: "s1", line: 1, text });
+      expect(h.events.at(-1)).toEqual({ type: "pause_suggested" });
+    });
   });
 });

@@ -59,6 +59,19 @@ export function useTutorSession(makeTransport: () => TutorTransport = createTran
     [send],
   );
 
+  const steps = state.steps;
+  const step = useCallback(
+    (problem_id: string, line: number, text: string) => {
+      // One line at a time, and only one the solution will show (the reducer's step_sent rule),
+      // so the server's lines and the screen's never drift apart.
+      if (!steps || steps.problem_id !== problem_id || steps.pending !== null || steps.solved) return;
+      // The line shows in the solution itself, not the chat (R-39). React state only (P-1).
+      dispatch({ type: "step_sent", text });
+      send({ type: "step", problem_id, line, text });
+    },
+    [send, steps],
+  );
+
   const puzzleMove = useCallback(
     (instance_id: string, move: PuzzleMove, echo?: string) => {
       // What the child typed or tapped shows in the chat, like an answer does, so the tutor's
@@ -76,6 +89,7 @@ export function useTutorSession(makeTransport: () => TutorTransport = createTran
     start,
     say,
     answer,
+    step,
     hint: (problem_id: string) => {
       dispatch({ type: "child_said", id: `k${++childMessages.current}`, text: "Can I get a hint?" });
       send({ type: "hint_requested", problem_id });

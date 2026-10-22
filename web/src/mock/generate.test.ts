@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { applyMove, isSolved, pansLatex } from "../content/balance";
-import { balance, missingStep, seeded, spotTheError } from "./generate";
+import { balance, missingStep, seeded, spotTheError, workedExample } from "./generate";
 import { hasSolution, sameLine } from "./grade";
 
 const SEEDS = Array.from({ length: 300 }, (_, i) => i + 1);
@@ -75,5 +75,24 @@ describe("balance generator", () => {
 
   it("repeats the same problem for the same seed", () => {
     expect(balance(seeded(7))).toEqual(balance(seeded(7)));
+  });
+});
+
+describe("worked example generator", () => {
+  it("makes two-step problems whose first step, either way round, leads to the answer", () => {
+    for (const seed of SEEDS) {
+      const p = workedExample(seeded(seed));
+      expect(hasSolution(p.equation, p.answer), p.equation).toBe(true);
+      expect(hasSolution(p.expected, p.answer)).toBe(true);
+      expect(hasSolution(p.divideFirst, p.answer)).toBe(true);
+      expect(hasSolution(p.slip, p.answer)).toBe(false);
+      expect(p.linesLatex).toEqual([`${p.a}x = ${p.c - p.b}`, `x = ${p.answer}`]);
+      expect([...p.order].sort()).toEqual([0, 1, 2]);
+    }
+  });
+
+  it("doesn't always put the right reason first", () => {
+    const firsts = new Set(SEEDS.map((seed) => workedExample(seeded(seed)).order[0]));
+    expect(firsts).toEqual(new Set([0, 1, 2]));
   });
 });

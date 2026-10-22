@@ -61,3 +61,54 @@ function map2(l: Node, r: Node, f: (a: number, b: number) => number[]): number[]
 function clean(vs: number[]): number[] | null {
   return vs.every(Number.isFinite) ? vs : null;
 }
+
+const EPS = 1e-9;
+const near = (a: number, b: number) => Math.abs(a - b) < EPS;
+
+// Where an expression is sampled. A curve can meet a straight line at a few points (x^3 - 3x^2
+// + 4x meets 2x at 0, 1 and 2), so these include negatives and fractions too.
+const SAMPLES = [0, 1, 2, -3, 0.5, 7.25];
+
+/** An expression in x as slope*x + constant, or null if it isn't linear in x. */
+export function linearOf(node: Node): { slope: number; constant: number } | null {
+  const values: number[] = [];
+  for (const x of SAMPLES) {
+    const r = evaluate(substitute(node, x));
+    if (r?.length !== 1) return null;
+    values.push(r[0]!);
+  }
+  const [f0, f1] = values as [number, number];
+  const slope = f1 - f0;
+  // x^2, 1/x, sqrt(x^2) and friends aren't linear.
+  if (!SAMPLES.every((x, i) => near(values[i]!, f0 + slope * x))) return null;
+  return { slope, constant: f0 };
+}
+
+/** Puts a number in for x. Puzzles and steps use x only; a capital X is still x. */
+export function substitute(node: Node, value: number): Node {
+  const s = (n: Node) => substitute(n, value);
+  switch (node.kind) {
+    case "var":
+      return node.name.toLowerCase() === "x" ? { kind: "num", value: String(value) } : node;
+    case "num":
+    case "pi":
+    case "missing":
+      return node;
+    case "group":
+      return { ...node, body: s(node.body) };
+    case "neg":
+      return { ...node, arg: s(node.arg) };
+    case "bin":
+      return { ...node, left: s(node.left), right: s(node.right) };
+    case "frac":
+      return { ...node, num: s(node.num), den: s(node.den) };
+    case "pow":
+      return { ...node, base: s(node.base), exp: s(node.exp) };
+    case "sqrt":
+      return { ...node, arg: s(node.arg) };
+    case "rel":
+      return { ...node, parts: node.parts.map(s) };
+    case "list":
+      return { ...node, items: node.items.map(s) };
+  }
+}
