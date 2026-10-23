@@ -23,7 +23,7 @@ Connor (backend) and Michael (frontend, `web/`) work in parallel. **Before start
 ## Demo contract (Platy demo; binding for all work)
 Scope: one unit ("solving linear equations"), one path, 14–18 skill nodes. Diagnose the missing prerequisite 1–2 levels down before teaching (R-01), ask for self-explanation (R-03), run one metacognition beat per session, checked at close (R-30), and never hand over answers (R-02).
 
-Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctness), P-14 (only pinned, ZDR-verified models and features, caching included) and the R-22 (988 + parent notice) demo note are drafts until Connor or Michael approves them (build step 1). No code that depends on them lands before that.
+The demo spec drafts (R-28 usage log and prompt caching, R-29 sympy decides correctness, R-30 metacognition, P-14 pinned ZDR-verified models and features, and the R-22 demo note) were approved by Connor on 2026-10-22. Their text is in `REQUIREMENTS.md` and `PRIVACY.md`.
 
 **Stack (closed list, A-11).** Runtime: `anthropic`, `pydantic` v2, `sympy`, `fastapi` (the demo server, HTTP + WebSocket), `pyBKT` (A-5). Dev: what pyproject already has. Everything else is stdlib (`tomllib`, `json`, `string.Template`, `unittest.mock`). The demo UI is the React + Vite app in `web/`, its npm dependencies pinned in `web/package.json` and `web/package-lock.json`. No DB, no auth, no web framework beyond FastAPI, no async outside the server's request and WebSocket handlers. Any new dependency needs Connor's or Michael's OK.
 
@@ -45,7 +45,11 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 - Error text carries codes, never payloads: use `errors(include_input=False)` and `raise … from None`. Never set `ANTHROPIC_LOG`.
 
 **Every turn**
-- Safety runs first on every child message. A disclosure gets the fixed text from `prompts/safety_escalation.md` (self-harm includes 988), sends exactly one codes-only `ParentNotice` (held in memory and shown on the demo panel; A-9 note), and stops tutoring. A safety stop is not an A-4 reset. If the safety call itself errors, the session fails closed and never falls through to the tutor.
+- **Safety runs first** on every child message and free-text answer: a fixed phrase tripwire plus the `safety_classifier` (R-22 demo note).
+  - **A flag** gets its category's fixed text from `prompts/safety_escalation.md`. Self-harm and danger-to-self include 988, and abuse never points to a parent.
+  - **Each flag** raises exactly one codes-only `ParentNotice`, held in memory and shown on the demo panel (A-9 note). Parent delivery is marked only for self_harm, danger_to_self and danger_to_others.
+  - **The session locks.** The tutor is never called again. A safety stop is not an A-4 reset.
+  - **If the safety call errors,** refuses or returns invalid output, the session fails closed with `screen_unavailable` and the fixed error text. It never falls through to the tutor.
 - Policy (pure) decides each turn's allowed and required actions and its probe candidates. The tutor returns a `TutorTurn` (message, action, active_node_id, active_problem_id, rationale). Every turn passes `policy/checks.py` before the child sees it: answer leak (via `mathcheck`, unless policy allows a reveal), length cap (R-06), a real probe id from policy's candidates (R-01), and the allowed or required action (R-02, R-30). On a violation, regenerate once with the violation codes. If it fails again, show the fixed recovery line from `prompts/`.
 
 **Child content and files**
@@ -54,7 +58,7 @@ Pending spec: R-28 (usage log and prompt caching), R-29 (sympy decides correctne
 - All file writes go through `platy.fsio`: a temp file in the same dir, fsync, then `os.replace`. The single exception is the usage JSONL: one `O_APPEND` line, then fsync. Every persisted JSON has `schema_version`. Runtime output goes in `var/` (gitignored).
 - Correctness is decided by sympy, never by a model. Child input is whitelisted before sympy sees it, because `sympify` calls `eval`.
 
-**Tests**: every module gets unit tests, with LLM calls faked. Live tests use `@pytest.mark.llm` (the registered marker the gate excludes; never `live`) and are skipped unless `PLATY_RUN_LLM=1`. The canary test lands with the first session code. Done means `scripts/check` is green, and pyright strict is the type gate.
+**Tests**: every module gets unit tests, with LLM calls faked. Live tests use `@pytest.mark.llm` (the registered marker the gate excludes; never `live`) and are skipped unless `PLATY_RUN_LLM=1`. The canary test lands with the first session entry point (the turn loop). Done means `scripts/check` is green, and pyright strict is the type gate.
 
 **Scope**: no features, UI polish or abstractions nobody asked for. List them at the end of your reply instead.
 

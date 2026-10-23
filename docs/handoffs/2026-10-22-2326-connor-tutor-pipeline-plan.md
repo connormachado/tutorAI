@@ -1,75 +1,58 @@
-# Planned the tutor turn pipeline (Step 3 spec), approved R-30 and R-39, and built the foundation (leak detector, TutorTurn, SessionState)
+# Tutor-pipeline foundation on main; prereqs branch started with the approved spec (R-22, R-28, R-29, P-14, R-41)
 
 - **Who:** connor   **Area:** docs + backend
-- **Branch / PR:** main / `cf54f19` (Task 0), `0049400` (Task 1) and the commit with this update (Task 2)
-- **R-ids:** R-30, R-39, R-02   **gate:** green (`scripts/check`, 342 passed; AS-BUILT gains `session`)
+- **Branch / PR:**
+  - main: `cf54f19` (Task 0), `0049400` (Task 1), `aca5bc0` (Task 2)
+  - `claude/prereqs-config-gateway-eval`, off `aca5bc0`: D0, the commit with this update. Not merged.
+- **R-ids:** R-02, R-22, R-28, R-29, R-30, R-41, P-14   **gate:** green (`scripts/check`, 342 passed)
 
 ## What changed
-- `REQUIREMENTS.md` gains two requirements:
-  - **R-30 Metacognition:** one `check_confidence` beat per session, checked at `close_session`; if it's missing, one final beat runs, turn cap permitting.
-  - **R-39 Stay on math:** off-topic for at most one turn, then a warm redirect.
-- Both join R-08's list of rules the eval checks.
-- The R-36 note now reads "R-28, R-29 and P-14 reserved; R-31–R-35 and R-40–R-42 unused".
-- `CLAUDE.md`:
-  - R-30 is off the pending-spec line.
-  - The demo-contract scope line matches the new R-30.
-  - The tutor's structured output is now **`TutorTurn`** (message, action, active_node_id, active_problem_id, rationale), no longer `TutorMove`.
-  - The caching note names `active_problem_id`.
-- The plan for the whole pipeline was approved this session: Tasks 0–2 now, and Tasks 3–6 once the gateway and the eval exist. Tasks 0–2, the whole foundation, are done.
-- **Task 1: `platy.mathcheck.states_answer(text, answer, problem)`.** It's pure and deterministic, and `policy/checks.py` will call it.
-  - It reads numbers as digits, decimals (".5" too), fractions, mixed numbers and number words.
-  - Signs: "subtract 9" states -9.
-  - Reveal phrases count, and so do restatements of the problem's own numbers.
-  - Expression answers count only in final form.
-  - Tests: `tests/test_mathcheck.py::test_states_answer`, `::test_reveal_phrase_is_a_leak_even_when_the_problem_holds_the_answer`, and two tests over all 48 shipped probes.
+- **On main (the Step 3 foundation):**
+  - **Spec:** R-30 metacognition and Stay on math added. CLAUDE.md now says `TutorTurn` (message, action, active_node_id, active_problem_id, rationale), no longer `TutorMove`.
+  - **`mathcheck.states_answer(text, answer, problem)`:** the deterministic R-02 leak detector. Its reveal-phrase test is `tests/test_mathcheck.py::test_reveal_phrase_is_a_leak_even_when_the_problem_holds_the_answer`, and two tests run over all 48 shipped probes.
+  - **`platy.session`:**
+    - `TutorTurn`: shaped ids; message and rationale stay out of repr and errors; no prose in the tool schema.
+    - A pure `SessionState`: per-problem attempts counted by the session, turn cap 40.
+- **On the branch (D0, docs only):**
+  - R-28, R-29 and P-14 are approved word for word: `REQUIREMENTS.md` (R-28, R-29) and `PRIVACY.md` (P-14).
+  - The R-22 demo note is recorded from the approved Step 4 plan's Task 4.0 (D10, with D3 and D5 filled in), along with its CLAUDE.md "Every turn" safety bullet.
+  - Stay on math is **R-41** now. It was R-39, but Michael's branch approved R-39 and R-40 first.
+  - The canary test lands "with the first session entry point (the turn loop)", in both PRIVACY.md and CLAUDE.md.
+  - CLAUDE.md's pending-spec line records the approvals.
 
-- **Task 2: the `platy.session` package.**
-  - `tutor.py`: `TutorAction` (the spec's 10 actions) and `TutorTurn`. Ids have fixed shapes, `message` and `rationale` stay out of repr and errors, and no docstring reaches the tool schema.
-  - `state.py`: a pure, frozen `SessionState` and its transitions, `start_session`, `record_student_message`, `record_tutor_turn` and `record_fallback`.
-  - Attempts are counted per presented problem by the session, never taken from the model. The turn cap is 40.
-  - A message after the session ends changes nothing and never raises; recording a tutor turn then raises `SessionOver`.
-  - Acceptance test: `tests/test_session_state.py::test_attempts_count_student_messages_on_active_problem`.
-
-## Decisions and why
-- **Approving R-30 doesn't approve R-28, R-29, P-14 or the R-22 note** (Connor). They're still pending.
-- **The model's `student_last_answer_correct` is dropped** from `TutorTurn`. Correctness is sympy's call (R-29, pending), never the model's.
-- **Rule ids in the coming `prompts/rules.md` are T1–T9**, each citing its R-id (T2 → R-02, T9 → R-30 …), so "R1" isn't read as R-01.
-- **The leak check is context-aware** (Task 1, `mathcheck.states_answer`):
-  - An answer number that appears in the problem is exempt when the tutor restates or refers to it ("x - 4", "subtracting 4").
-  - An explicit reveal phrase is always a leak, with a test on `inverse_operations.1`.
-  - Repeating an answer the student already wrote isn't a leak.
-- **The foundation is Tasks 0–2 only:** spec edits, leak detection, then `TutorTurn` + `SessionState`.
-  - The demo profile is Step 2's (now on main).
-  - `policy/checks.py`, `prompts/` and the turn loop wait for the gateway plus a passing eval case. They're `[pedagogy]`, and while untracked in `src/` they'd block every commit.
-- **`build_system_prompt` will return two blocks** (static rules + skill map; per-child profile + session state), per the CLAUDE.md caching rule. The fallback line goes in `prompts/recovery.md`, not config.
-- **Review fixes kept in Task 1:**
-  - A fraction not in lowest terms (24/4) still exposes 24 and 4.
-  - "5 - 2" counts as referring to the coefficients in 5x - 2x.
-  - A span copied from the problem is never a leak, even for a one-term answer.
-  - Child text and canonical answers share one guarded sympy parse (`_parse(as_written=True)`).
-- **Known gaps (fail-safe false positives or rare misses):**
-  - "What's 5 - 2?" on `variables_both_sides.1` is flagged, because 5x - 2x isn't written in that problem.
-  - "2n + 6" for "twice the sum of n and 3" isn't flagged.
-  - "one" and "a quarter" read as 1 and 1/4.
-  - There are no numbers of 100 or more.
-
-- **Canary test deferred to `session/turn.py`.** The privacy reviewer accepted this with conditions:
-  - Until it lands, nothing in `session/` or the server takes a student message string, calls the gateway, logs or writes.
-  - The fake gateway must also plant canaries in `TutorTurn.message` and `rationale`.
-- **Notes for the gateway task, from the privacy review:**
-  - Map `TutorTurn` validation errors to codes, as `_codes` in `student_state.py` does. `hide_input_in_errors` doesn't cover `err.errors()` or an `extra_forbidden` loc.
-  - Raise `GatewayError` outside the `except` block, so no ValidationError stays on `__context__`.
-  - Strip `minLength`, `maxLength` and, if strict mode rejects it, `pattern` from the tool schema.
+## Decisions and why (Connor, 2026-10-22)
+- **Leak check is context-aware.** The problem's own numbers may be restated or referred to. A reveal phrase is always a leak, and so is repeating an answer only the tutor has written (one the student already wrote is fine).
+- **Correctness:** the model's `student_last_answer_correct` is dropped. Correctness is R-29's: sympy decides.
+- **Rule ids are T1–T9,** each citing its R-id: T2 → R-02, T8 → R-41, T9 → R-30.
+- **Prereqs plan:** D0 docs, T1 config (P-14), T2 usage log (R-28), T3 gateway, T4 eval runner, T5 bootstrap.
+- **Bootstrap:** the first eval case (`answer_request`, R-02) lands in **one commit** with Step 3 Tasks 3, 4a and 5. The fail-closed gate allows no other order.
+- **Safety in the bootstrap loop:** `screen` is a required argument. An eval-only pass-through lives in evaluation code only, never in `session/`. R-22 lands before any server.
+- **Gateway:**
+  - `base_url` and `api_key` are explicit. **`trust_env` stays at its default.**
+  - It refuses to start if `ANTHROPIC_LOG` is set.
+  - `StructuredCaller` lives in `gateway/types.py`.
+- **Roles:** `tutor` at medium effort with 8,000 `max_tokens`; `simulated_student` at low with 2,000. Other roles arrive with their tasks.
+- **Cache rates** are fetched from the pricing page during T1 and recorded in the config verification block, never taken from memory.
 
 ## Contract changes
-- `TutorMove` → `TutorTurn` in CLAUDE.md. No code exists yet, and nothing changes for `web/`.
+- `TutorMove` → `TutorTurn` in CLAUDE.md. Nothing changes for `web/`.
 
 ## Open questions for Michael
-- None new. R-43–R-47 from the 0420 note are still open.
-- **For Connor:** PRIVACY.md (draft) says the canary test arrives "with the first session code". Reword it to "with the first session entry point (the turn loop)"? The privacy reviewer suggested this; it's your call.
-- **For Connor:** the `[privacy]` Codex review of Task 2 still needs a run and a line in `.claude/codex-log.md`.
+- **R-ids:** keep your R-39 and R-40. Main's Stay on math is R-41. When your branch merges, the `REQUIREMENTS.md` R-36 parenthetical will conflict: take main's version and drop its "on his branch until it merges" clause.
+- R-43–R-47 from the 0420 note are still open.
+- **For Connor:**
+  1. Apply the prepared `[privacy]` patch (adds `src/platy/evaluation*` and `src/platy/student_state*`) with `ALLOW_GATE_CHANGE=1`.
+  2. Run the `[privacy]` Codex review of Task 2 and log it.
+  3. Step 4's hook rule says "no always-clear placeholder screen in `src/`", and the eval-only pass-through will live in `src/platy/evaluation/`. Confirm that decision 4 supersedes the rule there.
+  4. The S1–S4 safety texts live only in the local Step 4 plan file. They land in `prompts/safety_escalation.md` at Task 4.2.
 
 ## Next steps
-1. **Connor:** run the Codex `[privacy]` review of Task 2 and log it.
-2. **Then the prerequisites:** approve R-28, R-29, P-14 and the R-22 note; build config, the gateway and the eval runner with a first case.
-3. **Later:** config, gateway and eval runner, then Tasks 3–6 (prompt builder + rules, checks, the turn loop with the canary test, R-17 resets).
+1. **T1 config (P-14):** `config.toml` keys, `config.py` and `tests/test_model_pins.py`. Fetch the pricing page for the cache rates.
+2. **T2 usage log (R-28), T3 gateway, T4 eval runner, then T5 bootstrap.** Each is one `/ship` on the branch.
+
+## Gotchas
+- The canary conditions hold until T5:
+  - Nothing in `session/` takes a student message string, calls the gateway, logs or writes.
+  - The fake gateway must plant canaries in `TutorTurn.message` and `rationale` too.
+- Pre-commit refuses every commit while untracked `src/` files exist. Keep pedagogy files for the T5 bundle until its eval passes.
+- A history with no thinking blocks is the documented accepted path. T3 confirms plain-text assistant turns with an `llm` test.

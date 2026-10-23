@@ -19,11 +19,12 @@
 | **P-11** | **No new outbound destination for child data.** A new dependency that phones home (telemetry, crash reporting, "anonymous usage stats") is a finding. | A-2 | `a2-egress` (the listed clients) + reviewer (unlisted ones) |
 | **P-12** | A **parent-shared grade/transcript** is used once as a bootstrap prior and then discarded, never stored. *Dormant in V1: there's no parent upload until R-16 returns in V2/V3.* | A-3, A-9 | Reviewer |
 | **P-13** | **Tooling never touches real child data.** `/demo-check`, evals and tests use seeded fake-child profiles only. | A-3 | Reviewer |
+| **P-14** | **Only pinned, ZDR-verified models and features.** Every role uses a model id pinned in `tests/test_model_pins.py` and recorded in `config.toml`'s verification block. A change needs a ZDR check by Connor or Michael, plus privacy review. Retention-excluded models (Fable 5/5.1, Mythos 5/5.1) are never used. Only API features verified as ZDR-eligible are used, and prompt caching is one of them (Connor, 2026-10-17). | R-25 *(pending an A-id; approved by Connor, 2026-10-22)* | `tests/test_model_pins.py` + reviewer |
 | **P-15** | The **age gate keeps only a yes/no "13 or older"**, never the age or birth date entered, and the entered value never reaches logs, analytics, error trackers or exception text. An under-13 attempt keeps nothing the user entered; the one exception is a device-local flag (no id, no age) that blocks an immediate retry with a different age, as FTC COPPA guidance recommends. A student found to be under 13 mid-session has their stored state deleted (R-36). | A-9 (note, 2026-10-18), R-36 | Reviewer |
 
 ## Canary test (A-2's own verification)
 
-Arrives with the first session code (`tests/`, fast and deterministic, so it's part of `scripts/check`). It works like this:
+Arrives with the first session entry point, the turn loop (`tests/`, fast and deterministic, so it's part of `scripts/check`). It works like this:
 
 1. Run a scripted session through the real session entry point, with the gateway replaced by an in-process fake.
 2. Every child message contains a unique canary string.

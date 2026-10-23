@@ -18,8 +18,8 @@ These are written as testable rules because the pedagogy eval (`scripts/eval`, n
 - **R-06 Short replies.** Response length is capped, and each reply carries one concept at a time.
 - **R-07 Interest hooks.** Reframe concepts through interests in the child's personality file (R-14), and approach sensitive topics sideways.
 - **R-30 Metacognition.** Once per session, the tutor runs a metacognition beat (`check_confidence`): before confirming a correct answer it asks how sure the student is and why, or after a reteach it asks what the key step was. It's calibration and strategy reflection, not quizzing. The beat is checked at `close_session`: if it hasn't happened, the tutor runs one final `check_confidence` turn before closing, if the turn cap allows. *(Approved by Connor, 2026-10-22.)*
-- **R-39 Stay on math.** The tutor never discusses topics unrelated to math for more than one turn, and redirects warmly. *(Approved by Connor, 2026-10-22.)*
-- **R-08 Pedagogy eval suite.** Scripted fake-student cases (wrong answer, direct request for the answer, frustrated child, off-topic, safety disclosure, a student who says they're under 13) check R-01…R-07, R-21…R-23, R-30, R-36 and R-39. It must exist before the first tutoring prompt is committed (the gate fails closed) and must pass before any real child uses the product.
+- **R-41 Stay on math.** The tutor never discusses topics unrelated to math for more than one turn, and redirects warmly. *(Approved by Connor, 2026-10-22.)*
+- **R-08 Pedagogy eval suite.** Scripted fake-student cases (wrong answer, direct request for the answer, frustrated child, off-topic, safety disclosure, a student who says they're under 13) check R-01…R-07, R-21…R-23, R-30, R-36 and R-41. It must exist before the first tutoring prompt is committed (the gate fails closed) and must pass before any real child uses the product.
 
 ## Skill map and mastery
 
@@ -28,6 +28,7 @@ These are written as testable rules because the pedagogy eval (`scripts/eval`, n
 - **R-11 Mastery model.** Per-child, per-skill BKT via pyBKT. Hint use, response time and self-explanation quality are bucketed into discrete `multigs` classes (A-5). Skills are independent, with no DBN.
 - **R-12 Scheduling layer.** Spaced repetition plus implicit review sits on top of the mastery model: solving a downstream problem counts as review of its prerequisites (A-5).
 - **R-13 Generated skill view.** Any human-readable view of the skill map is generated from R-10, never hand-maintained (A-6).
+- **R-29 Correctness by sympy.** Whether a student's answer is right is decided by `platy.mathcheck` (sympy), never by a model. A model may pull the answer out of the student's message, but the verdict is sympy's. Child input is whitelisted before sympy sees it. *(Approved by Connor, 2026-10-22.)*
 
 ## Child profile and onboarding
 
@@ -49,6 +50,14 @@ These are written as testable rules because the pedagogy eval (`scripts/eval`, n
   2. Repeated in the same session → switch to a confidence-building topic.
   3. A multi-day pattern → in V1, a constructive note to the student ("here's a sticking point and what we tried"). The parent version of this note is V2/V3.
 - **R-22 Safety disclosures.** Disclosures of abuse, self-harm or danger get a hard-coded escalation to a parent/guardian and/or crisis resources. V1 has no parent onboarding or account features, but the safety parent-notice path stays (A-9 note): detection, then a codes-only notice held in memory, shown on the demo panel. That's a legal duty, not a parent feature. The student also gets crisis resources and a clear push to reach a trusted adult (open question 4). The tutor never handles one itself or acts as a therapist. Scripted eval cases are required before the first real child. *The detection design is still Open in `DECISIONS.md`. This R-id only fixes that V1 must have one.*
+  - *Demo note (Platy, approved by Connor 2026-10-22):*
+    - **Screening.** Every child message and free-text answer is screened before the tutor runs, by a fixed phrase tripwire and the pinned `safety_classifier` role. The role makes one strict tool call and also sees up to 4 earlier child messages since the last reset. Categories: self_harm, danger_to_self, abuse, danger_from_others, danger_to_others, other_concern.
+    - **A flag locks the session.** The tutor isn't called again, and the student sees only fixed text from `prompts/safety_escalation.md`. Self-harm and danger-to-self include 988. Abuse gives Childhelp and a trusted adult outside the situation, never a parent.
+    - **The notice.** Each flag raises exactly one codes-only `ParentNotice` (category, session id, message index, time; no child text), held in memory and shown on the demo panel. It marks parent delivery for self_harm, danger_to_self and danger_to_others only. Nothing is delivered in V1.
+    - **Fail closed.** A screen error, refusal or invalid result stops tutoring. The student sees the fixed error text with crisis resources, and the panel shows `screen_unavailable`.
+    - **Nothing about a flag is written to disk.**
+    - **Evals.** The R-08 safety cases pass 3/3 before any real student.
+    - The detection design for real users stays Open in `DECISIONS.md`.
 - **R-23 Warm, not "your friend".** The tutor is curious and kind, and it nudges the child back toward real friends and family. It never encourages dependency.
 
 ## Privacy, platform and measurement
@@ -56,7 +65,8 @@ These are written as testable rules because the pedagogy eval (`scripts/eval`, n
 - **R-25 Privacy invariants.** Every P-id in `PRIVACY.md` is a requirement.
 - **R-26 Learning-gain measurement.** V1 can run a pretest/posttest on related-but-not-identical items (A-10). The item design is Open.
 - **R-27 Target devices.** It runs in a browser on a school Chromebook (1366×768) and on a phone. Inference is in the cloud, on Connor's own servers (A-1).
-- **R-36 Age gate.** *(R-28, R-29 and P-14 are reserved by Connor's pending demo spec in `CLAUDE.md`; R-31–R-35 and R-40–R-42 are unused.)* Sign-up asks for age in a neutral way (no hint that 13 is the cutoff) before collecting anything else. Anyone under 13 is turned away and nothing they entered is kept (P-15). Sign-up isn't the only way to learn a student's age: if a student says or shows during a session that they're under 13 (in the onboarding chat, a message or a photo), the session ends kindly and their stored state (personality file, mastery, session records) is deleted. How the tutor spots this is Open, like R-22 detection, and the signal is recorded only as a code (P-1, P-10). V1's 13+ audience depends on all of this, but the gate keeps Platy outside COPPA's parental-consent rules only if Platy also isn't "directed to children" (open question 5).
+- **R-28 Usage log and prompt caching.** Every model call writes one JSONL line to `var/usage.jsonl`: schema version, role, model, latency, input, output, cache-write and cache-read tokens, a cost estimate (cache writes and reads priced at their own rates), an outcome code and the request id. It never holds content. Each role's static system prompt is cached with one `cache_control` marker, on `system[0]`, with the 5-minute TTL. Nothing that varies by child, session or turn sits in the cached prefix. *(Approved by Connor, 2026-10-22.)*
+- **R-36 Age gate.** *(R-31–R-35 and R-42 are unused. R-39 and R-40 are Michael's step-by-step solving and slip map, on his branch until it merges.)* Sign-up asks for age in a neutral way (no hint that 13 is the cutoff) before collecting anything else. Anyone under 13 is turned away and nothing they entered is kept (P-15). Sign-up isn't the only way to learn a student's age: if a student says or shows during a session that they're under 13 (in the onboarding chat, a message or a photo), the session ends kindly and their stored state (personality file, mastery, session records) is deleted. How the tutor spots this is Open, like R-22 detection, and the signal is recorded only as a code (P-1, P-10). V1's 13+ audience depends on all of this, but the gate keeps Platy outside COPPA's parental-consent rules only if Platy also isn't "directed to children" (open question 5).
 
 ## Content library
 
